@@ -125,6 +125,13 @@ then the first defined expression. An empty map leaves the sprite without an ima
 
 Images are preloaded and decoded per character. `show()` waits for the initial
 image; expression changes retain the previous image until the new one is decoded.
+After decoding, expression changes crossfade for 180ms by default. Configure
+`new SpriteRenderer({ crossfadeDuration: 250 })` to change the duration, or use
+`crossfadeDuration: 0` to disable it. The duration must be finite and non-negative.
+Initial images and identical image URLs are not animated. `setExpression()` waits
+for the fade; a newer decoded expression cancels the previous fade and removes its
+temporary image. Destroy also cancels fades and prevents pending loads from
+updating the character. Browsers without Web Animations swap images immediately.
 Unknown names and failed loads leave the current image unchanged without throwing.
 Repeated requests for the same image do not rewrite its source; the latest valid
 request wins when loads overlap. Failed loads are cached for that character instance.

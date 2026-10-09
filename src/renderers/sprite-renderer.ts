@@ -7,6 +7,8 @@ import type {
 
 export interface SpriteRendererOptions {
   className?: string;
+  /** Expression crossfade duration in milliseconds; 0 disables it. */
+  crossfadeDuration?: number;
 }
 
 export interface SpriteAssets {
@@ -42,8 +44,11 @@ class SpriteCharacter implements RenderedCharacter {
   #expressionToken = 0;
   #initial: Promise<void>;
   #motion?: Animation;
+  readonly #crossfadeDuration: number;
+  #fade?: { outgoing: HTMLImageElement; animations: Animation[] };
 
-  constructor(host: HTMLElement, character: CharacterDefinition, className?: string) {
+  constructor(host: HTMLElement, character: CharacterDefinition, options: SpriteRendererOptions) {
+    this.#crossfadeDuration = options.crossfadeDuration ?? 180;
     const assets = character.assets?.expressions ?? character.assets ?? {};
     this.#expressions = Object.fromEntries(
       Object.entries(assets).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
@@ -51,7 +56,7 @@ class SpriteCharacter implements RenderedCharacter {
     this.#motions = (character.assets?.motions ?? {}) as Record<string, SpriteMotion>;
 
     this.#root = document.createElement("div");
-    this.#root.className = ["adv-sprite-character", className].filter(Boolean).join(" ");
+    this.#root.className = ["adv-sprite-character", options.className].filter(Boolean).join(" ");
     this.#root.dataset.character = character.id;
     this.#root.dataset.visible = "false";
 
@@ -85,8 +90,27 @@ class SpriteCharacter implements RenderedCharacter {
     const token = ++this.#expressionToken;
     if (source === this.#source) return;
     if (await this.#load(source) && token === this.#expressionToken) {
+      this.#cancelFade();
+      const previous = this.#source;
       this.#image.src = source;
       this.#source = source;
+      if (!previous || this.#crossfadeDuration === 0 || !this.#image.animate) return;
+      const outgoing = document.createElement("img");
+      outgoing.src = previous;
+      outgoing.alt = "";
+      outgoing.setAttribute("aria-hidden", "true");
+      this.#visual.append(outgoing);
+      const timing = { duration: this.#crossfadeDuration, easing: "linear", fill: "both" } as const;
+      const fade = {
+        outgoing,
+        animations: [
+          this.#image.animate([{ opacity: 0 }, { opacity: 1 }], timing),
+          outgoing.animate([{ opacity: 1 }, { opacity: 0 }], timing),
+        ],
+      };
+      this.#fade = fade;
+      await Promise.all(fade.animations.map((animation) => animation.finished.catch(() => {})));
+      if (this.#fade === fade) this.#cancelFade();
     }
   }
 
@@ -140,7 +164,15 @@ class SpriteCharacter implements RenderedCharacter {
   destroy(): void {
     this.#expressionToken += 1;
     this.#motion?.cancel();
+    this.#cancelFade();
     this.#root.remove();
+  }
+
+  #cancelFade(): void {
+    if (!this.#fade) return;
+    for (const animation of this.#fade.animations) animation.cancel();
+    this.#fade.outgoing.remove();
+    this.#fade = undefined;
   }
 
   #load(source: string): Promise<boolean> {
@@ -159,11 +191,15 @@ export class SpriteRenderer implements CharacterRenderer {
   readonly #options: SpriteRendererOptions;
 
   constructor(options: SpriteRendererOptions = {}) {
+    if (options.crossfadeDuration !== undefined &&
+        (!Number.isFinite(options.crossfadeDuration) || options.crossfadeDuration < 0)) {
+      throw new Error("crossfadeDuration must be a finite, non-negative number.");
+    }
     this.#options = options;
   }
 
   create(host: HTMLElement, character: CharacterDefinition): RenderedCharacter {
-    return new SpriteCharacter(host, character, this.#options.className);
+    return new SpriteCharacter(host, character, this.#options);
   }
 }
 
@@ -184,6 +220,7 @@ export const spriteRendererCss = `
   place-items: end center;
 }
 .adv-sprite-character img {
+  grid-area: 1 / 1;
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
