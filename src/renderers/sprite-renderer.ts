@@ -87,6 +87,8 @@ class SpriteCharacter implements RenderedCharacter {
     this.#root.style.setProperty("--adv-scale", String(position.scale ?? 1));
     if (position.zIndex !== undefined) {
       this.#root.style.zIndex = String(position.zIndex);
+    } else {
+      this.#root.style.removeProperty("z-index");
     }
   }
 
