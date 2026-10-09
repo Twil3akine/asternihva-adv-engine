@@ -23,6 +23,7 @@ export class AdvEngine {
   #sceneId: string;
   #nodeIndex = 0;
   #running = false;
+  #ended = false;
 
   constructor(options: AdvEngineOptions) {
     this.#game = options.game;
@@ -35,6 +36,10 @@ export class AdvEngine {
 
   get state(): Readonly<Record<string, Scalar>> {
     return this.#state;
+  }
+
+  get ended(): boolean {
+    return this.#ended;
   }
 
   snapshot(): EngineSnapshot {
@@ -54,10 +59,11 @@ export class AdvEngine {
     this.#nodeIndex = snapshot.nodeIndex;
     for (const key of Object.keys(this.#state)) delete this.#state[key];
     Object.assign(this.#state, snapshot.state);
+    this.#ended = false;
   }
 
   async run(): Promise<void> {
-    if (this.#running) return;
+    if (this.#running || this.#ended) return;
     this.#running = true;
 
     try {
@@ -69,7 +75,7 @@ export class AdvEngine {
 
         const node = scene[this.#nodeIndex];
         if (!node) {
-          this.#running = false;
+          await this.#finish();
           return;
         }
 
@@ -153,11 +159,17 @@ export class AdvEngine {
         return;
 
       case "end":
-        this.#stage.setActive(undefined);
-        this.#ui.setActiveSpeaker?.(undefined);
-        this.#running = false;
+        await this.#finish();
         return;
     }
+  }
+
+  async #finish(): Promise<void> {
+    this.#ended = true;
+    this.#stage.setActive(undefined);
+    this.#ui.setActiveSpeaker?.(undefined);
+    await this.#ui.presentEnd();
+    this.#running = false;
   }
 
   async #runCommands(commands: readonly CharacterCommand[]): Promise<void> {

@@ -99,6 +99,8 @@ export interface ChoicePresentation {
 export interface UiAdapter {
   presentLine(line: DialoguePresentation): Promise<void>;
   presentChoice(choice: ChoicePresentation): Promise<number>;
+  /** Clear pending interaction and present scenario completion. */
+  presentEnd(): void | Promise<void>;
   setBackground?(source?: string): void | Promise<void>;
   setActiveSpeaker?(characterId?: string): void;
   setTitle?(title?: string): void;

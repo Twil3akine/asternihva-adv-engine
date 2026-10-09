@@ -48,6 +48,23 @@ interface RenderedCharacter {
 
 That is the seam used to replace PNG sprites with Live2D later without changing scenario data.
 
+## Scenario completion
+
+`UiAdapter` must implement `presentEnd(): void | Promise<void>`. The engine calls
+it once when an `end` node is reached or a scene runs out of nodes, after clearing
+the active speaker. Adapters should clear dialogue/choice interaction and display
+their completion state. `DomUi` removes interaction, clears the speaker and choices,
+and replaces the last line with `The End` (`data-mode="ended"`).
+
+`engine.ended` becomes true before the notification. `run()` waits for an async
+completion presentation and subsequent calls do nothing until `restore()` resets
+completion. `stop()` pauses execution without notifying completion. Errors are
+not treated as completion. Existing custom UI adapters need to add `presentEnd()`.
+
+Snapshots store only the scenario cursor and scalar variables, not background or
+character rendering state. Restoring a terminal cursor and calling `run()` presents
+completion again; restoring an earlier cursor resumes from that node.
+
 ## Example scenario
 
 ```ts
@@ -93,6 +110,7 @@ const game = {
 
 ```sh
 npm install
+npm run typecheck
 npm run build
 npm run serve:example
 ```

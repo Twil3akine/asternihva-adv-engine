@@ -98,6 +98,16 @@ export class DomUi implements UiAdapter {
     this.#elements.choices.replaceChildren();
   }
 
+  presentEnd(): void {
+    this.#cancelPending();
+    this.#elements.choices.replaceChildren();
+    this.#elements.speaker.textContent = "";
+    this.#elements.speaker.hidden = true;
+    this.setActiveSpeaker(undefined);
+    this.#elements.text.textContent = "The End";
+    this.#elements.root.dataset.mode = "ended";
+  }
+
   #cancelPending(): void {
     this.#cleanup?.();
     this.#cleanup = undefined;
