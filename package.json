@@ -1,0 +1,36 @@
+{
+  "name": "web-adv-engine",
+  "version": "0.1.0",
+  "description": "A small, renderer-agnostic visual novel / ADV engine for the web.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test tests/*.test.mjs",
+    "check": "npm run build && npm test",
+    "serve:example": "python3 -m http.server 4173"
+  },
+  "keywords": [
+    "visual-novel",
+    "adv",
+    "web",
+    "typescript",
+    "game-engine"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}
