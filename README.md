@@ -28,7 +28,7 @@ AdvEngine ───────► UiAdapter
 CharacterStage
   │
   ├── SpriteRenderer (included)
-  ├── Live2DRenderer (optional adapter; not bundled)
+  ├── Live2DRenderer (SDK-free adapter foundation)
   ├── SpineRenderer  (future / third-party)
   └── CustomRenderer
 ```
@@ -183,7 +183,35 @@ built-in names: the demo defines its own bounce, nod, and pulse animations.
 
 ## Live2D integration
 
-Live2D is intentionally **not bundled**. A future adapter can implement `CharacterRenderer` / `RenderedCharacter` and translate the generic calls:
+`Live2DRenderer` is an SDK-free bridge in `src/adapters/live2d-renderer.ts`.
+Live2Dを利用する場合は利用者自身が公式Cubism SDKを導入してください。
+The engine includes neither Cubism SDK / Core nor any model files. Download and
+configure the SDK in your application using the
+[official Cubism SDK downloads](https://www.live2d.com/en/sdk/download/).
+Cubism Core has its own license and is distributed through the official package,
+as described in the [Cubism Core documentation](https://docs.live2d.com/en/cubism-sdk-manual/cubism-core/).
+The engine's MIT license does not cover your SDK or model assets; refer to the
+[official SDK licensing information](https://www.live2d.com/en/sdk/license/).
+
+Inject your application-owned factory. It receives the host and character
+definition and returns a `Live2DModelAdapter`, immediately or asynchronously:
+
+```ts
+import { CharacterStage, Live2DRenderer, SpriteRenderer } from "web-adv-engine";
+import type { Live2DModelAdapter } from "web-adv-engine";
+import { loadGameLive2DModel } from "./game-live2d-runtime.js";
+
+const live2d = new Live2DRenderer({
+  async createModel(host, character): Promise<Live2DModelAdapter> {
+    // Your module loads Cubism and maps model-specific names and coordinates.
+    return loadGameLive2DModel(host, character);
+  },
+});
+const stage = new CharacterStage(host, game.characters, [new SpriteRenderer(), live2d]);
+// Characters choose renderer: "sprite" or renderer: "live2d" in their definitions.
+```
+
+The model adapter implements the same `RenderedCharacter` operations:
 
 ```text
 setExpression("smile")
@@ -191,7 +219,21 @@ playMotion("wave")
 setPosition("left")
 ```
 
-into Cubism model operations. This keeps the core engine OSS-friendly and avoids making the engine itself dependent on the Cubism runtime or a specific rendering technology.
+Your bridge translates these calls into Cubism operations. Assets, expression and
+motion names, positioning, canvases, resize handling, and SDK resources belong to
+that bridge. Custom renderers can implement `CharacterRenderer` directly and are
+registered alongside sprite and Live2D renderers; scenario nodes do not change.
+To match sprite timing, the model adapter's `playMotion` should return or resolve
+once playback starts, allowing dialogue to proceed while the motion runs.
+
+The wrapper waits for model initialization before each async command. Optional
+`setActive` uses the latest requested value when initialization finishes. Initialization
+errors reject the awaiting command; the application decides how to report them.
+`destroy()` is idempotent and destroys a model that finishes loading later. Commands
+waiting for initialization do nothing if the character was destroyed. The factory
+must clean up its own resources if initialization fails; an initialized model's
+`destroy()` must cancel any SDK animations and release its resources. No SDK types
+are imported into the engine, so build and tests also work without a Cubism install.
 
 ## Repository direction
 
