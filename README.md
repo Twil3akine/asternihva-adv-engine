@@ -82,6 +82,12 @@ const game = {
           smile: "/alice/smile.png",
           surprised: "/alice/surprised.png",
         },
+        motions: {
+          nod: {
+            keyframes: [{ rotate: "0deg" }, { rotate: "2deg" }, { rotate: "0deg" }],
+            duration: 580,
+          },
+        },
       },
     },
   ],
@@ -152,6 +158,21 @@ bun install
 bun run build
 python3 -m http.server 4173
 ```
+
+## Sprite motions
+
+Define motion names per character in `assets.motions`. Each `SpriteMotion` has
+`keyframes` with optional `translate`, `rotate`, `scale`, `opacity`, `offset`, and
+`easing`; timing accepts `duration` in milliseconds (default 500), `easing`
+(default `ease`), `iterations` (default 1), and `direction` (default `normal`).
+The engine forwards names through `playMotion(name)` without interpreting them.
+
+Motions run on an inner visual layer using Web Animations, independently of
+stage position and active-speaker styling. They start without delaying dialogue
+and return to the base pose when finished (`fill: none`). A new known motion
+cancels the previous one. Unknown or omitted names do nothing; other characters
+are unaffected. Destroying a character cancels its motion. There are no implicit
+built-in names: the demo defines its own bounce, nod, and pulse animations.
 
 ## Live2D integration
 

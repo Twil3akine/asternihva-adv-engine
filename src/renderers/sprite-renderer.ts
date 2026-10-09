@@ -11,37 +11,57 @@ export interface SpriteRendererOptions {
 
 export interface SpriteAssets {
   expressions: Record<string, string>;
+  motions?: Record<string, SpriteMotion>;
 }
 
-const BUILTIN_MOTIONS = new Set(["bounce", "nod", "shake", "pulse"]);
+export type SpriteMotionKeyframe = {
+  translate?: string;
+  rotate?: string;
+  scale?: string | number;
+  opacity?: number;
+  offset?: number;
+  easing?: string;
+};
+
+export interface SpriteMotion {
+  keyframes: SpriteMotionKeyframe[];
+  duration?: number;
+  easing?: string;
+  iterations?: number;
+  direction?: PlaybackDirection;
+}
 
 class SpriteCharacter implements RenderedCharacter {
   readonly #root: HTMLDivElement;
+  readonly #visual: HTMLDivElement;
   readonly #image: HTMLImageElement;
-  readonly #character: CharacterDefinition;
   readonly #expressions: Record<string, string>;
+  readonly #motions: Record<string, SpriteMotion>;
   readonly #loads = new Map<string, Promise<boolean>>();
   #source?: string;
   #expressionToken = 0;
   #initial: Promise<void>;
-  #motionToken = 0;
+  #motion?: Animation;
 
   constructor(host: HTMLElement, character: CharacterDefinition, className?: string) {
-    this.#character = character;
     const assets = character.assets?.expressions ?? character.assets ?? {};
     this.#expressions = Object.fromEntries(
       Object.entries(assets).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
     );
+    this.#motions = (character.assets?.motions ?? {}) as Record<string, SpriteMotion>;
 
     this.#root = document.createElement("div");
     this.#root.className = ["adv-sprite-character", className].filter(Boolean).join(" ");
     this.#root.dataset.character = character.id;
     this.#root.dataset.visible = "false";
 
+    this.#visual = document.createElement("div");
+    this.#visual.className = "adv-sprite-visual";
+    this.#root.append(this.#visual);
     this.#image = document.createElement("img");
     this.#image.alt = character.name;
     this.#image.draggable = false;
-    this.#root.append(this.#image);
+    this.#visual.append(this.#image);
     host.append(this.#root);
 
     for (const source of Object.values(this.#expressions)) this.#load(source);
@@ -71,25 +91,25 @@ class SpriteCharacter implements RenderedCharacter {
   }
 
   playMotion(name: string): void {
-    if (!BUILTIN_MOTIONS.has(name)) {
-      this.#root.dispatchEvent(
-        new CustomEvent("adv:motion", {
-          bubbles: true,
-          detail: { character: this.#character.id, motion: name },
-        }),
-      );
-      return;
-    }
-
-    const token = ++this.#motionToken;
-    this.#root.dataset.motion = "";
-    // Force layout so playing the same motion twice restarts the animation.
-    void this.#root.offsetWidth;
-    this.#root.dataset.motion = name;
-
-    window.setTimeout(() => {
-      if (token === this.#motionToken) this.#root.dataset.motion = "";
-    }, 720);
+    const motion = Object.hasOwn(this.#motions, name) ? this.#motions[name] : undefined;
+    if (!motion || !Array.isArray(motion.keyframes) || !this.#visual.animate) return;
+    this.#motion?.cancel();
+    const animation = this.#visual.animate(motion.keyframes, {
+      duration: motion.duration ?? 500,
+      easing: motion.easing ?? "ease",
+      iterations: motion.iterations ?? 1,
+      direction: motion.direction ?? "normal",
+      fill: "none",
+    });
+    this.#motion = animation;
+    void animation.finished.then(() => {
+      if (this.#motion === animation) {
+        animation.cancel();
+        this.#motion = undefined;
+      }
+    }, () => {
+      if (this.#motion === animation) this.#motion = undefined;
+    });
   }
 
   setPosition(position: StagePosition): void {
@@ -119,6 +139,7 @@ class SpriteCharacter implements RenderedCharacter {
 
   destroy(): void {
     this.#expressionToken += 1;
+    this.#motion?.cancel();
     this.#root.remove();
   }
 
@@ -168,6 +189,15 @@ export const spriteRendererCss = `
   object-fit: contain;
   filter: drop-shadow(0 18px 30px rgb(0 0 0 / .28));
 }
+.adv-sprite-visual {
+  display: grid;
+  place-items: end center;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  transform-origin: 50% 100%;
+}
 .adv-sprite-character[data-visible="true"] { opacity: 1; }
 .adv-sprite-character[data-active="true"] {
   filter: brightness(1) saturate(1);
@@ -183,12 +213,4 @@ export const spriteRendererCss = `
   bottom: var(--adv-y);
   transform: translateX(-50%) scale(var(--adv-scale));
 }
-.adv-sprite-character[data-motion="bounce"] { animation: adv-bounce .62s ease; }
-.adv-sprite-character[data-motion="nod"] { animation: adv-nod .58s ease; }
-.adv-sprite-character[data-motion="shake"] { animation: adv-shake .48s ease; }
-.adv-sprite-character[data-motion="pulse"] { animation: adv-pulse .62s ease; }
-@keyframes adv-bounce { 0%,100%{margin-bottom:0} 42%{margin-bottom:24px} 68%{margin-bottom:5px} }
-@keyframes adv-nod { 0%,100%{rotate:0deg} 45%{rotate:2deg} 70%{rotate:-.5deg} }
-@keyframes adv-shake { 0%,100%{margin-left:0} 25%{margin-left:-13px} 50%{margin-left:12px} 75%{margin-left:-6px} }
-@keyframes adv-pulse { 0%,100%{scale:1} 50%{scale:1.035} }
 `;

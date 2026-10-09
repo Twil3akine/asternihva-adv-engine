@@ -14,6 +14,12 @@ const style = document.createElement("style");
 style.textContent = spriteRendererCss + domUiCss;
 document.head.append(style);
 
+const motions = {
+  bounce: { keyframes: [{ translate: "0 0" }, { translate: "0 -24px" }, { translate: "0 0" }], duration: 620 },
+  nod: { keyframes: [{ rotate: "0deg" }, { rotate: "2deg" }, { rotate: "0deg" }], duration: 580 },
+  pulse: { keyframes: [{ scale: 1, opacity: 1 }, { scale: 1.06, opacity: 0.75 }, { scale: 1, opacity: 1 }], duration: 620 },
+};
+
 const game = {
   title: "Asternihva Project — engine demo",
   start: "intro",
@@ -24,6 +30,7 @@ const game = {
       renderer: "sprite",
       defaultExpression: "normal",
       assets: {
+        motions,
         expressions: {
           normal: asset("noah-normal.svg"),
           smile: asset("noah-smile.svg"),
@@ -37,6 +44,7 @@ const game = {
       renderer: "sprite",
       defaultExpression: "normal",
       assets: {
+        motions,
         expressions: {
           normal: asset("seren-normal.svg"),
           smile: asset("seren-smile.svg"),
@@ -49,6 +57,7 @@ const game = {
       renderer: "sprite",
       defaultExpression: "normal",
       assets: {
+        motions,
         expressions: {
           normal: asset("luminal-normal.svg"),
           smile: asset("luminal-smile.svg"),
