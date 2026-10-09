@@ -24,8 +24,11 @@ const game = {
       renderer: "sprite",
       defaultExpression: "normal",
       assets: {
-        normal: asset("noah-normal.svg"),
-        smile: asset("noah-smile.svg"),
+        expressions: {
+          normal: asset("noah-normal.svg"),
+          smile: asset("noah-smile.svg"),
+          surprised: asset("noah-surprised.svg"),
+        },
       },
     },
     {
@@ -34,8 +37,10 @@ const game = {
       renderer: "sprite",
       defaultExpression: "normal",
       assets: {
-        normal: asset("seren-normal.svg"),
-        smile: asset("seren-smile.svg"),
+        expressions: {
+          normal: asset("seren-normal.svg"),
+          smile: asset("seren-smile.svg"),
+        },
       },
     },
     {
@@ -44,8 +49,10 @@ const game = {
       renderer: "sprite",
       defaultExpression: "normal",
       assets: {
-        normal: asset("luminal-normal.svg"),
-        smile: asset("luminal-smile.svg"),
+        expressions: {
+          normal: asset("luminal-normal.svg"),
+          smile: asset("luminal-smile.svg"),
+        },
       },
     },
   ],

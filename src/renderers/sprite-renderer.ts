@@ -9,18 +9,29 @@ export interface SpriteRendererOptions {
   className?: string;
 }
 
+export interface SpriteAssets {
+  expressions: Record<string, string>;
+}
+
 const BUILTIN_MOTIONS = new Set(["bounce", "nod", "shake", "pulse"]);
 
 class SpriteCharacter implements RenderedCharacter {
   readonly #root: HTMLDivElement;
   readonly #image: HTMLImageElement;
   readonly #character: CharacterDefinition;
-  #expression: string;
+  readonly #expressions: Record<string, string>;
+  readonly #loads = new Map<string, Promise<boolean>>();
+  #source?: string;
+  #expressionToken = 0;
+  #initial: Promise<void>;
   #motionToken = 0;
 
   constructor(host: HTMLElement, character: CharacterDefinition, className?: string) {
     this.#character = character;
-    this.#expression = character.defaultExpression ?? "default";
+    const assets = character.assets?.expressions ?? character.assets ?? {};
+    this.#expressions = Object.fromEntries(
+      Object.entries(assets).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+    );
 
     this.#root = document.createElement("div");
     this.#root.className = ["adv-sprite-character", className].filter(Boolean).join(" ");
@@ -33,10 +44,14 @@ class SpriteCharacter implements RenderedCharacter {
     this.#root.append(this.#image);
     host.append(this.#root);
 
-    this.#applyExpression();
+    for (const source of Object.values(this.#expressions)) this.#load(source);
+    const initial = [character.defaultExpression, "normal", "default"]
+      .find((name) => name !== undefined && this.#expressions[name]);
+    this.#initial = this.setExpression(initial ?? Object.keys(this.#expressions)[0] ?? "");
   }
 
-  show(): void {
+  async show(): Promise<void> {
+    await this.#initial;
     this.#root.dataset.visible = "true";
   }
 
@@ -44,9 +59,15 @@ class SpriteCharacter implements RenderedCharacter {
     this.#root.dataset.visible = "false";
   }
 
-  setExpression(name: string): void {
-    this.#expression = name;
-    this.#applyExpression();
+  async setExpression(name: string): Promise<void> {
+    const source = Object.hasOwn(this.#expressions, name) ? this.#expressions[name] : undefined;
+    if (!source) return;
+    const token = ++this.#expressionToken;
+    if (source === this.#source) return;
+    if (await this.#load(source) && token === this.#expressionToken) {
+      this.#image.src = source;
+      this.#source = source;
+    }
   }
 
   playMotion(name: string): void {
@@ -97,20 +118,18 @@ class SpriteCharacter implements RenderedCharacter {
   }
 
   destroy(): void {
+    this.#expressionToken += 1;
     this.#root.remove();
   }
 
-  #applyExpression(): void {
-    const source = this.#character.assets?.[this.#expression]
-      ?? this.#character.assets?.[this.#character.defaultExpression ?? ""]
-      ?? this.#character.assets?.default;
-
-    if (!source) {
-      throw new Error(
-        `No sprite asset for ${this.#character.id}:${this.#expression}.`,
-      );
-    }
-    this.#image.src = source;
+  #load(source: string): Promise<boolean> {
+    const cached = this.#loads.get(source);
+    if (cached) return cached;
+    const image = document.createElement("img");
+    image.src = source;
+    const loaded = image.decode().then(() => true, () => false);
+    this.#loads.set(source, loaded);
+    return loaded;
   }
 }
 

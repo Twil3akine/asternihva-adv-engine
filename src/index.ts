@@ -1,6 +1,6 @@
 export { AdvEngine, type AdvEngineOptions } from "./engine.js";
 export { CharacterStage } from "./character-stage.js";
-export { SpriteRenderer, spriteRendererCss, type SpriteRendererOptions } from "./renderers/sprite-renderer.js";
+export { SpriteRenderer, spriteRendererCss, type SpriteRendererOptions, type SpriteAssets } from "./renderers/sprite-renderer.js";
 export { DomUi, domUiCss, type DomUiElements } from "./ui/dom-ui.js";
 export type {
   AdvNode,

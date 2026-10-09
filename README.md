@@ -77,8 +77,11 @@ const game = {
       renderer: "sprite",
       defaultExpression: "normal",
       assets: {
-        normal: "/alice/normal.png",
-        smile: "/alice/smile.png",
+        expressions: {
+          normal: "/alice/normal.png",
+          smile: "/alice/smile.png",
+          surprised: "/alice/surprised.png",
+        },
       },
     },
   ],
@@ -107,6 +110,19 @@ const game = {
 ```
 
 ## Build and run the demo
+
+`SpriteRenderer` accepts `assets.expressions` (a map of expression names to image
+URLs); the original flat asset map is also supported. These assets are interpreted
+only by the renderer, while the engine passes generic `setExpression` commands.
+The initial image uses a valid `defaultExpression`, then `normal`, then `default`,
+then the first defined expression. An empty map leaves the sprite without an image.
+
+Images are preloaded and decoded per character. `show()` waits for the initial
+image; expression changes retain the previous image until the new one is decoded.
+Unknown names and failed loads leave the current image unchanged without throwing.
+Repeated requests for the same image do not rewrite its source; the latest valid
+request wins when loads overlap. Failed loads are cached for that character instance.
+The example's first three lines demonstrate normal → smile → surprised.
 
 ```sh
 npm install

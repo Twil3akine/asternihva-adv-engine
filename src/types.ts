@@ -18,7 +18,7 @@ export interface CharacterDefinition {
   name: string;
   renderer: string;
   defaultExpression?: string;
-  assets?: Record<string, string>;
+  assets?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
 }
 
