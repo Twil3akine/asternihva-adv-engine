@@ -11,7 +11,7 @@ button { font: inherit; }
 .brand strong { font-family: Georgia, "Times New Roman", serif; font-size: clamp(24px, 3vw, 42px); font-weight: 500; }
 @media (max-width: 720px) {
   .stage { inset: 9vh -18vw 19vh; }
-  .adv-dialogue {
+  .game .adv-dialogue {
     --adv-dialogue-block-size: clamp(11rem, 35vh, 18rem);
     --adv-dialogue-inline-padding: 1.375rem;
     left: 14px;
