@@ -124,6 +124,14 @@ Repeated requests for the same image do not rewrite its source; the latest valid
 request wins when loads overlap. Failed loads are cached for that character instance.
 The example's first three lines demonstrate normal → smile → surprised.
 
+The built-in dialogue panel keeps a fixed height for each line, sized from the
+viewport and capped for large screens. Its text and choice list scroll inside
+the panel when their content is longer than the available space. The speaker
+label stays in a fixed position above the text. On small screens, the panel
+uses a larger share of the viewport while keeping the same scrolling behavior.
+For overflowing dialogue, clicking or pressing an advance key first scrolls to
+the bottom; the next advance continues the scenario. Each new line starts at the top.
+
 ```sh
 npm install
 npm run typecheck
