@@ -240,7 +240,7 @@ export const domUiCss = defaultThemeCss + `
   transition: background .18s ease, transform .18s ease;
 }
 .adv-choice:hover, .adv-choice:focus-visible { background: var(--adv-choice-hover-bg); transform: translateY(-1px); }
-.adv-controls { position: absolute; right: 4.2cqw; bottom: .65cqw; display: flex; gap: 1.4cqw; }
+.adv-controls { position: absolute; right: 6cqw; bottom: .65cqw; display: flex; gap: 1.4cqw; }
 .adv-control { appearance: none; padding: .3cqw 0; border: 0; background: none; color: var(--adv-muted-color); font-family: var(--adv-ui-font); font-size: .85cqw; letter-spacing: .12em; cursor: pointer; }
 .adv-control:hover, .adv-control[aria-pressed="true"] { color: var(--adv-name-color); }
 .adv-panel { width: 52cqw; max-height: 38cqw; border: 1px solid var(--adv-dialog-border); border-radius: .6cqw; padding: 2cqw; color: var(--adv-text-color); background: var(--adv-panel-bg); font-family: var(--adv-text-font); font-size: 1.2cqw; }

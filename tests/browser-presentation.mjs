@@ -1,6 +1,7 @@
-import { AdvEngine, DomUi, SpriteRenderer } from '../dist/index.js';
+import { AdvEngine, DomUi, SpriteRenderer, calculateAutoDelay } from '../dist/index.js';
 
 import { fitDialoguePage } from '../dist/ui/dialogue-paging.js';
+import { demoUiConfig } from '../examples/asternihva/ui-config.mjs';
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
@@ -159,7 +160,7 @@ export async function testDemoPlay() {
       expressions.get(root.dataset.character).add(image.src.split('/').pop());
       const style = getComputedStyle(root);
       const expected = speaker ? root.dataset.character === speaker ? 1 : .55 : .6;
-      assert(Math.abs(Number(style.filter.match(/brightness\(([^)]+)\)/)[1]) - expected) < .001, 'Demo focus');
+      assert(Math.abs(Number(style.filter.match(/brightness\(([^)]+)\)/)[1]) - expected) < .001, `Demo focus: character=${root.dataset.character}, speaker=${speaker}, expected=${expected}, actual=${style.filter}`);
     }
     if (speaker === 'seren' && text.textContent.includes('あの光、覚えているわ')) {
       document.querySelector('[data-control="log"]').click();
@@ -174,4 +175,115 @@ export async function testDemoPlay() {
   assert(checkedLog && longPages >= 1 && choices, 'Missing long dialogue/log/choice');
   if (game.dataset.assets === 'local') assert([...expressions.values()].every(set => set.size >= 3), 'Missing expression variants');
   return { demo: true, steps, longPages, fullBacklog: checkedLog, choices, controls: true, expressionCounts: Object.fromEntries([...expressions].map(([id, set]) => [id, set.size])) };
+}
+
+export async function testPolish() {
+  const root = document.querySelector('#game');
+  const dialogue = document.querySelector('#dialogue');
+  const text = document.querySelector('#text');
+  const pageIndicator = document.querySelector('#page-indicator');
+  const waitForLine = async () => {
+    for (let n = 0; n < 200 && root.dataset.mode !== 'line'; n++) await wait(50);
+    assert(root.dataset.mode === 'line', 'Demo did not enter dialogue');
+  };
+  const waitForPresentationChange = async (previousPage, previousText) => {
+    for (let n = 0; n < 100; n++) {
+      if (root.dataset.mode !== 'line' || Number(root.dataset.page) !== previousPage || text.textContent !== previousText) return;
+      await wait(20);
+    }
+    throw new Error('Dialogue did not update after advancing');
+  };
+  const advanceNode = async () => {
+    for (let n = 0; n < 100; n++) {
+      const lastPage = pageIndicator.textContent.includes('▼');
+      const pageBefore = Number(root.dataset.page);
+      const textBefore = text.textContent;
+      dialogue.click();
+      await waitForPresentationChange(pageBefore, textBefore);
+      if (root.dataset.mode !== 'line') return;
+      if (lastPage) return;
+    }
+    throw new Error('Could not advance past current dialogue node');
+  };
+
+  await waitForLine();
+  for (let n = 0; n < 30 && !text.textContent.includes('あの光、覚えているわ'); n++) {
+    if (root.dataset.mode === 'choice') document.querySelector('.adv-choice').click();
+    else await advanceNode();
+    await wait(0);
+  }
+  assert(root.dataset.mode === 'line' && text.textContent.includes('あの光、覚えているわ'), 'Could not reach Seren’s long dialogue');
+  await wait(250);
+
+  const auto = document.querySelector('[data-control="auto"]');
+  const targetPage = text.textContent;
+  assert(document.querySelector('#controls').getBoundingClientRect().right + 4 <= pageIndicator.getBoundingClientRect().left, 'Page indicator overlaps dialogue controls');
+  const originalSetTimeout = window.setTimeout;
+  const delays = [];
+  try {
+    window.setTimeout = function (callback, delay, ...args) {
+      delays.push(Number(delay));
+      return originalSetTimeout.call(this, callback, delay, ...args);
+    };
+    auto.click();
+  } finally {
+    window.setTimeout = originalSetTimeout;
+  }
+  assert(auto.getAttribute('aria-pressed') === 'true', 'AUTO did not enable');
+  const expectedDelay = calculateAutoDelay(targetPage, demoUiConfig.auto);
+  assert(delays.includes(expectedDelay), `AUTO scheduled ${delays}; expected visible-page delay ${expectedDelay}`);
+  auto.click();
+  assert(auto.getAttribute('aria-pressed') === 'false', 'AUTO did not disable');
+
+  document.querySelector('[data-control="log"]').click();
+  const logPanel = document.querySelector('#log-panel');
+  const content = logPanel.querySelector('.adv-log-content');
+  assert(logPanel.open, 'LOG did not open');
+  const articles = [...content.querySelectorAll('.adv-log-entry')];
+  assert(articles.length > 0, 'LOG has no structured entries');
+  assert(articles.every(article => article.getAttribute('role') === 'listitem'), 'LOG entries lack listitem roles');
+  const narration = articles.find(article => article.classList.contains('adv-log-entry--narration'));
+  assert(narration && !narration.querySelector('.adv-log-avatar'), 'LOG narration entry has an avatar or is missing');
+  const latest = articles.at(-1);
+  assert(latest.classList.contains('adv-log-entry--latest'), 'Latest LOG entry is not marked');
+  assert(content.scrollTop + content.clientHeight >= content.scrollHeight - 2, 'LOG did not scroll to its latest entry');
+
+  const longEntry = articles.find(article => article.querySelector('.adv-log-name')?.textContent === 'Seren' &&
+    article.querySelector('.adv-log-text')?.textContent.includes('あの光、覚えているわ'));
+  assert(longEntry, 'LOG did not retain Seren’s full dialogue entry');
+  const fullText = longEntry.querySelector('.adv-log-text').textContent;
+  assert(fullText.includes('今度は私ひとりの記憶にはならないから。') && fullText.includes('\n\n'), 'LOG lost the full multiline node text');
+  assert(expectedDelay !== calculateAutoDelay(fullText, demoUiConfig.auto), 'AUTO timing did not depend on the current page');
+  const stageImage = document.querySelector('#stage [data-character="seren"] img');
+  const logImage = longEntry.querySelector('.adv-log-avatar img');
+  assert(stageImage && logImage && logImage.src === stageImage.src, 'LOG portrait does not use Seren’s current expression');
+  logPanel.close();
+
+  const pages = [];
+  for (let n = 0; n < 100; n++) {
+    pages.push(text.textContent);
+    if (pageIndicator.textContent.includes('▼')) break;
+    dialogue.click();
+    await wait(0);
+  }
+  assert(pages.length > 1 && pages.join('') === fullText, 'Paged dialogue differs from full LOG text');
+
+  const menuButton = document.querySelector('[data-control="menu"]');
+  const menuPanel = document.querySelector('#menu-panel');
+  menuButton.click();
+  assert(menuPanel.open, 'MENU did not open');
+  const resume = menuPanel.querySelector('[data-menu-action="resume"]');
+  const logAction = menuPanel.querySelector('[data-menu-action="log"]');
+  const restart = menuPanel.querySelector('#restart');
+  assert(resume && resume.textContent.trim() === 'Resume', 'MENU Resume action is missing');
+  assert(logAction && logAction.textContent.trim() === 'Log', 'MENU Log action is missing');
+  assert(restart && restart.textContent.trim() === 'Restart', 'MENU Restart action is missing');
+  logAction.click();
+  assert(!menuPanel.open && logPanel.open, 'MENU Log action did not switch to LOG');
+  logPanel.close();
+  menuButton.click();
+  menuPanel.querySelector('[data-menu-action="resume"]').click();
+  assert(!menuPanel.open, 'MENU Resume action did not close the menu');
+
+  return { polish: true, logEntries: articles.length, narration: true, expressionPortrait: true, pages: pages.length, autoDelay: expectedDelay, menu: true };
 }
