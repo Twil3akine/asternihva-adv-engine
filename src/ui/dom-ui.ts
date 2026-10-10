@@ -131,11 +131,19 @@ export class DomUi implements UiAdapter {
         }
         finish();
       };
-      target.addEventListener("click", advance, { signal: controller.signal });
+      const blocksAdvance = (event: Event) => event.defaultPrevented
+        || this.#elements.root.dataset.mode !== "line"
+        || Boolean(this.#elements.root.querySelector?.("dialog[open]"))
+        || Boolean((event.target as Element | null)?.closest?.(
+          "button, a, input, textarea, select, [contenteditable], dialog, .adv-controls, .adv-choices, [data-adv-interactive]",
+        ));
+      target.addEventListener("click", (event) => {
+        if (!blocksAdvance(event)) advance();
+      }, { signal: controller.signal });
       window.addEventListener(
         "keydown",
         (event) => {
-          if (event.defaultPrevented || (event.target as Element | null)?.closest?.("button, input, textarea, select, dialog[open]")) return;
+          if (blocksAdvance(event)) return;
           if (["Enter", " ", "ArrowRight"].includes(event.key)) {
             event.preventDefault();
             advance();

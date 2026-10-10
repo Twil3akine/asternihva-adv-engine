@@ -204,3 +204,85 @@ test("DomUi ending aborts pending choice input", async t => {
   assert.equal(settled, false);
   assert.equal(elements.root.dataset.mode, "ended");
 });
+
+test("viewport input advances exactly one page per background, character, or dialogue click", async t => {
+  const { elements } = fakeUi(t);
+  elements.text.clientHeight = 20;
+  const ui = new DomUi({ ...elements, advanceTarget: elements.root });
+  let done = false;
+  const pending = ui.presentLine({ text: "あ".repeat(40) }).then(() => { done = true; });
+  for (const name of ["background", "character", "dialogue"]) {
+    const event = new Event("click", { bubbles: true });
+    Object.defineProperty(event, "target", { value: { closest: () => null, name } });
+    elements.root.dispatchEvent(event);
+    await Promise.resolve();
+    assert.equal(elements.root.dataset.page, String(["background", "character", "dialogue"].indexOf(name) + 2));
+    assert.equal(done, false);
+  }
+  elements.root.dispatchEvent(new Event("click"));
+  await pending;
+  assert.equal(done, true);
+});
+
+test("viewport input consumes interactive controls and blocks all open overlays", async t => {
+  const { elements } = fakeUi(t);
+  const ui = new DomUi({ ...elements, advanceTarget: elements.root });
+  let done = false;
+  const pending = ui.presentLine({ text: "会話" }).then(() => { done = true; });
+  for (const name of ["AUTO", "SKIP", "LOG", "MENU", "Settings", "link", "input"]) {
+    const event = new Event("click", { bubbles: true });
+    Object.defineProperty(event, "target", { value: { closest: selector => {
+      assert.match(selector, /button/);
+      assert.match(selector, /data-adv-interactive/);
+      return { name };
+    } } });
+    elements.root.dispatchEvent(event);
+    await Promise.resolve();
+    assert.equal(done, false, name);
+  }
+  for (const name of ["Menu", "Log", "Settings"]) {
+    elements.root.querySelector = () => ({ name });
+    elements.root.dispatchEvent(new Event("click"));
+    const key = new Event("keydown", { cancelable: true });
+    Object.defineProperty(key, "key", { value: "Enter" });
+    window.dispatchEvent(key);
+    await Promise.resolve();
+    assert.equal(done, false, name);
+    assert.equal(key.defaultPrevented, false);
+  }
+  elements.root.querySelector = () => null;
+  const consumed = new Event("click", { cancelable: true });
+  consumed.preventDefault();
+  elements.root.dispatchEvent(consumed);
+  await Promise.resolve();
+  assert.equal(done, false);
+  elements.root.dispatchEvent(new Event("click"));
+  await pending;
+});
+
+test("viewport input ignores intro, choice background and ended modes", async t => {
+  const { elements } = fakeUi(t);
+  const ui = new DomUi({ ...elements, advanceTarget: elements.root });
+  let done = false;
+  const pending = ui.presentLine({ text: "会話" }).then(() => { done = true; });
+  for (const mode of ["intro", "choice", "ended"]) {
+    elements.root.dataset.mode = mode;
+    elements.root.dispatchEvent(new Event("click"));
+    await Promise.resolve();
+    assert.equal(done, false, mode);
+  }
+  elements.root.dataset.mode = "line";
+  elements.root.dispatchEvent(new Event("click"));
+  await pending;
+  const choice = ui.presentChoice({ options: ["選ぶ"] });
+  let selected = false;
+  choice.then(() => { selected = true; });
+  elements.root.dispatchEvent(new Event("click"));
+  await Promise.resolve();
+  assert.equal(selected, false);
+  elements.choices.children[0].dispatchEvent(new Event("click"));
+  assert.equal(await choice, 0);
+  ui.presentEnd();
+  elements.root.dispatchEvent(new Event("click"));
+  assert.equal(elements.root.dataset.mode, "ended");
+});

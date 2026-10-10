@@ -78,7 +78,7 @@ const ui = new DemoUi({
   text: document.querySelector("#text"),
   pageIndicator: document.querySelector("#page-indicator"),
   choices: document.querySelector("#choices"),
-  advanceTarget: document.querySelector("#dialogue"),
+  advanceTarget: root,
 }, {
   resolveIcon: entry => resolveLogPortrait(entry, logIcons),
   endCard: document.querySelector("#end-card"),
