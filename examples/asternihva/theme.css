@@ -129,4 +129,5 @@
 .game .adv-scenario-title[data-has-chapter="true"]::first-line { color: var(--adv-accent); font-family: var(--adv-ui-font); font-size: .8cqw; letter-spacing: .18em; }
 .game .adv-scenario-title[data-has-title="false"] { font-family: var(--adv-ui-font); font-size: .8cqw; letter-spacing: .18em; }
 .game[data-mode="intro"] .adv-scenario-title { visibility: hidden; }
+.game[data-mode="intro"] :is(#dialogue, #choices) { display: none; }
 .game[data-debug="true"] .brand { top: 12%; }

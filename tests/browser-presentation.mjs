@@ -139,11 +139,18 @@ export async function testDemoPlay() {
   const game = document.querySelector('#game');
   const introCard = document.querySelector('#episode-title');
   let sawIntro = false;
-  const introObserver = new MutationObserver(() => { if (!introCard.hidden) sawIntro = true; });
+  let introDialogueHidden = false;
+  const introObserver = new MutationObserver(() => {
+    if (!introCard.hidden) {
+      sawIntro = true;
+      introDialogueHidden = getComputedStyle(document.querySelector('#dialogue')).display === 'none';
+    }
+  });
   introObserver.observe(introCard, { attributes: true, attributeFilter: ['hidden'] });
   for (let n = 0; n < 200 && game.dataset.mode !== 'line'; n++) await wait(50);
   introObserver.disconnect();
   assert(sawIntro, 'Episode title card did not appear before the opening line');
+  assert(introDialogueHidden, 'Dialogue and controls must remain hidden during the episode intro');
   assert(introCard.hidden, 'Episode title card did not fade out before play');
   assert(document.fonts.check('400 16px "Zen Kaku Gothic New"', '日本語の表示を確認します'), 'Zen Kaku Gothic New did not load before play');
   assert(document.fonts.check('400 16px Ubuntu', 'EP.00 AUTO MENU'), 'Ubuntu did not load before play');
