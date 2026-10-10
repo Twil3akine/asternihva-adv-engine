@@ -25,3 +25,4 @@ export type {
   UiAdapter,
 } from "./types.js";
 export { gameViewportCss } from "./ui/game-viewport.js";
+export { defaultThemeCss } from "./ui/theme.js";

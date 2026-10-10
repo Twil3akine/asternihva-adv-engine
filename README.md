@@ -279,3 +279,11 @@ MIT. The example art in this repository is placeholder SVG artwork created only 
 ### Asternihvaのローカル立ち絵
 
 実PNGはGitに含めません。`node scripts/import-asternihva-assets.mjs` でローカル素材を導入できます。未導入の場合はDemoの既存SVGを表示します。素材一覧、expression対応、portrait設定、導入手順は [examples/asternihva/ASSETS.md](examples/asternihva/ASSETS.md) を参照してください。
+
+### Game viewport, paging and themes
+
+Use `.adv-viewport` with `gameViewportCss` for a centered 16:9 surface. Put background, character stage, dialogue and choices in this same surface. The host page can center it with a grid and disable page scrolling. The presentation uses container-relative units and scales with this surface.
+
+`domUiCss` includes `defaultThemeCss`. Override CSS custom properties on your viewport to change presentation without replacing the UI adapter. Available tokens are defined in [src/ui/theme.ts](src/ui/theme.ts): dialogue background/border/height/padding/radius/blur, text size/line height/color, name/accent/muted colors, choice/panel backgrounds and transition duration. `--adv-choice-duration` is a number in milliseconds; other duration tokens use CSS time values. Speaker focus uses `--adv-focus-brightness`, `--adv-unfocus-brightness`, `--adv-focus-opacity`, `--adv-unfocus-opacity` and `--adv-focus-duration`. It changes brightness/opacity only; narration treats all characters equally. The Asternihva theme is defined only in [examples/asternihva/theme.css](examples/asternihva/theme.css).
+
+`DomUi` measures each dialogue page against the text element's actual `clientWidth/clientHeight` and scroll extent. The text area must have a bounded size. Click/Enter advances pages; only advancing past the final page resolves `presentLine()`. Grapheme and nearby word boundaries preserve Japanese, emoji and newlines without changing scenario text. Resize remeasures the current page from its original start offset. Optional `DomUiElements.pageIndicator` displays a small next-page cue. Backlog implementations can retain the unchanged `DialoguePresentation.text`.

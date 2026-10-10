@@ -1,3 +1,4 @@
+import { defaultThemeCss } from "./theme.js";
 import { fitDialoguePage } from "./dialogue-paging.js";
 import type {
   ChoicePresentation,
@@ -178,30 +179,30 @@ export class DomUi implements UiAdapter {
   }
 }
 
-export const domUiCss = `
+export const domUiCss = defaultThemeCss + `
 .adv-dialogue {
   position: absolute;
   z-index: 100;
   box-sizing: border-box;
   left: 5%; right: 5%; bottom: 3.6%;
   display: flex; flex-direction: column;
-  block-size: 24%;
-  padding: 3.2cqw 2.2cqw 2.2cqw;
-  border: 1px solid rgb(210 220 240 / .25);
-  border-radius: .65cqw;
-  background: rgb(8 13 25 / .8);
-  backdrop-filter: blur(8px);
-  color: #f4f6fc;
+  block-size: var(--adv-dialog-height);
+  padding: var(--adv-dialog-padding-top) var(--adv-dialog-padding-inline) var(--adv-dialog-padding-bottom);
+  border: 1px solid var(--adv-dialog-border);
+  border-radius: var(--adv-dialog-radius);
+  background: var(--adv-dialog-bg);
+  backdrop-filter: blur(var(--adv-dialog-blur));
+  color: var(--adv-text-color);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  animation: adv-dialogue-in .2s ease;
+  animation: adv-dialogue-in var(--adv-transition-duration) ease;
 }
 .adv-speaker {
   position: absolute;
-  top: .8cqw; left: 2.2cqw;
+  top: .8cqw; left: var(--adv-dialog-padding-inline);
   min-inline-size: 8cqw;
   padding-block-end: .3cqw;
-  border-block-end: 1px solid rgb(160 190 230 / .5);
-  color: #d9e6ff;
+  border-block-end: 1px solid var(--adv-accent);
+  color: var(--adv-name-color);
   font-size: 1.2cqw;
   font-weight: 600;
   letter-spacing: .12em;
@@ -211,8 +212,8 @@ export const domUiCss = `
   overflow: hidden;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font-size: 1.55cqw;
-  line-height: 1.65;
+  font-size: var(--adv-text-size);
+  line-height: var(--adv-text-line-height);
 }
 .adv-page-indicator { position: absolute; right: 2.2cqw; bottom: .8cqw; font-size: 1cqw; opacity: .65; }
 .adv-choices {
@@ -225,20 +226,20 @@ export const domUiCss = `
 .adv-choices[data-columns="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .adv-choices[data-selected="true"] { pointer-events: none; }
 .adv-choice {
-  appearance: none; border: 1px solid rgb(210 220 240 / .3);
+  appearance: none; border: 1px solid var(--adv-dialog-border);
   border-radius: .4cqw; padding: .6cqw 1.4cqw;
-  background: rgb(8 13 25 / .88); backdrop-filter: blur(8px); color: inherit;
+  background: var(--adv-choice-bg); backdrop-filter: blur(var(--adv-dialog-blur)); color: inherit;
   font: inherit; font-size: 1.25cqw; line-height: 1.4;
   text-align: left; cursor: pointer;
   transition: background .18s ease, transform .18s ease;
 }
-.adv-choice:hover, .adv-choice:focus-visible { background: rgb(38 47 65 / .95); transform: translateY(-1px); }
+.adv-choice:hover, .adv-choice:focus-visible { background: var(--adv-choice-hover-bg); transform: translateY(-1px); }
 .adv-controls { position: absolute; right: 4.2cqw; bottom: .65cqw; display: flex; gap: 1.4cqw; }
-.adv-control { appearance: none; padding: .3cqw 0; border: 0; background: none; color: #a6b0c2; font-size: .85cqw; letter-spacing: .12em; cursor: pointer; }
-.adv-control:hover, .adv-control[aria-pressed="true"] { color: #d9e6ff; }
-.adv-panel { width: 52cqw; max-height: 38cqw; border: 1px solid rgb(210 220 240 / .3); border-radius: .6cqw; padding: 2cqw; color: #f4f6fc; background: rgb(8 13 25 / .96); font-size: 1.2cqw; }
+.adv-control { appearance: none; padding: .3cqw 0; border: 0; background: none; color: var(--adv-muted-color); font-size: .85cqw; letter-spacing: .12em; cursor: pointer; }
+.adv-control:hover, .adv-control[aria-pressed="true"] { color: var(--adv-name-color); }
+.adv-panel { width: 52cqw; max-height: 38cqw; border: 1px solid var(--adv-dialog-border); border-radius: .6cqw; padding: 2cqw; color: var(--adv-text-color); background: var(--adv-panel-bg); font-size: 1.2cqw; }
 .adv-panel::backdrop { background: rgb(0 0 0 / .55); }
-.adv-log-content { overflow: auto; max-height: 27cqw; white-space: pre-wrap; line-height: 1.65; }
-.adv-panel button { color: inherit; background: transparent; border: 1px solid rgb(210 220 240 / .3); padding: .5em 1em; cursor: pointer; }
+.adv-log-content { overflow: auto; max-height: 27cqw; white-space: pre-wrap; line-height: var(--adv-text-line-height); }
+.adv-panel button { color: inherit; background: transparent; border: 1px solid var(--adv-dialog-border); padding: .5em 1em; cursor: pointer; }
 @keyframes adv-dialogue-in { from { opacity: 0; } to { opacity: 1; } }
 `;

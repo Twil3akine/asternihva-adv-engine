@@ -1,4 +1,12 @@
-/* Project styling stays outside the engine's default presentation. */
-.game .adv-dialogue { border-color: rgb(231 201 105 / .32); background: rgb(6 11 25 / .84); }
-.game .adv-speaker { color: #efd477; border-color: rgb(239 212 119 / .65); }
+/* All project-specific colors and decoration live in the example. */
+.game {
+  --adv-dialog-bg: rgb(6 11 25 / .84);
+  --adv-dialog-border: rgb(231 201 105 / .32);
+  --adv-accent: #efd477;
+  --adv-name-color: #efd477;
+  --adv-choice-bg: rgb(6 11 25 / .9);
+  --adv-choice-hover-bg: rgb(36 36 31 / .96);
+}
 .game .adv-speaker::before { content: "✦"; margin-inline-end: .6em; font-size: .75em; }
+.game .adv-choice::before { content: "›"; color: var(--adv-accent); margin-inline-end: 1em; }
+.game .adv-control[aria-pressed="true"] { color: var(--adv-accent); }
