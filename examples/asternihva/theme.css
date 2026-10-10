@@ -69,7 +69,7 @@
 
 .game .background { background: linear-gradient(135deg, #080f20 0%, #172b46 65%, #0a1427 100%); }
 .game .adv-scenario-title { color: #dce2ed; }
-.game .adv-scenario-title { font: 500 1.75cqw/1.35 var(--adv-ui-font); letter-spacing: .015em; opacity: 1; text-shadow: 0 2px 12px rgb(0 0 0 / .82); }
+.game .adv-scenario-title { width: 24cqw; max-width: 42cqw; font: 500 2cqw/1.3 var(--adv-ui-font); letter-spacing: .015em; opacity: 1; text-shadow: 0 2px 12px rgb(0 0 0 / .9); }
 .game .adv-scenario-title[data-has-chapter="true"]::first-line { color: var(--adv-accent); font-size: .78cqw; letter-spacing: .16em; }
 .game .adv-scenario-title[data-has-title="false"] { font-size: .78cqw; letter-spacing: .16em; }
 .game[data-debug="true"] .brand { top: 12%; }

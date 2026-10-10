@@ -16,6 +16,12 @@ export async function testPresentation() {
   assert(document.documentElement.scrollHeight <= innerHeight + 1, 'Page scrolls');
   assert(document.querySelector('[data-debug-panel]').hidden === (game.dataset.debug !== 'true'), 'Debug visibility');
   assert(getComputedStyle(game).getPropertyValue('--adv-accent').trim() === '#efd477', 'Project theme');
+  const scenarioTitle = document.querySelector('#scenario-title');
+  const titleRect = scenarioTitle.getBoundingClientRect();
+  const titleSize = Number.parseFloat(getComputedStyle(scenarioTitle).fontSize);
+  assert(scenarioTitle.textContent === 'EP.00\n小さな光', 'Scenario title is missing its two-line metadata');
+  assert(titleRect.width >= titleSize * 3.5 && titleRect.height >= titleSize * 1.8, 'Scenario title wrapped too narrowly or is too small');
+  assert(titleRect.bottom < document.querySelector('#dialogue').getBoundingClientRect().top, 'Scenario title overlaps the dialogue');
 
   const fixture = document.createElement('section');
   fixture.className = 'adv-viewport';
@@ -31,6 +37,7 @@ export async function testPresentation() {
     assert(getComputedStyle(text).color === 'rgb(128, 210, 220)', 'Custom theme override');
     fixture.style.removeProperty('--adv-text-color');
     assert(getComputedStyle(text).overflowY === 'hidden', 'Dialogue has a scrollbar');
+    assert(document.querySelector('#page-indicator').textContent === '▼', 'Page indicator is not the minimal down cue');
     fixture.dataset.mode = 'line';
     const sample = '星が瞬いた。もう少し、ここで待とう。\n';
     const original = sample.repeat(80);
