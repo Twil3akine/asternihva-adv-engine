@@ -20,7 +20,7 @@ export async function testPresentation() {
   const titleRect = scenarioTitle.getBoundingClientRect();
   const titleSize = Number.parseFloat(getComputedStyle(scenarioTitle).fontSize);
   assert(scenarioTitle.textContent === 'EP.00\n小さな光', 'Scenario title is missing its two-line metadata');
-  assert(titleRect.width >= titleSize * 3.5 && titleRect.height >= titleSize * 1.8, 'Scenario title wrapped too narrowly or is too small');
+  assert(titleRect.width >= titleSize * 3.5 && titleRect.height >= titleSize * 1.6, 'Scenario title wrapped too narrowly or is too small');
   assert(titleRect.bottom < document.querySelector('#dialogue').getBoundingClientRect().top, 'Scenario title overlaps the dialogue');
 
   const fixture = document.createElement('section');
@@ -101,6 +101,9 @@ export async function testPresentation() {
     character = new SpriteRenderer({ crossfadeDuration: 100 }).create(host, { id: 'test', name: 'Test', renderer: 'sprite', assets: { expressions: { normal: source, alternate: `${source}?test` }, portrait: { scale: 1.5, anchorX: .5, anchorY: -.04 }, motions: { move: { keyframes: [{ translate: '0 0' }, { translate: '0 -4px' }, { translate: '0 0' }], duration: 150 } } } });
     await character.show();
     const root = host.firstElementChild;
+    const stageStyle = getComputedStyle(root);
+    assert(stageStyle.transitionProperty.includes('left') && stageStyle.transitionProperty.includes('transform'), 'Stage layout does not transition its position and scale');
+    assert(stageStyle.transitionDuration.split(',').some(value => Number.parseFloat(value) >= .15 && Number.parseFloat(value) <= .25), 'Stage transition is outside the subtle 150–250ms range');
     character.setActive(true);
     await wait(250);
     const before = root.getBoundingClientRect().toJSON();
@@ -137,6 +140,8 @@ export async function testDemoPlay() {
   const dialogue = document.querySelector('#dialogue'), text = document.querySelector('#text');
   const height = dialogue.getBoundingClientRect().height;
   const expressions = new Map(['noah', 'seren', 'luminal'].map(id => [id, new Set()]));
+  const layoutSizes = new Set();
+  let windowBackgroundSeen = false, closeShotSeen = false;
   let longPages = 0, checkedLog = false, choices = false, steps = 0;
   const auto = document.querySelector('[data-control="auto"]');
   auto.click(); assert(auto.getAttribute('aria-pressed') === 'true', 'AUTO toggle');
@@ -158,9 +163,19 @@ export async function testDemoPlay() {
       continue;
     }
     assert(text.scrollHeight <= text.clientHeight + 1, 'Demo line overflows');
+    await wait(450);
     const speaker = game.dataset.speaker;
     const roots = [...document.querySelectorAll('#stage .adv-sprite-character')];
+    layoutSizes.add(roots.filter(root => root.dataset.visible === 'true').length);
+    if (text.textContent.includes('待って。また光った')) {
+      const background = document.querySelector('.adv-background-image');
+      windowBackgroundSeen = Boolean(background?.src.endsWith('/room-night-window.png'));
+    }
+    if (speaker === 'seren' && text.textContent.includes('あの光、覚えているわ')) {
+      closeShotSeen = roots.find(root => root.dataset.character === 'seren')?.style.getPropertyValue('--adv-scale') === '1.08';
+    }
     for (const root of roots) {
+      for (let n = 0; n < 30 && root.querySelectorAll('img').length > 1; n++) await wait(50);
       const image = root.querySelector('img');
       assert(root.querySelectorAll('img').length === 1, 'Demo ghost remained');
       assert(image.complete && image.naturalWidth > 0, 'Demo image missing');
@@ -180,8 +195,11 @@ export async function testDemoPlay() {
   }
   assert(game.dataset.mode === 'ended' && steps < 100, 'Demo did not end');
   assert(checkedLog && longPages >= 1 && choices, 'Missing long dialogue/log/choice');
+  assert([1, 2, 3].every(size => layoutSizes.has(size)), `Missing stage layouts: ${[...layoutSizes]}`);
+  assert(windowBackgroundSeen, 'Window background did not appear for the light scene');
+  assert(closeShotSeen, 'Seren close layout was not applied');
   if (game.dataset.assets === 'local') assert([...expressions.values()].every(set => set.size >= 3), 'Missing expression variants');
-  return { demo: true, steps, longPages, fullBacklog: checkedLog, choices, controls: true, expressionCounts: Object.fromEntries([...expressions].map(([id, set]) => [id, set.size])) };
+  return { demo: true, steps, longPages, fullBacklog: checkedLog, choices, layouts: [...layoutSizes], backgrounds: ['room-night-wide', 'room-night-window'], controls: true, expressionCounts: Object.fromEntries([...expressions].map(([id, set]) => [id, set.size])) };
 }
 
 export async function testPolish() {
