@@ -72,7 +72,7 @@
 @media (prefers-reduced-motion: reduce) { .game .end-card__replay { transition: none; } }
 .game :is(.adv-dialogue, .adv-choice, .adv-menu-panel, .adv-settings-panel, .adv-log-content) { font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; }
 .game :is(.adv-speaker, .adv-log-name) { font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; font-weight: 500; }
-.game :is(.adv-control, .adv-scenario-title, .adv-panel-header h2) { font-family: Ubuntu, "Avenir Next", sans-serif; }
+.game :is(.adv-control, .adv-panel-header h2) { font-family: Ubuntu, "Avenir Next", sans-serif; }
 
 .game {
   --adv-dialog-width: 74%;
@@ -125,8 +125,8 @@
 
 .game .background { background: linear-gradient(135deg, #080f20 0%, #172b46 65%, #0a1427 100%); }
 .game .adv-scenario-title { color: #e5e8ef; }
-.game .adv-scenario-title { width: 28cqw; max-width: 42cqw; font: 500 1.65cqw/1.45 var(--adv-ui-font); letter-spacing: .02em; opacity: 1; text-shadow: 0 2px 12px rgb(0 0 0 / .95); }
-.game .adv-scenario-title[data-has-chapter="true"]::first-line { color: var(--adv-accent); font-size: .8cqw; letter-spacing: .18em; }
-.game .adv-scenario-title[data-has-title="false"] { font-size: .8cqw; letter-spacing: .18em; }
+.game .adv-scenario-title { width: 28cqw; max-width: 42cqw; font: 500 1.65cqw/1.45 var(--adv-text-font); letter-spacing: .02em; opacity: 1; text-shadow: 0 2px 12px rgb(0 0 0 / .95); }
+.game .adv-scenario-title[data-has-chapter="true"]::first-line { color: var(--adv-accent); font-family: var(--adv-ui-font); font-size: .8cqw; letter-spacing: .18em; }
+.game .adv-scenario-title[data-has-title="false"] { font-family: var(--adv-ui-font); font-size: .8cqw; letter-spacing: .18em; }
 .game[data-mode="intro"] .adv-scenario-title { visibility: hidden; }
 .game[data-debug="true"] .brand { top: 12%; }

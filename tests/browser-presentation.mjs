@@ -19,6 +19,7 @@ export async function testPresentation() {
   const scenarioTitle = document.querySelector('#scenario-title');
   const titleRect = scenarioTitle.getBoundingClientRect();
   const titleSize = Number.parseFloat(getComputedStyle(scenarioTitle).fontSize);
+  assert(getComputedStyle(scenarioTitle).fontFamily.startsWith('"Zen Kaku Gothic New"'), 'Japanese scenario title falls back outside the loaded Japanese face');
   assert(scenarioTitle.textContent === 'EP.00\n小さな光', 'Scenario title is missing its two-line metadata');
   assert(titleRect.width >= titleSize * 3.5 && titleRect.height >= titleSize * 1.6, 'Scenario title wrapped too narrowly or is too small');
   assert(titleRect.bottom < document.querySelector('#dialogue').getBoundingClientRect().top, 'Scenario title overlaps the dialogue');
