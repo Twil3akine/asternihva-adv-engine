@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="./theme.css" />
   </head>
   <body>
-    <main id="game" class="game adv-viewport">
-      <section id="title-screen" class="shell-screen" aria-labelledby="shell-title" hidden>
+    <main id="game" class="game adv-viewport" data-screen="title" data-mode="title">
+      <section id="title-screen" class="shell-screen" aria-labelledby="shell-title">
         <h1 id="shell-title">Asternihva Project</h1>
         <nav class="shell-actions" aria-label="タイトル">
           <button data-shell-action="start">START</button>
@@ -53,6 +53,7 @@
         <span class="end-card__chapter">— END —</span>
         <h1 id="end-title" class="end-card__title"></h1>
         <button class="end-card__replay" data-replay>もう一度読む</button>
+        <button class="end-card__replay" data-end-chapters>チャプター選択へ戻る</button>
       </section>
       <dialog id="log-panel" class="adv-panel adv-log-panel" aria-label="会話履歴">
         <header class="adv-panel-header"><h2>LOG</h2><form method="dialog"><button aria-label="履歴を閉じる">閉じる ×</button></form></header>

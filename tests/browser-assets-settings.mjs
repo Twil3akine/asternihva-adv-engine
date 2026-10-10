@@ -134,7 +134,15 @@ async function testBackgroundPresenter() {
 }
 
 /** Run after opening the actual example page in a browser. */
+async function startDemoFromTitle() {
+  const game = document.querySelector('#game');
+  if (game.dataset.screen !== 'title') return;
+  await until(() => game.dataset.shellReady === 'true', 'Shell did not initialize');
+  game.querySelector('[data-shell-action="start"]').click();
+}
+
 export async function testAssetsAndSettings() {
+  await startDemoFromTitle();
   const game = document.querySelector("#game");
   const background = document.querySelector("#background");
   const scenarioTitle = document.querySelector("#scenario-title");
@@ -234,6 +242,7 @@ export async function testAssetsAndSettings() {
 
 /** Fullscreen needs an actual browser user gesture; unsupported browsers return explicitly. */
 export async function testFullscreen() {
+  await startDemoFromTitle();
   await until(() => document.querySelector('#game').dataset.mode === 'line', 'Demo did not enter dialogue');
   const { menu, panel } = await openSettings();
   const button = document.querySelector('#fullscreen');

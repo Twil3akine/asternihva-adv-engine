@@ -25,13 +25,18 @@ export async function presentEpisodeTitle(root, element, metadata, { durationMs 
 
 export class DemoUi extends DomUi {
   history = [];
-  constructor(elements, { resolveIcon, endCard, scenario, ...uiOptions } = {}) {
+  constructor(elements, { resolveIcon, endCard, scenario, onReplay, ...uiOptions } = {}) {
     super(elements, uiOptions);
     this.resolveIcon = resolveIcon;
     this.endCard = endCard;
     this.scenario = scenario;
     this.root = elements.root;
-    this.endCard?.querySelector('.end-card__replay')?.addEventListener('click', () => location.reload());
+    this.replayHandler = () => onReplay ? onReplay() : location.reload();
+    this.endCard?.querySelector('.end-card__replay')?.addEventListener('click', this.replayHandler);
+  }
+  destroy() {
+    this.endCard?.querySelector('.end-card__replay')?.removeEventListener?.('click', this.replayHandler);
+    super.destroy();
   }
   renderLog(container) { renderLogEntries(container, this.history, this.resolveIcon); }
   presentLine(line) {
@@ -48,7 +53,7 @@ export class DemoUi extends DomUi {
   }
 }
 
-export function attachControls(root, ui, { auto = {} } = {}, settings) {
+export function attachControls(root, ui, { auto = {} } = {}, settings, { onRestart } = {}) {
   const controls = root.querySelector('#controls');
   let mode, timer;
   const stop = () => {
@@ -103,6 +108,7 @@ export function attachControls(root, ui, { auto = {} } = {}, settings) {
     panel.showModal();
     content.scrollTop = content.scrollHeight;
   });
-  root.querySelector('#restart').addEventListener('click', () => location.reload());
+  root.querySelector('#restart').addEventListener('click', () => onRestart ? onRestart() : location.reload());
   window.addEventListener('pagehide', () => { stop(); stateObserver.disconnect(); pageObserver.disconnect(); unsubscribeSettings?.(); }, { once: true });
+  return { stop };
 }

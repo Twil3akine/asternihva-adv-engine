@@ -6,7 +6,6 @@ import { demoUiConfig } from '../examples/asternihva/ui-config.mjs';
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 
-/** Run after opening the example; tests need real layout, not a DOM mock. */
 function preservesPresentedText(pages, original) {
   let remaining = original.trim();
   for (const page of pages) {
@@ -18,7 +17,15 @@ function preservesPresentedText(pages, original) {
   return remaining.trim() === '';
 }
 
+async function startDemoFromTitle() {
+  const game = document.querySelector('#game');
+  if (game.dataset.screen !== 'title') return;
+  for (let n = 0; n < 200 && game.dataset.shellReady !== 'true'; n++) await wait(50);
+  document.querySelector('[data-shell-action="start"]').click();
+}
+
 export async function testPresentation() {
+  await startDemoFromTitle();
   const game = document.querySelector('#game');
   for (let n = 0; n < 200 && game.dataset.mode !== 'line'; n++) await wait(50);
   const rect = game.getBoundingClientRect();
@@ -158,6 +165,7 @@ export async function testDemoPlay() {
     }
   });
   introObserver.observe(introCard, { attributes: true, attributeFilter: ['hidden'] });
+  await startDemoFromTitle();
   for (let n = 0; n < 200 && game.dataset.mode !== 'line'; n++) await wait(50);
   introObserver.disconnect();
   assert(sawIntro, 'Episode title card did not appear before the opening line');
@@ -167,7 +175,7 @@ export async function testDemoPlay() {
   assert(document.fonts.check('400 16px Ubuntu', 'EP.00 AUTO MENU'), 'Ubuntu did not load before play');
   const dialogue = document.querySelector('#dialogue'), text = document.querySelector('#text');
   const height = dialogue.getBoundingClientRect().height;
-  assert(Math.abs(dialogue.getBoundingClientRect().width / game.getBoundingClientRect().width - .69) < .01, 'Dialogue width is not 74% of the game surface');
+  assert(Math.abs(dialogue.getBoundingClientRect().width / game.getBoundingClientRect().width - .69) < .01, 'Dialogue width is not 69% of the game surface');
   const userSelect = element => {
     const style = getComputedStyle(element);
     return style.userSelect || style.webkitUserSelect;
@@ -264,6 +272,7 @@ export async function testDemoPlay() {
 }
 
 export async function testPolish() {
+  await startDemoFromTitle();
   const root = document.querySelector('#game');
   const dialogue = document.querySelector('#dialogue');
   const text = document.querySelector('#text');

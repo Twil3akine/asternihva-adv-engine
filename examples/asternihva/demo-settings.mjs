@@ -1,5 +1,5 @@
 /** Settings stay in presentation; the engine's scenario state is unaffected. */
-export function attachSettings(root, settings, { ui, stage }) {
+export function attachSettings(root, settings, { ui, stage, onBack }) {
   const panel = root.querySelector('#settings-panel');
   const menu = root.querySelector('#menu-panel');
   const opener = menu.querySelector('[data-menu-action="settings"]');
@@ -14,7 +14,7 @@ export function attachSettings(root, settings, { ui, stage }) {
   apply(settings.value);
   const unsubscribe = settings.subscribe(apply);
   opener.addEventListener('click', () => { menu.close(); panel.showModal(); });
-  const back = () => { panel.close(); menu.showModal(); opener.focus(); };
+  const back = () => { panel.close(); if (onBack) onBack(); else { menu.showModal(); opener.focus(); } };
   panel.querySelector('[data-settings-back]').addEventListener('click', back);
   panel.addEventListener('cancel', event => { event.preventDefault(); back(); });
   panel.addEventListener('click', event => {

@@ -30,3 +30,18 @@ test("the end card replaces the dialogue surface and dims the stage", async () =
   assert.match(css, /\.game\[data-mode="ended"\] \.adv-scenario-title\s*\{\s*visibility:\s*hidden/);
   assert.match(css, /\.game\[data-mode="ended"\]::after\s*\{\s*opacity:\s*\.64/);
 });
+
+test("destroying a demo UI removes its replay handler before a new scenario uses the end card", () => {
+  const replay = new EventTarget();
+  const endCard = { querySelector: () => replay };
+  const element = () => ({ replaceChildren() {}, setAttribute() {} });
+  let calls = 0;
+  const ui = new DemoUi({ root: { dataset: {} }, background: element(), speaker: element(), text: element(), choices: element() }, {
+    endCard, onReplay: () => calls++,
+  });
+  replay.dispatchEvent(new Event('click'));
+  assert.equal(calls, 1);
+  ui.destroy();
+  replay.dispatchEvent(new Event('click'));
+  assert.equal(calls, 1);
+});

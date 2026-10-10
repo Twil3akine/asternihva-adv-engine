@@ -35,6 +35,10 @@ export async function testFocusedUi() {
   assert(game && dialogue && text && speaker && choices && controls && pageIndicator, "Asternihva dialogue DOM IDs changed");
   assert(menu && log && settings, "Asternihva menu, LOG, or settings dialog is missing");
 
+  if (game.dataset.screen === "title") {
+    await until(() => game.dataset.shellReady === "true", "Shell did not initialize", 1000);
+    game.querySelector('[data-shell-action="start"]').click();
+  }
   await until(() => game.dataset.mode === "line", "Demo did not finish its intro", 1000);
   await document.fonts?.ready;
   const originals = {

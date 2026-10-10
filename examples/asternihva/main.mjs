@@ -1,5 +1,5 @@
 import {
-  AdvEngine,
+  ScenarioCatalog,
   CharacterStage,
   SpriteRenderer,
   GameSettingsStore,
@@ -16,6 +16,7 @@ import { resolveLogPortrait } from "./demo-log.mjs";
 import { attachSettings } from "./demo-settings.mjs";
 import { demoUiConfig } from "./ui-config.mjs";
 import { DemoUi, attachControls, presentEpisodeTitle } from "./demo-controls.mjs";
+import { attachGameShell } from './game-shell.mjs';
 import { loadDemoAssets } from "./demo-assets.mjs";
 
 
@@ -69,29 +70,62 @@ const logIcons = Object.fromEntries(loaded.characters.map(character => [characte
   portrait: assetManifest.find(entry => entry.id === character.id).logPortrait,
 }]));
 const imageCache = new DecodedImageCache({ maxDecodedImages: 8 });
-const ui = new DemoUi({
-  root,
-  background: document.querySelector("#background"),
-  title: document.querySelector("#title"),
-  scenarioTitle: document.querySelector("#scenario-title"),
-  speaker: document.querySelector("#speaker"),
-  text: document.querySelector("#text"),
-  pageIndicator: document.querySelector("#page-indicator"),
-  choices: document.querySelector("#choices"),
-  advanceTarget: root,
-}, {
-  resolveIcon: entry => resolveLogPortrait(entry, logIcons),
-  endCard: document.querySelector("#end-card"),
-  scenario: game.scenario,
-  background: { imageCache, transitionDuration: 320 },
-});
-const stage = new CharacterStage(stageHost, game.characters, [new SpriteRenderer({ imageCache })]);
-const engine = new AdvEngine({ game, stage, ui });
+let currentUi, currentStage, currentEngine;
+let shell, controls;
 let settingsStorage;
 try { settingsStorage = localStorage; } catch { /* Settings still work without persistence. */ }
 const settings = new GameSettingsStore(settingsStorage);
-attachControls(root, ui, demoUiConfig, settings);
-attachSettings(root, settings, { ui, stage });
-await ui.presentBackground(firstBackground ? game.backgrounds[firstBackground] : undefined);
-await presentEpisodeTitle(root, document.querySelector('#episode-title'), game.scenario);
-engine.run();
+const scenarioEntries = [{
+  id: "ep00", chapter: "EP.00", title: "小さな光",
+  description: "窓の外の小さな光を、三人で見つめる夜。", entry: game,
+}];
+const catalog = new ScenarioCatalog(scenarioEntries);
+const uiElements = {
+  root, background: document.querySelector("#background"), title: document.querySelector("#title"),
+  scenarioTitle: document.querySelector("#scenario-title"), speaker: document.querySelector("#speaker"),
+  text: document.querySelector("#text"), pageIndicator: document.querySelector("#page-indicator"),
+  choices: document.querySelector("#choices"), advanceTarget: root,
+};
+const disposePlayback = () => {
+  controls?.stop();
+  root.querySelectorAll('dialog[open]').forEach(panel => panel.close());
+  currentEngine?.destroy();
+  currentUi = currentStage = currentEngine = undefined;
+  document.querySelector('#end-card').hidden = true;
+  document.querySelector('#episode-title').hidden = true;
+  document.querySelector('#choices').replaceChildren();
+};
+controls = attachControls(root, { renderLog: container => currentUi?.renderLog(container) }, demoUiConfig, settings, {
+  onRestart: () => shell.replay(),
+});
+attachSettings(root, settings, {
+  ui: { setAnimationsEnabled: enabled => { root.dataset.uiAnimation = enabled ? 'on' : 'off'; currentUi?.setAnimationsEnabled(enabled); } },
+  stage: { setMotionEnabled: enabled => currentStage?.setMotionEnabled(enabled) },
+  onBack: () => {
+    if (root.dataset.screen === 'game') {
+      document.querySelector('#menu-panel').showModal();
+      document.querySelector('[data-menu-action="settings"]').focus();
+    } else document.querySelector('[data-shell-action="settings"]').focus();
+  },
+});
+shell = attachGameShell(root, catalog, {
+  onLeave: disposePlayback,
+  onSettings: () => document.querySelector('#settings-panel').showModal(),
+  onStart: async id => {
+    disposePlayback();
+    const definition = scenarioEntries.find(entry => entry.id === id).entry;
+    currentUi = new DemoUi(uiElements, {
+      resolveIcon: entry => resolveLogPortrait(entry, logIcons),
+      endCard: document.querySelector('#end-card'), scenario: catalog.getScenarioMetadata(id),
+      onReplay: () => shell.replay(), background: { imageCache, transitionDuration: 320 },
+    });
+    currentStage = new CharacterStage(stageHost, definition.characters, [new SpriteRenderer({ imageCache })]);
+    currentUi.setAnimationsEnabled(settings.value.uiAnimation);
+    currentStage.setMotionEnabled(settings.value.characterMotion);
+    await currentUi.presentBackground(firstBackground ? definition.backgrounds?.[firstBackground] : undefined);
+    await presentEpisodeTitle(root, document.querySelector('#episode-title'), catalog.getScenarioMetadata(id));
+    const playback = catalog.startScenario(id, { stage: currentStage, ui: currentUi });
+    currentEngine = playback.engine;
+    return playback;
+  },
+});
