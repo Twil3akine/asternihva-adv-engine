@@ -51,6 +51,8 @@ export class DomUi implements UiAdapter {
     const element = this.#elements.scenarioTitle;
     if (!element) return;
     element.textContent = [metadata?.chapter, metadata?.title].filter(Boolean).join("\n");
+    element.dataset.hasChapter = String(Boolean(metadata?.chapter));
+    element.dataset.hasTitle = String(Boolean(metadata?.title));
     element.hidden = !element.textContent;
   }
 

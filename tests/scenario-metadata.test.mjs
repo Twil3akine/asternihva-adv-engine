@@ -9,12 +9,16 @@ test('engine passes optional scenario metadata unchanged to its adapter', () => 
   assert.equal(received, scenario);
 });
 test('scenario title supports chapter, title only, chapter only and absent metadata', () => {
-  const scenarioTitle = { textContent: '', hidden: false };
+  const scenarioTitle = { textContent: '', hidden: false, dataset: {} };
   const ui = new DomUi({ scenarioTitle });
   ui.setScenarioMetadata({ chapter: 'EP.01', title: 'A light' });
   assert.equal(scenarioTitle.textContent, 'EP.01\nA light');
+  assert.equal(scenarioTitle.dataset.hasChapter, 'true');
+  assert.equal(scenarioTitle.dataset.hasTitle, 'true');
   ui.setScenarioMetadata({ title: 'A light' });
   assert.equal(scenarioTitle.textContent, 'A light');
+  assert.equal(scenarioTitle.dataset.hasChapter, 'false');
+  assert.equal(scenarioTitle.dataset.hasTitle, 'true');
   ui.setScenarioMetadata({ chapter: 'EP.01' });
   assert.equal(scenarioTitle.textContent, 'EP.01');
   ui.setScenarioMetadata();
