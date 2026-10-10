@@ -166,6 +166,27 @@ bun run build
 python3 -m http.server 4173
 ```
 
+## Sprite portrait framing
+
+Sprite assets may include `displayMode: "portrait"` and
+`portrait: { scale: 2, anchorX: 0.5, anchorY: 0 }`. `scale` sets image width
+relative to the character viewport width; image height follows the original aspect
+ratio. The viewport clips overflowing content without editing the source image.
+An anchor positions the image by `(viewport size - image size) * anchor`:
+`anchorX: 0.5` centers it and `anchorY: 0` keeps the top visible. Finite values
+outside 0–1 are allowed, for example a slightly negative anchorY adds headroom.
+Scale must be finite and positive. Defaults are 1, 0.5, and 0 respectively.
+
+Without framing settings, sprites retain the existing full-body layout. Providing
+`portrait` selects portrait mode unless `displayMode: "fullbody"` is explicit.
+The sprite-specific handle returned by `SpriteRenderer.create()` exposes
+`setDisplayMode("fullbody" | "portrait")` for applications that switch modes.
+This leaves expression, framing, and motion state intact. Position commands still
+place the viewport on the stage; motions run inside it. Both crossfade images
+inherit the same framing variables. Use consistently aligned expression canvases
+to avoid artwork moving between expressions. These settings belong to the sprite
+renderer; engine nodes and other renderer adapters do not interpret them.
+
 ## Sprite motions
 
 Define motion names per character in `assets.motions`. Each `SpriteMotion` has

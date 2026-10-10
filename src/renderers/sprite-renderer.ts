@@ -14,6 +14,23 @@ export interface SpriteRendererOptions {
 export interface SpriteAssets {
   expressions: Record<string, string>;
   motions?: Record<string, SpriteMotion>;
+  displayMode?: SpriteDisplayMode;
+  portrait?: SpritePortrait;
+}
+
+export type SpriteDisplayMode = "portrait" | "fullbody";
+
+export interface SpritePortrait {
+  /** Image width relative to the character viewport width. */
+  scale?: number;
+  /** Fraction of horizontal overflow to crop; defaults to 0.5 (center). */
+  anchorX?: number;
+  /** Fraction of vertical overflow to crop; defaults to 0 (top). */
+  anchorY?: number;
+}
+
+export interface SpriteRenderedCharacter extends RenderedCharacter {
+  setDisplayMode(mode: SpriteDisplayMode): void;
 }
 
 export type SpriteMotionKeyframe = {
@@ -33,7 +50,7 @@ export interface SpriteMotion {
   direction?: PlaybackDirection;
 }
 
-class SpriteCharacter implements RenderedCharacter {
+class SpriteCharacter implements SpriteRenderedCharacter {
   readonly #root: HTMLDivElement;
   readonly #visual: HTMLDivElement;
   readonly #image: HTMLImageElement;
@@ -59,6 +76,19 @@ class SpriteCharacter implements RenderedCharacter {
     this.#root.className = ["adv-sprite-character", options.className].filter(Boolean).join(" ");
     this.#root.dataset.character = character.id;
     this.#root.dataset.visible = "false";
+    const portrait = (character.assets?.portrait ?? {}) as SpritePortrait;
+    const scale = portrait.scale ?? 1;
+    const anchorX = portrait.anchorX ?? 0.5;
+    const anchorY = portrait.anchorY ?? 0;
+    if (!Number.isFinite(scale) || scale <= 0 ||
+        !Number.isFinite(anchorX) || !Number.isFinite(anchorY)) {
+      throw new Error("Sprite portrait requires a positive finite scale and finite anchors.");
+    }
+    this.#root.style.setProperty("--adv-portrait-scale", String(scale));
+    this.#root.style.setProperty("--adv-portrait-anchor-x", String(anchorX));
+    this.#root.style.setProperty("--adv-portrait-anchor-y", String(anchorY));
+    this.setDisplayMode((character.assets?.displayMode ??
+      (character.assets?.portrait ? "portrait" : "fullbody")) as SpriteDisplayMode);
 
     this.#visual = document.createElement("div");
     this.#visual.className = "adv-sprite-visual";
@@ -161,6 +191,13 @@ class SpriteCharacter implements RenderedCharacter {
     this.#root.dataset.active = String(active);
   }
 
+  setDisplayMode(mode: SpriteDisplayMode): void {
+    if (mode !== "portrait" && mode !== "fullbody") {
+      throw new Error(`Unknown sprite display mode: ${mode}`);
+    }
+    this.#root.dataset.displayMode = mode;
+  }
+
   destroy(): void {
     this.#expressionToken += 1;
     this.#motion?.cancel();
@@ -198,7 +235,7 @@ export class SpriteRenderer implements CharacterRenderer {
     this.#options = options;
   }
 
-  create(host: HTMLElement, character: CharacterDefinition): RenderedCharacter {
+  create(host: HTMLElement, character: CharacterDefinition): SpriteRenderedCharacter {
     return new SpriteCharacter(host, character, this.#options);
   }
 }
@@ -227,6 +264,7 @@ export const spriteRendererCss = `
   filter: drop-shadow(0 18px 30px rgb(0 0 0 / .28));
 }
 .adv-sprite-visual {
+  position: relative;
   display: grid;
   place-items: end center;
   width: 100%;
@@ -234,6 +272,20 @@ export const spriteRendererCss = `
   min-width: 0;
   min-height: 0;
   transform-origin: 50% 100%;
+}
+.adv-sprite-character[data-display-mode="portrait"] { overflow: hidden; }
+.adv-sprite-character[data-display-mode="portrait"] img {
+  position: absolute;
+  width: calc(100% * var(--adv-portrait-scale));
+  height: auto;
+  max-width: none;
+  max-height: none;
+  left: calc(100% * var(--adv-portrait-anchor-x));
+  top: calc(100% * var(--adv-portrait-anchor-y));
+  transform: translate(
+    calc(-100% * var(--adv-portrait-anchor-x)),
+    calc(-100% * var(--adv-portrait-anchor-y))
+  );
 }
 .adv-sprite-character[data-visible="true"] { opacity: 1; }
 .adv-sprite-character[data-active="true"] {
