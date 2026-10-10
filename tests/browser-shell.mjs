@@ -67,11 +67,11 @@ async function playToEnd({ checkFraming = false, checkLog = false } = {}) {
   assert(document.querySelector("#end-title").textContent.length > 0, "End card title did not use catalog metadata");
 }
 
-async function startFromChapter() {
+async function startFromChapter(id) {
   const root = document.querySelector("#game");
   const plays = document.querySelectorAll("#chapter-list [data-scenario-id]");
   assert(plays.length === 3, `Expected three catalog chapters, got ${plays.length}`);
-  plays[0].click();
+  (id ? [...plays].find(button => button.dataset.scenarioId === id) : plays[0]).click();
   assert(root.dataset.screen === "game" && root.dataset.mode === "intro", "Chapter PLAY did not enter game intro");
   await waitForFirstLine();
 }
@@ -123,5 +123,11 @@ export async function testGameShell() {
   await until(() => root.dataset.screen === "chapter", "Chapter return action did not restore the chapter screen");
   await startFromChapter();
   await playToEnd();
-  return { title: true, chapterSelect: true, settingsReturn: true, introAndLine: true, controlsExcluded: true, choiceAndEnd: true, trioFraming: true, fullLog: true, chapterRestart: true, replay: true };
+  for (const id of ["ep01", "ep02"]) {
+    document.querySelector("[data-end-chapters]").click();
+    await until(() => root.dataset.screen === "chapter", "Chapter screen did not reopen");
+    await startFromChapter(id);
+    await playToEnd();
+  }
+  return { title: true, chapterSelect: true, settingsReturn: true, introAndLine: true, controlsExcluded: true, choiceAndEnd: true, trioFraming: true, fullLog: true, chapterRestart: true, replay: true, allThreeScenarios: true };
 }
