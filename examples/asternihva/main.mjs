@@ -10,6 +10,7 @@ import {
 } from "../../dist/index.js";
 
 import { backgroundManifest, initialBackground } from "./background-manifest.mjs";
+import { stageLayoutManifest } from "./stage-layout-manifest.mjs";
 import { assetManifest } from "./asset-manifest.mjs";
 import { resolveLogPortrait } from "./demo-log.mjs";
 import { attachSettings } from "./demo-settings.mjs";
@@ -46,6 +47,7 @@ const game = {
   title: "Asternihva Project",
   scenario: { id: "ep00", chapter: "EP.00", title: "小さな光" },
   backgrounds: backgroundManifest,
+  stageLayouts: stageLayoutManifest,
   start: "intro",
   characters: loaded.characters.map(({ local, ...character }) => ({
     ...character,
