@@ -1,4 +1,6 @@
 /* All project-specific colors and decoration live in the example. */
+.game, .game * { user-select: none; -webkit-user-select: none; }
+.game .adv-log-content, .game .adv-log-content * { user-select: text; -webkit-user-select: text; }
 @font-face {
   font-family: "Zen Kaku Gothic New";
   src: url("./public/fonts/ZenKakuGothicNew-Regular.ttf") format("truetype");
