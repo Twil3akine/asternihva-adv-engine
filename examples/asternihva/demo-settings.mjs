@@ -26,7 +26,7 @@ export function attachSettings(root, settings, { ui, stage }) {
   const updateFullscreen = () => {
     const supported = document.fullscreenEnabled && typeof document.documentElement.requestFullscreen === 'function';
     fullscreen.disabled = !supported;
-    fullscreen.textContent = document.fullscreenElement ? 'Exit Fullscreen' : 'Enter Fullscreen';
+    fullscreen.textContent = document.fullscreenElement ? '全画面表示を終了' : '全画面表示にする';
     fullscreen.setAttribute('aria-pressed', String(Boolean(document.fullscreenElement)));
   };
   updateFullscreen();
@@ -38,7 +38,7 @@ export function attachSettings(root, settings, { ui, stage }) {
       fullscreen.removeAttribute('data-error');
     } catch {
       fullscreen.dataset.error = 'unavailable';
-      fullscreen.textContent = 'Fullscreen unavailable';
+      fullscreen.textContent = '全画面表示を利用できません';
     }
   });
   window.addEventListener('pagehide', () => {

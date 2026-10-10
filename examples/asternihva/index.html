@@ -43,31 +43,31 @@
       <dialog id="menu-panel" class="adv-panel adv-menu-panel" aria-label="メニュー">
         <h2>MENU</h2>
         <nav class="adv-menu-items" aria-label="メニュー操作">
-          <form method="dialog"><button data-menu-action="resume">Resume</button></form>
-          <button data-menu-action="log">Log</button>
-          <button data-menu-action="settings">Settings</button>
-          <button id="restart">Restart</button>
+          <form method="dialog"><button data-menu-action="resume">ゲームに戻る</button></form>
+          <button data-menu-action="log">ログ</button>
+          <button data-menu-action="settings">設定</button>
+          <button id="restart">最初から</button>
         </nav>
       </dialog>
       <dialog id="settings-panel" class="adv-panel adv-settings-panel" aria-labelledby="settings-title">
-        <header class="adv-panel-header"><h2 id="settings-title">SETTINGS</h2><button data-settings-back aria-label="メニューへ戻る">戻る ×</button></header>
+        <header class="adv-panel-header"><h2 id="settings-title">設定</h2><button data-settings-back aria-label="メニューへ戻る">戻る ×</button></header>
         <section class="adv-setting-row" role="group" aria-labelledby="auto-speed-label">
-          <h3 id="auto-speed-label">Auto Speed</h3>
+          <h3 id="auto-speed-label">AUTO速度</h3>
           <div class="adv-setting-options">
-            <button data-setting="autoSpeed" data-value="slow" aria-pressed="false">Slow</button>
-            <button data-setting="autoSpeed" data-value="normal" aria-pressed="true">Normal</button>
-            <button data-setting="autoSpeed" data-value="fast" aria-pressed="false">Fast</button>
+            <button data-setting="autoSpeed" data-value="slow" aria-pressed="false">遅い</button>
+            <button data-setting="autoSpeed" data-value="normal" aria-pressed="true">標準</button>
+            <button data-setting="autoSpeed" data-value="fast" aria-pressed="false">速い</button>
           </div>
         </section>
         <section class="adv-setting-row" role="group" aria-labelledby="motion-label">
-          <h3 id="motion-label">Character Motion</h3>
-          <div class="adv-setting-options"><button data-setting="characterMotion" data-value="true" aria-pressed="true">On</button><button data-setting="characterMotion" data-value="false" aria-pressed="false">Off</button></div>
+          <h3 id="motion-label">キャラクター演出</h3>
+          <div class="adv-setting-options"><button data-setting="characterMotion" data-value="true" aria-pressed="true">オン</button><button data-setting="characterMotion" data-value="false" aria-pressed="false">オフ</button></div>
         </section>
         <section class="adv-setting-row" role="group" aria-labelledby="ui-animation-label">
-          <h3 id="ui-animation-label">UI Animation</h3>
-          <div class="adv-setting-options"><button data-setting="uiAnimation" data-value="true" aria-pressed="true">On</button><button data-setting="uiAnimation" data-value="false" aria-pressed="false">Off</button></div>
+          <h3 id="ui-animation-label">画面演出</h3>
+          <div class="adv-setting-options"><button data-setting="uiAnimation" data-value="true" aria-pressed="true">オン</button><button data-setting="uiAnimation" data-value="false" aria-pressed="false">オフ</button></div>
         </section>
-        <section class="adv-setting-row"><h3>Fullscreen</h3><button id="fullscreen" aria-pressed="false">Enter Fullscreen</button></section>
+        <section class="adv-setting-row"><h3>全画面表示</h3><button id="fullscreen" aria-pressed="false">全画面表示にする</button></section>
       </dialog>
     </main>
     <script type="module" src="./main.mjs"></script>

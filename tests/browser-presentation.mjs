@@ -301,9 +301,9 @@ export async function testPolish() {
   const resume = menuPanel.querySelector('[data-menu-action="resume"]');
   const logAction = menuPanel.querySelector('[data-menu-action="log"]');
   const restart = menuPanel.querySelector('#restart');
-  assert(resume && resume.textContent.trim() === 'Resume', 'MENU Resume action is missing');
+  assert(resume && resume.textContent.trim() === 'ゲームに戻る', 'MENU game return action is missing');
   assert(logAction && logAction.textContent.trim() === 'Log', 'MENU Log action is missing');
-  assert(restart && restart.textContent.trim() === 'Restart', 'MENU Restart action is missing');
+  assert(restart && restart.textContent.trim() === '最初から', 'MENU restart action is missing');
   logAction.click();
   assert(!menuPanel.open && logPanel.open, 'MENU Log action did not switch to LOG');
   logPanel.close();
