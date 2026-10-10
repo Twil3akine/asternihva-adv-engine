@@ -304,7 +304,7 @@ export const domUiCss = defaultThemeCss + backgroundPresenterCss + `
   filter: brightness(var(--adv-narration-brightness));
   opacity: var(--adv-narration-opacity);
 }
-.adv-viewport[data-ui-animation="off"] { --adv-transition-duration: 0ms; --adv-choice-duration: 0ms; --adv-focus-duration: 0ms; }
+.adv-viewport[data-ui-animation="off"] { --adv-transition-duration: 0ms; --adv-choice-duration: 0ms; --adv-focus-duration: 0ms; --adv-stage-duration: 0ms; }
 .adv-viewport[data-ui-animation="off"] :is(.adv-dialogue, .adv-choices, .adv-choice, .adv-panel, .adv-panel button),
 .adv-viewport[data-ui-animation="off"]::after { animation: none !important; transition: none !important; }
 @media (prefers-reduced-motion: reduce) {

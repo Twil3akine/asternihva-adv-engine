@@ -102,6 +102,7 @@ export class AdvEngine {
   async #execute(node: AdvNode): Promise<void> {
     switch (node.type) {
       case "line": {
+        await this.#applyLayout(node.layout);
         const commands: CharacterCommand[] = [...(node.commands ?? [])];
         if (node.speaker && (node.expression || node.motion || node.position)) {
           commands.push({
@@ -157,6 +158,7 @@ export class AdvEngine {
 
       case "scene":
         await this.#setBackground(node.background);
+        await this.#applyLayout(node.layout);
         await this.#runCommands(node.commands ?? []);
         if (node.next) this.#jump(node.next);
         else this.#nodeIndex += 1;
@@ -188,6 +190,13 @@ export class AdvEngine {
       : undefined;
     if (this.#ui.presentBackground) await this.#ui.presentBackground(definition);
     else await this.#ui.setBackground?.(definition?.src);
+  }
+
+  async #applyLayout(id?: string): Promise<void> {
+    if (!id) return;
+    const layout = this.#game.stageLayouts?.[id];
+    if (!layout) throw new Error(`Unknown stage layout: ${id}`);
+    await this.#stage.applyLayout(layout);
   }
 
   async #finish(): Promise<void> {

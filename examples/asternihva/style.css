@@ -8,7 +8,6 @@ button { font: inherit; }
 .stage-window { overflow: hidden; }
 .stage { position: relative; width: 100%; height: 100%; }
 .stage .adv-sprite-character { width: 31%; height: 94%; }
-.stage .adv-sprite-character[data-active="true"] { transform: translateX(-50%); }
 .asset-status { position: absolute; z-index: 120; top: 12%; left: 3%; right: 3%; margin: 0; font-size: .8125rem; }
 .brand { position: absolute; z-index: 120; top: 3%; left: 3%; display: grid; gap: 4px; }
 .brand span { font-size: .75rem; letter-spacing: .16em; opacity: .72; text-transform: uppercase; }

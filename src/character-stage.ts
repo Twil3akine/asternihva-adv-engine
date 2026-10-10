@@ -3,6 +3,7 @@ import type {
   CharacterDefinition,
   CharacterRenderer,
   RenderedCharacter,
+  StageLayoutDefinition,
 } from "./types.js";
 
 interface CharacterEntry {
@@ -46,6 +47,25 @@ export class CharacterStage {
 
   getExpression(characterId: string): string | undefined {
     return this.#characters.get(characterId)?.expression;
+  }
+
+  async applyLayout(layout: StageLayoutDefinition): Promise<void> {
+    const members = new Map(layout.members.map((member) => [member.character, member]));
+    for (const characterId of members.keys()) {
+      if (!this.#characters.has(characterId)) throw new Error(`Unknown character: ${characterId}`);
+    }
+
+    for (const [characterId, member] of members) {
+      if (member.position !== undefined) await this.command({ character: characterId, position: member.position });
+    }
+    if (layout.hideOthers !== false) {
+      for (const characterId of this.#characters.keys()) {
+        if (!members.has(characterId)) await this.command({ character: characterId, show: false });
+      }
+    }
+    for (const [characterId, member] of members) {
+      await this.command({ character: characterId, show: member.show !== false });
+    }
   }
 
   async command(command: CharacterCommand): Promise<void> {

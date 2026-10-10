@@ -34,6 +34,7 @@ export interface LineNode {
   type: "line";
   speaker?: string;
   text: string;
+  layout?: string;
   expression?: string;
   motion?: string;
   position?: StagePosition;
@@ -67,6 +68,7 @@ export interface SetNode {
 export interface SceneNode {
   type: "scene";
   background?: string;
+  layout?: string;
   commands?: CharacterCommand[];
   next?: string;
 }
@@ -91,8 +93,23 @@ export interface BackgroundDefinition {
   overlay?: number;
 }
 
+export interface StageLayoutMember {
+  character: string;
+  position?: StagePosition;
+  show?: boolean;
+}
+
+export interface StageLayoutDefinition {
+  /** Characters omitted from this layout are hidden by default. */
+  members: readonly StageLayoutMember[];
+  hideOthers?: boolean;
+}
+
+export type StageLayoutPreset = "trio" | "duo-left" | "duo-right" | "solo-center" | "solo-close" | "narration";
+
 export interface GameDefinition {
   backgrounds?: Record<string, BackgroundDefinition>;
+  stageLayouts?: Record<string, StageLayoutDefinition>;
   scenario?: ScenarioMetadata;
   title?: string;
   start: string;

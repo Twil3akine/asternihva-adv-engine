@@ -37,6 +37,7 @@ export const defaultThemeCss = `
   --adv-focus-opacity: 1;
   --adv-unfocus-opacity: .82;
   --adv-focus-duration: 200ms;
+  --adv-stage-duration: 200ms;
   --adv-narration-brightness: .9;
   --adv-narration-opacity: 1;
 }

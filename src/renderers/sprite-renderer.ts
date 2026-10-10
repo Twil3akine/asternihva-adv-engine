@@ -263,7 +263,9 @@ export const spriteRendererCss = `
   transform-origin: 50% 100%;
   opacity: 0;
   filter: brightness(var(--adv-unfocus-brightness, .55));
-  transition: opacity var(--adv-focus-duration, 200ms) ease, filter var(--adv-focus-duration, 200ms) ease;
+  transition: left var(--adv-stage-duration, 200ms) ease, bottom var(--adv-stage-duration, 200ms) ease,
+    transform var(--adv-stage-duration, 200ms) ease, opacity var(--adv-focus-duration, 200ms) ease,
+    filter var(--adv-focus-duration, 200ms) ease;
   pointer-events: none;
   display: grid;
   place-items: end center;
@@ -320,5 +322,8 @@ export const spriteRendererCss = `
   left: var(--adv-x);
   bottom: var(--adv-y);
   transform: translateX(-50%) scale(var(--adv-scale));
+}
+@media (prefers-reduced-motion: reduce) {
+  .adv-sprite-character { --adv-stage-duration: 0ms; --adv-focus-duration: 0ms; }
 }
 `;

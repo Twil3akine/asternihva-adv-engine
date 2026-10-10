@@ -1,5 +1,6 @@
 export { AdvEngine, type AdvEngineOptions } from "./engine.js";
 export { CharacterStage } from "./character-stage.js";
+export { createStageLayoutPreset } from "./stage-layouts.js";
 export { Live2DRenderer, type Live2DRendererOptions, type Live2DModelAdapter } from "./adapters/live2d-renderer.js";
 export { SpriteRenderer, spriteRendererCss, type SpriteRendererOptions, type SpriteAssets, type SpriteMotion, type SpriteMotionKeyframe, type SpritePortrait, type SpriteDisplayMode, type SpriteRenderedCharacter } from "./renderers/sprite-renderer.js";
 export { DomUi, domUiCss, type DomUiElements, type DomUiOptions } from "./ui/dom-ui.js";
@@ -24,6 +25,9 @@ export type {
   ScenarioMetadata,
   SetNode,
   StagePosition,
+  StageLayoutDefinition,
+  StageLayoutMember,
+  StageLayoutPreset,
   UiAdapter,
 } from "./types.js";
 export { gameViewportCss } from "./ui/game-viewport.js";
