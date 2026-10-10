@@ -35,8 +35,9 @@ export function validateScenarios(
   const orders = new Map<number, string[]>();
   for (const item of scenarios) {
     ids.set(item.id, (ids.get(item.id) ?? 0) + 1);
-    if (typeof item.order === "number" && Number.isFinite(item.order)) {
-      orders.set(item.order, [...(orders.get(item.order) ?? []), item.id]);
+    const order = item.order ?? item.entry.scenario?.order;
+    if (typeof order === "number" && Number.isFinite(order)) {
+      orders.set(order, [...(orders.get(order) ?? []), item.id]);
     }
   }
   for (const [id, count] of ids) {
@@ -231,7 +232,7 @@ function validateGraph(
     const node = nodes.get(key);
     if (!node) continue; // Scene exhaustion is a valid terminal state.
     for (const target of outgoingTargets(key, node, lengths)) {
-      if (!target || !nodes.has(target)) continue;
+      if (!target || !lengths.has(splitNodeKey(target)[0])) continue;
       if (!reachable.has(target)) queue.push(target);
     }
   }

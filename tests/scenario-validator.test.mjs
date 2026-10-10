@@ -132,3 +132,30 @@ test("accepts a choice when each branch can terminate", () => {
   };
   assert.equal(validateScenarios([entry({ game })]).valid, true);
 });
+
+
+test("reached empty scenes terminate without unreachable warnings", () => {
+  const result = validateScenarios([entry({ game: {
+    ...entry().entry, scenes: { intro: [{ type: "jump", next: "empty" }], empty: [] },
+  } })]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("a terminating choice cannot hide a dead branch or absent asset registries", () => {
+  const result = validateScenarios([entry({ game: {
+    ...entry().entry,
+    characters: [{ ...character, assets: undefined }],
+    backgrounds: undefined,
+    scenes: {
+      intro: [
+        { type: "scene", background: "room" },
+        { type: "line", speaker: "alice", expression: "normal", motion: "wave", text: "Hello." },
+        { type: "choice", options: [{ text: "End", next: "end" }, { text: "Loop", next: "loop" }] },
+      ],
+      end: [{ type: "end" }], loop: [{ type: "jump", next: "loop" }],
+    },
+  } })]);
+  for (const text of ['unknown background', 'unknown expression', 'unknown motion', 'cannot reach scenario termination']) {
+    assert(result.diagnostics.some(diagnostic => diagnostic.severity === 'error' && diagnostic.message.includes(text)));
+  }
+});
