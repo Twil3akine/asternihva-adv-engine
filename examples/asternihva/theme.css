@@ -77,14 +77,14 @@
 .game {
   --adv-dialog-width: 69%;
   --adv-dialog-height: 20.4%;
-  --adv-dialog-padding-top: .75cqw;
+  --adv-dialog-padding-top: .9cqw;
   --adv-dialog-padding-bottom: .6cqw;
   --adv-text-size: 1.4cqw;
   --adv-text-line-height: 1.65;
 }
 .game .adv-dialogue {
   display: grid;
-  grid-template-rows: 1.5cqw minmax(0, 1fr) 1.4cqw;
+  grid-template-rows: 1.5cqw minmax(0, 1fr) 1.25cqw;
   row-gap: .1cqw;
 }
 .game .adv-speaker {
