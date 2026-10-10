@@ -83,7 +83,16 @@ export interface ScenarioMetadata {
   chapter?: string;
 }
 
+export interface BackgroundDefinition {
+  src: string;
+  anchorX?: number;
+  anchorY?: number;
+  /** Dark overlay opacity from 0 to 1. */
+  overlay?: number;
+}
+
 export interface GameDefinition {
+  backgrounds?: Record<string, BackgroundDefinition>;
   scenario?: ScenarioMetadata;
   title?: string;
   start: string;
@@ -111,6 +120,7 @@ export interface UiAdapter {
   /** Clear pending interaction and present scenario completion. */
   presentEnd(): void | Promise<void>;
   setBackground?(source?: string): void | Promise<void>;
+  presentBackground?(background?: BackgroundDefinition): void | Promise<void>;
   setActiveSpeaker?(characterId?: string): void;
   setTitle?(title?: string): void;
   setScenarioMetadata?(metadata?: ScenarioMetadata): void;

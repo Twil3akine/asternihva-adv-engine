@@ -5,6 +5,7 @@ import type {
   DialoguePresentation,
   UiAdapter,
   ScenarioMetadata,
+  BackgroundDefinition,
 } from "../types.js";
 
 export interface DomUiElements {
@@ -39,11 +40,15 @@ export class DomUi implements UiAdapter {
   }
 
   setBackground(source?: string): void {
-    if (!source) {
-      this.#elements.background.style.backgroundImage = "";
-      return;
-    }
-    this.#elements.background.style.backgroundImage = `url(${JSON.stringify(source).slice(1, -1)})`;
+    this.presentBackground(source ? { src: source } : undefined);
+  }
+
+  presentBackground(background?: BackgroundDefinition): void {
+    const host = this.#elements.background;
+    host.style.backgroundImage = background ? `url(${JSON.stringify(background.src)})` : "";
+    host.style.backgroundSize = "cover";
+    host.style.backgroundPosition = `${(background?.anchorX ?? 0.5) * 100}% ${(background?.anchorY ?? 0.5) * 100}%`;
+    host.style.setProperty("--adv-background-overlay", String(background?.overlay ?? 0));
   }
 
   setActiveSpeaker(characterId?: string): void {
@@ -193,6 +198,8 @@ export class DomUi implements UiAdapter {
 }
 
 export const domUiCss = defaultThemeCss + `
+.adv-background { isolation: isolate; }
+.adv-background::after { content: ""; position: absolute; inset: 0; background: #000; opacity: var(--adv-background-overlay, 0); pointer-events: none; z-index: 2; }
 .adv-scenario-title { position: absolute; z-index: 80; top: 3.5%; left: 4%; margin: 0; white-space: pre-line; font: 500 1cqw/1.6 var(--adv-ui-font); color: var(--adv-muted-color); text-shadow: 0 1px 5px #000; opacity: .85; pointer-events: none; }
 .adv-dialogue {
   position: absolute;

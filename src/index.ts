@@ -5,6 +5,7 @@ export { SpriteRenderer, spriteRendererCss, type SpriteRendererOptions, type Spr
 export { DomUi, domUiCss, type DomUiElements } from "./ui/dom-ui.js";
 export type {
   AdvNode,
+  BackgroundDefinition,
   CharacterCommand,
   CharacterDefinition,
   CharacterRenderer,

@@ -1,6 +1,7 @@
 import { CharacterStage } from "./character-stage.js";
 import type {
   AdvNode,
+  BackgroundDefinition,
   CharacterCommand,
   EngineSnapshot,
   GameDefinition,
@@ -154,7 +155,7 @@ export class AdvEngine {
         return;
 
       case "scene":
-        await this.#ui.setBackground?.(node.background);
+        await this.#setBackground(node.background);
         await this.#runCommands(node.commands ?? []);
         if (node.next) this.#jump(node.next);
         else this.#nodeIndex += 1;
@@ -164,6 +165,14 @@ export class AdvEngine {
         await this.#finish();
         return;
     }
+  }
+
+  async #setBackground(idOrSource?: string): Promise<void> {
+    const definition: BackgroundDefinition | undefined = idOrSource
+      ? this.#game.backgrounds?.[idOrSource] ?? { src: idOrSource }
+      : undefined;
+    if (this.#ui.presentBackground) await this.#ui.presentBackground(definition);
+    else await this.#ui.setBackground?.(definition?.src);
   }
 
   async #finish(): Promise<void> {
