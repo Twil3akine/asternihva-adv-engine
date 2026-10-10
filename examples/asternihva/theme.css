@@ -154,3 +154,10 @@
 .game .shell-screen button:hover, .game .shell-screen button:focus-visible { color: var(--adv-accent); border-color: var(--adv-accent); background: rgb(255 255 255 / .04); }
 .game[data-screen="title"] :is(#dialogue, #choices, #scenario-title, #stage, #end-card),
 .game[data-screen="chapter"] :is(#dialogue, #choices, #scenario-title, #stage, #end-card) { visibility: hidden; }
+
+.game .shell-screen h2 { margin: 0; color: var(--adv-muted-color); font: 500 1.1cqw/1.4 var(--adv-ui-font); letter-spacing: .16em; }
+.game .chapter-list { width: 52cqw; max-height: 30cqw; overflow-y: auto; display: grid; gap: 1cqw; }
+.game .chapter-entry { border-block-end: 1px solid var(--adv-log-separator); padding: 1.2cqw 1.5cqw; }
+.game .chapter-entry p { margin: .5cqw 0; font: 400 1.05cqw/1.7 var(--adv-text-font); }
+.game .chapter-entry .chapter-label { color: var(--adv-accent); font: 500 .85cqw/1.4 var(--adv-ui-font); letter-spacing: .16em; }
+.game .chapter-entry h3 { margin: .4cqw 0; font: 500 1.8cqw/1.5 var(--adv-text-font); }
