@@ -90,3 +90,40 @@ test('different existing destination is refused before any other asset is writte
   assert.equal(await readFile(conflictingPath, 'utf8'), 'pre-existing different bytes');
   await assert.rejects(readFile(path.join(fixture.destinationDir, '.local-assets.json')), { code: 'ENOENT' });
 });
+
+test('explicit replacement updates changed destination bytes and preserves source bytes', async (t) => {
+  const fixture = await makeFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  await importAssets(fixture.sourceDir, fixture.destinationDir);
+
+  const filename = 'Noah_angry.png';
+  const relativePath = path.join('noah', filename);
+  const sourcePath = path.join(fixture.sourceDir, filename);
+  const destinationPath = path.join(fixture.destinationDir, relativePath);
+  const previousDestinationBytes = await readFile(destinationPath);
+  const refreshedBytes = Buffer.from('refreshed source image bytes');
+  await writeFile(sourcePath, refreshedBytes);
+
+  await importAssets(fixture.sourceDir, fixture.destinationDir, { replaceExisting: true });
+
+  assert.notDeepEqual(await readFile(destinationPath), previousDestinationBytes);
+  assert.deepEqual(await readFile(destinationPath), refreshedBytes);
+  assert.deepEqual(await readFile(sourcePath), refreshedBytes);
+  assert.deepEqual(await readFile(path.join(fixture.destinationDir, 'noah', 'Noah_happy.png')), fixture.sourceBytes.get('Noah_happy.png'));
+  assert.ok((await readdir(path.dirname(destinationPath))).every((filename) => !filename.endsWith('.tmp')));
+});
+
+test('destination equal to or inside source directory is rejected', async (t) => {
+  const fixture = await makeFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+
+  await assert.rejects(
+    importAssets(fixture.sourceDir, fixture.sourceDir),
+    /Destination must be outside source directory/,
+  );
+  await assert.rejects(
+    importAssets(fixture.sourceDir, path.join(fixture.sourceDir, 'generated')),
+    /Destination must be outside source directory/,
+  );
+  assert.deepEqual((await readdir(fixture.sourceDir)).sort(), [...fixture.sourceBytes.keys()].sort());
+});
