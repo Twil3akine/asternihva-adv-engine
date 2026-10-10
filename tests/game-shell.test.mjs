@@ -153,3 +153,20 @@ test("chapter select omits absent descriptions", () => {
     fixture.restoreDocument();
   }
 });
+
+test('chapter selection restores the current chapter and wraps arrow navigation', () => {
+  const fixture = makeShellFixture();
+  try {
+    const catalog = { getScenarios: () => [0, 1, 2].map(index => ({ id: `s${index}`, title: 'Test scene' })) };
+    const controller = renderChapterSelect(fixture.chapterList, catalog, () => {}, 's1');
+    controller.focus();
+    const rows = fixture.chapterList.children;
+    assert.equal(rows[1].dataset.selected, 'true');
+    rows[1].children.at(-1).dispatch('keydown', { key: 'ArrowDown' });
+    assert.equal(rows[2].dataset.selected, 'true');
+    rows[2].children.at(-1).dispatch('keydown', { key: 'ArrowDown' });
+    assert.equal(rows[0].dataset.selected, 'true');
+    rows[0].children.at(-1).dispatch('keydown', { key: 'ArrowUp' });
+    assert.equal(rows[2].dataset.selected, 'true');
+  } finally { fixture.restoreDocument(); }
+});

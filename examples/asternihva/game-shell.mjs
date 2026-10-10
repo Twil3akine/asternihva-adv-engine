@@ -14,8 +14,8 @@ export function attachGameShell(root, catalog, { onStart, onLeave, onSettings })
     root.dataset.mode = screen;
     title.hidden = screen !== 'title';
     chapters.hidden = screen !== 'chapter';
-    if (screen === 'chapter') renderChapterSelect(root.querySelector('#chapter-list'), catalog, start);
-    (screen === 'title' ? title : chapters).querySelector('button')?.focus();
+    if (screen === 'chapter') renderChapterSelect(root.querySelector('#chapter-list'), catalog, start, currentId).focus();
+    else title.querySelector('button')?.focus();
   };
   const start = async id => {
     if (starting || !catalog.getScenarioMetadata(id)) return;

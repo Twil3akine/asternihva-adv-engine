@@ -161,3 +161,13 @@
 .game .chapter-entry p { margin: .5cqw 0; font: 400 1.05cqw/1.7 var(--adv-text-font); }
 .game .chapter-entry .chapter-label { color: var(--adv-accent); font: 500 .85cqw/1.4 var(--adv-ui-font); letter-spacing: .16em; }
 .game .chapter-entry h3 { margin: .4cqw 0; font: 500 1.8cqw/1.5 var(--adv-text-font); }
+
+/* Quiet title navigation and editorial chapter hierarchy. */
+.game #title-screen { gap: 4.3cqw; background: linear-gradient(180deg, rgb(5 10 22 / .45), rgb(5 10 22 / .88)); }
+.game #title-screen h1 { font-weight: 400; font-size: 3.5cqw; letter-spacing: .12em; }
+.game .shell-actions { gap: .8cqw; }
+.game .shell-actions button { font-family: var(--adv-text-font); font-weight: 400; text-align: left; letter-spacing: .15em; }
+.game .chapter-entry { position: relative; border-left: 1px solid transparent; padding-right: 8cqw; }
+.game .chapter-entry[data-selected="true"] { border-left-color: var(--adv-accent); background: rgb(239 212 119 / .035); }
+.game .chapter-entry button { position: absolute; right: 0; top: 50%; transform: translateY(-50%); font-family: var(--adv-text-font); }
+.game .chapter-entry h3 { font-size: 1.65cqw; letter-spacing: .05em; }
