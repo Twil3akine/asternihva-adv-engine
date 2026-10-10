@@ -1,6 +1,6 @@
 /** Defaults use zero specificity so a game's stylesheet can override tokens. */
 export const defaultThemeCss = `
-:where(.adv-viewport) {
+:where(:root, .adv-viewport) {
   --adv-dialog-bg: rgb(8 13 25 / .8);
   --adv-dialog-border: rgb(210 220 240 / .25);
   --adv-text-color: #f4f6fc;
@@ -19,11 +19,13 @@ export const defaultThemeCss = `
   --adv-choice-hover-bg: rgb(38 47 65 / .95);
   --adv-panel-bg: rgb(8 13 25 / .96);
   --adv-transition-duration: 200ms;
-  --adv-choice-duration: 180;
+  --adv-choice-duration: 180ms;
   --adv-focus-brightness: 1;
   --adv-unfocus-brightness: .55;
   --adv-focus-opacity: 1;
   --adv-unfocus-opacity: .82;
   --adv-focus-duration: 200ms;
+  --adv-narration-brightness: .9;
+  --adv-narration-opacity: 1;
 }
 `;

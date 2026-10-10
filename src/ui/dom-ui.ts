@@ -57,6 +57,7 @@ export class DomUi implements UiAdapter {
       let disposed = false;
       const render = () => {
         const text = this.#elements.text;
+        text.setAttribute("aria-busy", "true");
         end = text.clientHeight > 0 && text.clientWidth > 0
           ? fitDialoguePage(line.text, start, candidate => {
               text.textContent = candidate;
@@ -64,6 +65,7 @@ export class DomUi implements UiAdapter {
             })
           : line.text.length;
         text.textContent = line.text.slice(start, end);
+        text.setAttribute("aria-busy", "false");
         text.scrollTop = 0;
         this.#elements.root.dataset.page = String(page);
         if (this.#elements.pageIndicator) {
@@ -143,7 +145,9 @@ export class DomUi implements UiAdapter {
           if (selected) return;
           selected = true;
           this.#elements.choices.dataset.selected = "true";
-          const duration = Number.parseFloat(getComputedStyle(this.#elements.root).getPropertyValue("--adv-choice-duration")) || 180;
+          const configuredTime = getComputedStyle(this.#elements.root).getPropertyValue("--adv-choice-duration").trim();
+          const configuredDuration = Number.parseFloat(configuredTime) * (configuredTime.endsWith("s") && !configuredTime.endsWith("ms") ? 1000 : 1);
+          const duration = Number.isFinite(configuredDuration) && configuredDuration >= 0 ? configuredDuration : 180;
           animation = this.#elements.choices.animate?.([{ opacity: 1 }, { opacity: 0 }], { duration });
           await animation?.finished.catch(() => {});
           if (controller.signal.aborted) return;
@@ -229,7 +233,7 @@ export const domUiCss = defaultThemeCss + `
   appearance: none; border: 1px solid var(--adv-dialog-border);
   border-radius: .4cqw; padding: .6cqw 1.4cqw;
   background: var(--adv-choice-bg); backdrop-filter: blur(var(--adv-dialog-blur)); color: inherit;
-  font: inherit; font-size: 1.25cqw; line-height: 1.4;
+  font: inherit; color: var(--adv-text-color); font-size: 1.25cqw; line-height: 1.4;
   text-align: left; cursor: pointer;
   transition: background .18s ease, transform .18s ease;
 }
@@ -241,5 +245,9 @@ export const domUiCss = defaultThemeCss + `
 .adv-panel::backdrop { background: rgb(0 0 0 / .55); }
 .adv-log-content { overflow: auto; max-height: 27cqw; white-space: pre-wrap; line-height: var(--adv-text-line-height); }
 .adv-panel button { color: inherit; background: transparent; border: 1px solid var(--adv-dialog-border); padding: .5em 1em; cursor: pointer; }
+.adv-viewport[data-speaker=""] .adv-sprite-character[data-visible="true"] {
+  filter: brightness(var(--adv-narration-brightness));
+  opacity: var(--adv-narration-opacity);
+}
 @keyframes adv-dialogue-in { from { opacity: 0; } to { opacity: 1; } }
 `;

@@ -135,15 +135,12 @@ updating the character. Browsers without Web Animations swap images immediately.
 Unknown names and failed loads leave the current image unchanged without throwing.
 Repeated requests for the same image do not rewrite its source; the latest valid
 request wins when loads overlap. Failed loads are cached for that character instance.
-The example's first three lines demonstrate normal → smile → surprised.
+The example demonstrates normal, smile and surprised expressions for each character.
 
-The built-in dialogue panel keeps a fixed height for each line, sized from the
-viewport and capped for large screens. Its text and choice list scroll inside
-the panel when their content is longer than the available space. The speaker
-label stays in a fixed position above the text. On small screens, the panel
-uses a larger share of the viewport while keeping the same scrolling behavior.
-For overflowing dialogue, clicking or pressing an advance key first scrolls to
-the bottom; the next advance continues the scenario. Each new line starts at the top.
+The built-in dialogue panel stays at a fixed size within the 16:9 game surface.
+The nameplate occupies a fixed position and long lines advance through measured
+pages without a dialogue scrollbar. Choices overlay the stage above the panel.
+The example targets PC windows and does not use page scrolling for play.
 
 ```sh
 npm install
@@ -284,8 +281,10 @@ MIT. The example art in this repository is placeholder SVG artwork created only 
 
 Use `.adv-viewport` with `gameViewportCss` for a centered 16:9 surface. Put background, character stage, dialogue and choices in this same surface. The host page can center it with a grid and disable page scrolling. The presentation uses container-relative units and scales with this surface.
 
-`domUiCss` includes `defaultThemeCss`. Override CSS custom properties on your viewport to change presentation without replacing the UI adapter. Available tokens are defined in [src/ui/theme.ts](src/ui/theme.ts): dialogue background/border/height/padding/radius/blur, text size/line height/color, name/accent/muted colors, choice/panel backgrounds and transition duration. `--adv-choice-duration` is a number in milliseconds; other duration tokens use CSS time values. Speaker focus uses `--adv-focus-brightness`, `--adv-unfocus-brightness`, `--adv-focus-opacity`, `--adv-unfocus-opacity` and `--adv-focus-duration`. It changes brightness/opacity only; narration treats all characters equally. The Asternihva theme is defined only in [examples/asternihva/theme.css](examples/asternihva/theme.css).
+`domUiCss` includes `defaultThemeCss`. Override CSS custom properties on your viewport to change presentation without replacing the UI adapter. Available tokens are defined in [src/ui/theme.ts](src/ui/theme.ts): dialogue background/border/height/padding/radius/blur, text size/line height/color, name/accent/muted colors, choice/panel backgrounds and transition duration. Duration tokens use CSS time values (`ms` or `s`); `--adv-choice-duration: 0ms` disables the selection fade. Speaker focus uses `--adv-focus-brightness`, `--adv-unfocus-brightness`, `--adv-focus-opacity`, `--adv-unfocus-opacity` and `--adv-focus-duration`. It changes brightness/opacity only; narration treats all characters equally using `--adv-narration-brightness` and `--adv-narration-opacity`. The Asternihva theme is defined only in [examples/asternihva/theme.css](examples/asternihva/theme.css).
 
 `DomUi` measures each dialogue page against the text element's actual `clientWidth/clientHeight` and scroll extent. The text area must have a bounded size. Click/Enter advances pages; only advancing past the final page resolves `presentLine()`. Grapheme and nearby word boundaries preserve Japanese, emoji and newlines without changing scenario text. Resize remeasures the current page from its original start offset. Optional `DomUiElements.pageIndicator` displays a small next-page cue. Backlog implementations can retain the unchanged `DialoguePresentation.text`.
 
 The Asternihva example opens as a PC game screen. Add `?debug=1` to show the engine heading and local-asset status. Missing local art still shows a concise notice in normal mode. AUTO advances dialogue pages, SKIP advances them faster, LOG retains full original lines, and MENU pauses automatic input while open. Choices remain manual. These demo controls do not add engine save/audio features.
+
+Real layout regression tests are in [tests/browser-presentation.mjs](tests/browser-presentation.mjs). After building and serving the example, run `await (await import("/tests/browser-presentation.mjs")).testPresentation()` in the browser console. It checks measured 1/2/3+ page dialogue, resize, full-text preservation, themes, focus, 12 choices, motion and crossfade without browser automation dependencies.
