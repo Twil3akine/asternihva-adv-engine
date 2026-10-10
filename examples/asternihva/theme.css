@@ -19,3 +19,13 @@
 .game .adv-control[aria-pressed="true"] { color: var(--adv-accent); }
 
 .game .adv-panel h2 { font-family: var(--adv-ui-font); font-weight: 500; letter-spacing: .12em; }
+
+.game {
+  --adv-dialog-height: 20.4%;
+  --adv-dialog-padding-top: 2.4cqw;
+  --adv-dialog-padding-bottom: 1.8cqw;
+  --adv-text-size: 1.4cqw;
+  --adv-text-line-height: 1.65;
+}
+.game .adv-speaker { top: .6cqw; font-size: 1.05cqw; line-height: 1.25; padding-block-end: .2cqw; }
+.game .adv-control { padding-block: .15cqw; }
