@@ -314,3 +314,5 @@ Define `GameDefinition.backgrounds` as `{ [id]: { src, anchorX?, anchorY?, overl
 The demo's MENU includes Settings and browser Fullscreen (disabled if unsupported). Escape returns Settings → Menu → Game. Text Speed is omitted because the current renderer presents a whole page without a typewriter effect. Audio settings are omitted because audio is not implemented. Settings persistence is separate from scenario state and snapshots.
 
 The local background specification and generation prompt are in [examples/asternihva/BACKGROUNDS.md](examples/asternihva/BACKGROUNDS.md). Without local background artwork the demo uses a CSS gradient. Run `await (await import("/tests/browser-assets-settings.mjs")).testAssetsAndSettings()` on a fresh demo page for browser regression coverage.
+
+Startup measurement and limitations are recorded in [examples/asternihva/PERFORMANCE.md](examples/asternihva/PERFORMANCE.md). The final demo loads three initial character PNGs instead of all thirty; the background uses a gradient until local artwork is supplied.

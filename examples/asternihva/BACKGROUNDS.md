@@ -27,6 +27,6 @@ examples/asternihva/public/backgrounds/room-night.png
 
 想定仕様は16:9、最低1600×900です。ADVの画面でキャラクターを手前に重ねるため、画面下部中央には目立つ物を置かず、窓、ソファ、棚、テーブル、フロアランプなどで共有リビングと分かる夜の室内を描きます。窓の外は青みのある夜景、室内は暖色の間接照明にすると、既存の夜色の画面になじみます。
 
-生成プロンプト案:
+生成promptの例です。
 
-> Wide 16:9 anime background illustration of a cozy shared living room at night, viewed straight on as a visual novel scene. A large window shows a quiet deep-blue night sky and a few distant city lights; a comfortable shared sofa, low coffee table, bookshelf, a couple of cushions, and a warm floor lamp establish a lived-in communal space. Cool blue moonlight from the window balances soft amber indoor lighting. Detailed but calm, clean composition, readable room layout, restrained contrast, no people, no characters, no silhouettes, no text, no logos, no UI, no foreground objects blocking the lower center where visual-novel characters will appear. 1600x900 or larger.
+> Wide 16:9 anime background illustration of a quiet shared living room for three people at night, viewed straight on as a visual novel scene. Modern minimalist interior with a subtle near-future feel, never high-tech science fiction. A large window at center-right shows a dark starry sky and a few distant city lights. A low sofa, unobtrusive shelves and a small warm floor lamp establish a lived-in shared space. Black, navy and muted blue dominate, with a little soft amber indirect lighting. Very restrained celestial motifs, calm atmosphere, modest visual detail and contrast. Leave clear central space for three foreground character sprites, with no furniture blocking their upper bodies or the lower dialogue overlay. No people, characters, silhouettes, text, logos, UI, holograms, neon glare or elaborate technology. 1920x1080 or larger.
