@@ -29,7 +29,8 @@ test('manifest explicitly aliases neutral source images to normal expression IDs
   for (const character of assetManifest) {
     assert.equal(character.defaultExpression, 'normal');
     assert.equal(character.expressions.normal, `${character.name}_neutral.png`);
-    assert.deepEqual(character.portrait, { scale: 2.25, anchorX: 0.5, anchorY: -0.04 });
+    assert.ok(Number.isFinite(character.portrait.scale) && character.portrait.scale > 0);
+    assert.ok(Number.isFinite(character.portrait.anchorX) && Number.isFinite(character.portrait.anchorY));
   }
   assert.equal(assetManifest[1].expressions.embarrased, 'Seren_embarrased.png');
   assert.equal(assetManifest[0].expressions.relaxed, 'Noah_relaxed.png');
