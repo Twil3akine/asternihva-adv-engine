@@ -2,6 +2,7 @@ import {
   AdvEngine,
   CharacterStage,
   SpriteRenderer,
+  GameSettingsStore,
   domUiCss,
   gameViewportCss,
   spriteRendererCss,
@@ -9,6 +10,7 @@ import {
 
 import { assetManifest } from "./asset-manifest.mjs";
 import { resolveLogPortrait } from "./demo-log.mjs";
+import { attachSettings } from "./demo-settings.mjs";
 import { demoUiConfig } from "./ui-config.mjs";
 import { DemoUi, attachControls } from "./demo-controls.mjs";
 import { loadDemoAssets } from "./demo-assets.mjs";
@@ -68,5 +70,9 @@ const ui = new DemoUi({
 }, { resolveIcon: entry => resolveLogPortrait(entry, logIcons) });
 const stage = new CharacterStage(stageHost, game.characters, [new SpriteRenderer()]);
 const engine = new AdvEngine({ game, stage, ui });
-attachControls(root, ui, demoUiConfig);
+let settingsStorage;
+try { settingsStorage = localStorage; } catch { /* Settings still work without persistence. */ }
+const settings = new GameSettingsStore(settingsStorage);
+attachControls(root, ui, demoUiConfig, settings);
+attachSettings(root, settings, { ui, stage });
 engine.run();
