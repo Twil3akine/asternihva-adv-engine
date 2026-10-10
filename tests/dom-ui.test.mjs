@@ -286,3 +286,48 @@ test("viewport input ignores intro, choice background and ended modes", async t 
   elements.root.dispatchEvent(new Event("click"));
   assert.equal(elements.root.dataset.mode, "ended");
 });
+
+for (const [label, text, expected] of [
+  ["one leading newline", "\n本文", "本文"],
+  ["two leading newlines", "\n\n本文", "本文"],
+  ["trailing newline", "本文\n", "本文"],
+  ["template indentation", "\n    本文\n    次の行\n  ", "本文\n    次の行"],
+  ["internal newlines", "\n一行目\n\n二行目\n", "一行目\n\n二行目"],
+  ["empty presentation", "\n  \n", ""],
+]) {
+  test(`DomUi normalizes ${label} only at presentation edges`, async t => {
+    const { elements, ui } = fakeUi(t);
+    const line = Object.freeze({ text });
+    const pending = ui.presentLine(line);
+    assert.equal(elements.text.textContent, expected);
+    assert.equal(line.text, text);
+    elements.advanceTarget.dispatchEvent(new Event("click"));
+    await pending;
+  });
+}
+
+test("paginated presentation removes page-edge blank lines while preserving internal line breaks and log source", async t => {
+  const { elements } = fakeUi(t);
+  const original = "\n\n一行目\n二行目\n\n三行目\n四行目\n\n五行目\n六行目\n";
+  // Two actual lines fit; a paragraph break crossing a page must not create an empty page head.
+  elements.text.clientHeight = 40;
+  Object.defineProperty(elements.text, "scrollHeight", {
+    get() { return this.textContent.split("\n").length * 20; },
+  });
+  const { DemoUi } = await import("../examples/asternihva/demo-controls.mjs");
+  const ui = new DemoUi(elements);
+  let done = false;
+  const pending = ui.presentLine({ text: original, speakerName: "Alice" }).then(() => { done = true; });
+  const pages = [];
+  while (!done) {
+    pages.push(elements.text.textContent);
+    assert.equal(elements.text.textContent, elements.text.textContent.trim());
+    assert.equal(elements.text.scrollHeight <= elements.text.clientHeight, true);
+    elements.advanceTarget.dispatchEvent(new Event("click"));
+    await Promise.resolve();
+  }
+  await pending;
+  assert.deepEqual(pages, ["一行目\n二行目", "三行目\n四行目", "五行目\n六行目"]);
+  assert.equal(ui.history.length, 1);
+  assert.equal(ui.history[0].fullText, original);
+});

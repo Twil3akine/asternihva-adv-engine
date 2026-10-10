@@ -80,7 +80,9 @@ export class DomUi implements UiAdapter {
     this.#elements.choices.replaceChildren();
     this.#elements.speaker.textContent = line.speakerName ?? "";
     this.#elements.speaker.hidden = !line.speakerName;
-    this.#elements.text.textContent = line.text;
+    // Normalize presentation only: callers retain the original full text for logs.
+    const displayText = line.text.trim();
+    this.#elements.text.textContent = displayText;
     this.#elements.text.scrollTop = 0;
     this.#elements.root.dataset.mode = "line";
 
@@ -93,12 +95,12 @@ export class DomUi implements UiAdapter {
         const text = this.#elements.text;
         text.setAttribute("aria-busy", "true");
         end = text.clientHeight > 0 && text.clientWidth > 0
-          ? fitDialoguePage(line.text, start, candidate => {
-              text.textContent = candidate;
+          ? fitDialoguePage(displayText, start, candidate => {
+              text.textContent = candidate.trim();
               return text.scrollHeight <= text.clientHeight + 1 && text.scrollWidth <= text.clientWidth + 1;
             })
-          : line.text.length;
-        text.textContent = line.text.slice(start, end);
+          : displayText.length;
+        text.textContent = displayText.slice(start, end).trim();
         text.setAttribute("aria-busy", "false");
         text.scrollTop = 0;
         this.#elements.root.dataset.page = String(page);
@@ -123,7 +125,7 @@ export class DomUi implements UiAdapter {
       };
 
       const advance = () => {
-        if (end < line.text.length) {
+        if (end < displayText.length) {
           start = end;
           page++;
           render();
