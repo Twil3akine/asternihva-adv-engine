@@ -16,3 +16,7 @@ examples/asternihva/public/characters/
 # Local background artwork is not licensed for repository distribution.
 examples/asternihva/public/backgrounds/
 examples/asternihva/public/fonts/
+
+# Private local stories and unattended runner state.
+scenario/
+.codex-night-run/

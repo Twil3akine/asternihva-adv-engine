@@ -16,14 +16,9 @@ test("Asternihva demo layout manifest covers trio, duos, solos, and narration", 
   assert.deepEqual(stageLayoutManifest["background-only"], { hideOthers: true, members: [] });
 });
 
-test("EP.00 opens on the empty window view, introduces characters solo, and clears the last narration", async () => {
+test("Asternihva shell obtains private story definitions from the local loader", async () => {
   const main = await readFile(new URL("../examples/asternihva/main.mjs", import.meta.url), "utf8");
-  const opening = main.slice(main.indexOf("intro: ["), main.indexOf("\n    noah: ["));
-  const ending = main.slice(main.indexOf("\n    end: ["));
-  assert.match(opening, /background: firstBackground \?\? "room-night-window",\s*layout: "background-only"/);
-  assert.match(opening, /layout: "background-only", text: "窓の外で、小さな光が瞬いた/);
-  assert.match(opening, /layout: "solo-noah", speaker: "noah"/);
-  assert.match(opening, /layout: "solo-seren-close", speaker: "seren"/);
-  assert.match(opening, /layout: "trio", speaker: "luminal"/);
-  assert.match(ending, /layout: "background-only", text: "三人の声が、静かな部屋に重なった/);
+  assert.match(main, /await loadLocalScenarios\(\)/);
+  assert.match(main, /entry: \{ \.\.\.sharedGame, \.\.\.definition \}/);
+  assert.doesNotMatch(main, /scenes:\s*\{/);
 });

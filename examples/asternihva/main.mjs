@@ -17,6 +17,7 @@ import { attachSettings } from "./demo-settings.mjs";
 import { demoUiConfig } from "./ui-config.mjs";
 import { DemoUi, attachControls, presentEpisodeTitle } from "./demo-controls.mjs";
 import { attachGameShell } from './game-shell.mjs';
+import { loadLocalScenarios } from "./local-scenarios.mjs";
 import { loadDemoAssets } from "./demo-assets.mjs";
 
 
@@ -50,18 +51,22 @@ status.textContent = loaded.missing.length
   : "Local PNG / expression crossfade / motion";
 gameRoot.dataset.assets = loaded.missing.length ? "fallback" : "local";
 
-const game = {
+const sharedGame = {
   title: "Asternihva Project",
-  scenario: { id: "ep00", chapter: "EP.00", title: "小さな光" },
   backgrounds: backgroundManifest,
   stageLayouts: stageLayoutManifest,
-  start: "intro",
   characters: loaded.characters.map(({ local, ...character }) => ({
-    ...character,
-    assets: { ...character.assets, motions },
+    ...character, assets: { ...character.assets, motions },
   })),
-  scenes: { intro: [{ type: "end" }] },
 };
+let localScenarios;
+try {
+  localScenarios = await loadLocalScenarios();
+} catch (error) {
+  status.hidden = false;
+  status.textContent = `ローカルScenarioを読み込めませんでした: ${error.message}`;
+  localScenarios = [];
+}
 
 const root = document.querySelector("#game");
 const stageHost = document.querySelector("#stage");
@@ -75,10 +80,9 @@ let shell, controls;
 let settingsStorage;
 try { settingsStorage = localStorage; } catch { /* Settings still work without persistence. */ }
 const settings = new GameSettingsStore(settingsStorage);
-const scenarioEntries = [{
-  id: "ep00", chapter: "EP.00", title: "小さな光",
-  description: "窓の外の小さな光を、三人で見つめる夜。", entry: game,
-}];
+const scenarioEntries = localScenarios.map(definition => ({
+  ...definition.scenario, entry: { ...sharedGame, ...definition },
+}));
 const catalog = new ScenarioCatalog(scenarioEntries);
 const uiElements = {
   root, background: document.querySelector("#background"), title: document.querySelector("#title"),
