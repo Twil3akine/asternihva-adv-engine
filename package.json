@@ -1,7 +1,7 @@
 {
-  "name": "web-adv-engine",
+  "name": "asternihva-adv-engine",
   "version": "0.1.0",
-  "description": "A small, renderer-agnostic visual novel / ADV engine for the web.",
+  "description": "A small, renderer-agnostic visual novel and ADV engine.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -9,6 +9,22 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core.d.ts",
+      "import": "./dist/core.js"
+    },
+    "./web": {
+      "types": "./dist/web.d.ts",
+      "import": "./dist/web.js"
+    },
+    "./live2d": {
+      "types": "./dist/live2d.d.ts",
+      "import": "./dist/live2d.js"
+    },
+    "./tooling": {
+      "types": "./dist/tooling/scenario-validator.d.ts",
+      "import": "./dist/tooling/scenario-validator.js"
     }
   },
   "files": [
@@ -21,7 +37,9 @@
     "build": "tsc -p tsconfig.json",
     "test": "node --test tests/*.test.mjs",
     "check": "npm run build && npm test",
-    "serve:example": "python3 -m http.server 4173"
+    "pack:smoke": "npm run build && node scripts/package-smoke.mjs",
+    "serve:example": "python3 -m http.server 4173 --bind 127.0.0.1",
+    "validate:scenarios": "npm run build && node scripts/validate-scenarios.mjs"
   },
   "keywords": [
     "visual-novel",
@@ -31,6 +49,14 @@
     "game-engine"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Twil3akine/asternihva-adv-engine.git"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
   "devDependencies": {
     "typescript": "^5.8.3"
   }
