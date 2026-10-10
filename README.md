@@ -275,3 +275,7 @@ Keeping v0.1 as one package makes the API easier to change while the contracts a
 ## License
 
 MIT. The example art in this repository is placeholder SVG artwork created only for the demo.
+
+### Asternihvaのローカル立ち絵
+
+実PNGはGitに含めません。`node scripts/import-asternihva-assets.mjs` でローカル素材を導入できます。未導入の場合はDemoの既存SVGを表示します。素材一覧、expression対応、portrait設定、導入手順は [examples/asternihva/ASSETS.md](examples/asternihva/ASSETS.md) を参照してください。

@@ -5,12 +5,24 @@ button { font: inherit; }
 .game { position: relative; width: 100%; height: 100%; overflow: hidden; background: #0d1229; }
 .background { position: absolute; inset: 0; background-size: cover; background-position: center; transition: background-image .5s ease; }
 .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgb(4 8 30 / .08), rgb(4 8 25 / .22) 52%, rgb(4 5 15 / .78)); }
-.stage { position: absolute; inset: 7vh 3vw 17vh; }
+.stage-window {
+  position: absolute;
+  inset: 9rem 2vw calc(clamp(12rem, 29vh, 18rem) + max(24px, 4vh) + 1rem);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.stage { position: relative; width: max(100%, 60rem); height: 100%; }
+.stage .adv-sprite-character { width: calc(100% / 3 - 1.5rem); height: 100%; }
+.stage .adv-sprite-character[data-active="true"] { transform: translateX(-50%); }
+.asset-status { position: absolute; z-index: 120; top: 6rem; left: 2vw; right: 2vw; margin: 0; font-size: .8125rem; line-height: 1.5; opacity: .85; }
 .brand { position: absolute; z-index: 120; top: 28px; left: 34px; display: grid; gap: 4px; text-shadow: 0 2px 18px rgb(0 0 0 / .55); }
 .brand span { font-size: 12px; letter-spacing: .16em; opacity: .72; text-transform: uppercase; }
 .brand strong { font-family: Georgia, "Times New Roman", serif; font-size: clamp(24px, 3vw, 42px); font-weight: 500; }
 @media (max-width: 720px) {
-  .stage { inset: 9vh -18vw 19vh; }
+  .stage-window { top: 10rem; bottom: calc(clamp(11rem, 35vh, 18rem) + 2rem); }
+  .brand { top: 1rem; left: 1rem; }
+  .brand strong { font-size: 1.25rem; }
+  .asset-status { top: 5rem; }
   .game .adv-dialogue {
     --adv-dialogue-block-size: clamp(11rem, 35vh, 18rem);
     --adv-dialogue-inline-padding: 1.375rem;

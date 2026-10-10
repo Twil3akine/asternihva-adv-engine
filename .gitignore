@@ -9,3 +9,6 @@ coverage/
 .DS_Store
 
 *.log
+
+# Private, locally imported Asternihva character artwork and readiness manifest.
+examples/asternihva/public/characters/

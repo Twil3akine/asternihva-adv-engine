@@ -7,6 +7,8 @@ import {
   spriteRendererCss,
 } from "../../dist/index.js";
 
+import { loadDemoAssets } from "./demo-assets.mjs";
+
 const base = new URL("./", import.meta.url);
 const asset = (name) => new URL(`assets/${name}`, base).href;
 
@@ -15,56 +17,25 @@ style.textContent = spriteRendererCss + domUiCss;
 document.head.append(style);
 
 const motions = {
-  bounce: { keyframes: [{ translate: "0 0" }, { translate: "0 -24px" }, { translate: "0 0" }], duration: 620 },
-  nod: { keyframes: [{ rotate: "0deg" }, { rotate: "2deg" }, { rotate: "0deg" }], duration: 580 },
-  pulse: { keyframes: [{ scale: 1, opacity: 1 }, { scale: 1.06, opacity: 0.75 }, { scale: 1, opacity: 1 }], duration: 620 },
+  bounce: { keyframes: [{ translate: "0 0" }, { translate: "0 -8px" }, { translate: "0 0" }], duration: 620 },
+  nod: { keyframes: [{ rotate: "0deg" }, { rotate: "1deg" }, { rotate: "0deg" }], duration: 580 },
+  pulse: { keyframes: [{ scale: 1, opacity: 1 }, { scale: 1.02, opacity: 1 }, { scale: 1, opacity: 1 }], duration: 620 },
 };
+
+const loaded = await loadDemoAssets();
+const status = document.querySelector("#asset-status");
+status.textContent = loaded.missing.length
+  ? "ローカル画像が未導入または不足しています。該当キャラクターは仮画像で表示します。node scripts/import-asternihva-assets.mjsで導入できます。"
+  : "ローカルPNGを表示しています。狭い画面では立ち絵の欄を横にスクロールできます。";
+document.querySelector("#game").dataset.assets = loaded.missing.length ? "fallback" : "local";
 
 const game = {
   title: "Asternihva Project — engine demo",
   start: "intro",
-  characters: [
-    {
-      id: "noah",
-      name: "Noah",
-      renderer: "sprite",
-      defaultExpression: "normal",
-      assets: {
-        motions,
-        expressions: {
-          normal: asset("noah-normal.svg"),
-          smile: asset("noah-smile.svg"),
-          surprised: asset("noah-surprised.svg"),
-        },
-      },
-    },
-    {
-      id: "seren",
-      name: "Seren",
-      renderer: "sprite",
-      defaultExpression: "normal",
-      assets: {
-        motions,
-        expressions: {
-          normal: asset("seren-normal.svg"),
-          smile: asset("seren-smile.svg"),
-        },
-      },
-    },
-    {
-      id: "luminal",
-      name: "Luminal",
-      renderer: "sprite",
-      defaultExpression: "normal",
-      assets: {
-        motions,
-        expressions: {
-          normal: asset("luminal-normal.svg"),
-          smile: asset("luminal-smile.svg"),
-        },
-      },
-    },
-  ],
+  characters: loaded.characters.map(({ local, ...character }) => ({
+    ...character,
+    assets: { ...character.assets, motions },
+  })),
   scenes: { intro: [{ type: "end" }] },
 };
 
@@ -81,4 +52,9 @@ const ui = new DomUi({
 });
 const stage = new CharacterStage(stageHost, game.characters, [new SpriteRenderer()]);
 const engine = new AdvEngine({ game, stage, ui });
+const observer = new MutationObserver(() => {
+  const active = stageHost.querySelector('[data-active="true"]');
+  active?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+});
+observer.observe(stageHost, { attributes: true, subtree: true, attributeFilter: ["data-active"] });
 engine.run();
