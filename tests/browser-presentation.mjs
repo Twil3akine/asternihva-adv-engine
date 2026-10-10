@@ -171,7 +171,8 @@ export async function testDemoPlay() {
     settings: getComputedStyle(document.querySelector('.adv-settings-panel h3')).fontFamily,
     end: getComputedStyle(document.querySelector('.end-card__title')).fontFamily,
   };
-  assert(typography.scenario.startsWith('Ubuntu') && typography.controls.startsWith('Ubuntu'), 'Latin UI does not use Ubuntu');
+  assert(typography.scenario.startsWith('"Zen Kaku Gothic New"'), 'Japanese scenario title does not use Zen Kaku Gothic New');
+  assert(getComputedStyle(document.querySelector('#scenario-title'), '::first-line').fontFamily.startsWith('Ubuntu') && typography.controls.startsWith('Ubuntu'), 'Latin episode label or controls do not use Ubuntu');
   assert([typography.dialogue, typography.name, typography.menu, typography.log, typography.settings, typography.end].every(value => value.startsWith('"Zen Kaku Gothic New"')), `Japanese UI does not use Zen Kaku Gothic New: ${JSON.stringify(typography)}`);
   const expressions = new Map(['noah', 'seren', 'luminal'].map(id => [id, new Set()]));
   const layoutSizes = new Set();
