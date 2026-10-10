@@ -2,6 +2,27 @@ import { DomUi, calculateAutoDelay, getAutoDelayMultiplier } from "../../dist/in
 
 import { createLogEntry, renderLogEntries } from "./demo-log.mjs";
 
+export async function presentEpisodeTitle(root, element, metadata, { durationMs = 1900, fadeDurationMs = 700 } = {}) {
+  const reducedMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const animated = root.dataset.uiAnimation !== 'off' && !reducedMotion;
+  const chapter = element.querySelector('.episode-title__chapter');
+  const title = element.querySelector('.episode-title__name');
+  chapter.textContent = metadata.chapter ?? '';
+  title.textContent = metadata.title ?? '';
+  chapter.hidden = !metadata.chapter;
+  title.hidden = !metadata.title;
+  root.dataset.mode = 'intro';
+  element.dataset.phase = 'in';
+  element.hidden = false;
+  await new Promise(resolve => setTimeout(resolve, animated ? durationMs : 250));
+  if (animated) {
+    element.dataset.phase = 'out';
+    await new Promise(resolve => setTimeout(resolve, fadeDurationMs));
+  }
+  element.hidden = true;
+  delete element.dataset.phase;
+}
+
 export class DemoUi extends DomUi {
   history = [];
   constructor(elements, { resolveIcon, ...uiOptions } = {}) {

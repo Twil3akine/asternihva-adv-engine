@@ -48,6 +48,15 @@
 .game .adv-control[aria-pressed="true"] { color: var(--adv-accent); }
 
 .game .adv-panel h2 { font-family: var(--adv-ui-font); font-weight: 500; letter-spacing: .12em; }
+.game .episode-title { position: absolute; z-index: 90; inset: 0; display: grid; align-content: center; justify-items: center; gap: 1.1cqw; color: #f3f4f7; text-align: center; text-shadow: 0 2px 16px rgb(0 0 0 / .9); pointer-events: none; }
+.game .episode-title[hidden] { display: none; }
+.game .episode-title__chapter { color: var(--adv-accent); font: 500 1cqw/1.2 Ubuntu, sans-serif; letter-spacing: .22em; }
+.game .episode-title__name { font: 500 3.1cqw/1.25 "Zen Kaku Gothic New", sans-serif; letter-spacing: .08em; }
+.game .episode-title[data-phase="in"] { animation: episode-title-in 700ms ease both; }
+.game .episode-title[data-phase="out"] { opacity: 0; transition: opacity 700ms ease; }
+@keyframes episode-title-in { from { opacity: 0; } to { opacity: 1; } }
+.game[data-ui-animation="off"] .episode-title { animation: none; transition: none; }
+@media (prefers-reduced-motion: reduce) { .game .episode-title { animation: none; transition: none; } }
 .game :is(.adv-dialogue, .adv-choice, .adv-menu-panel, .adv-settings-panel, .adv-log-content) { font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; }
 .game :is(.adv-speaker, .adv-log-name) { font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; font-weight: 500; }
 .game :is(.adv-control, .adv-scenario-title, .adv-panel-header h2) { font-family: Ubuntu, "Avenir Next", sans-serif; }

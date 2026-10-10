@@ -15,7 +15,7 @@ import { assetManifest } from "./asset-manifest.mjs";
 import { resolveLogPortrait } from "./demo-log.mjs";
 import { attachSettings } from "./demo-settings.mjs";
 import { demoUiConfig } from "./ui-config.mjs";
-import { DemoUi, attachControls } from "./demo-controls.mjs";
+import { DemoUi, attachControls, presentEpisodeTitle } from "./demo-controls.mjs";
 import { loadDemoAssets } from "./demo-assets.mjs";
 
 
@@ -87,4 +87,6 @@ try { settingsStorage = localStorage; } catch { /* Settings still work without p
 const settings = new GameSettingsStore(settingsStorage);
 attachControls(root, ui, demoUiConfig, settings);
 attachSettings(root, settings, { ui, stage });
+await ui.presentBackground(firstBackground ? game.backgrounds[firstBackground] : undefined);
+await presentEpisodeTitle(root, document.querySelector('#episode-title'), game.scenario);
 engine.run();
