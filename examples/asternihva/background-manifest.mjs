@@ -18,7 +18,7 @@ export const backgroundManifest = {
 /** Only inspect the opening background; absent local artwork uses the CSS gradient. */
 export async function initialBackground(fetchAsset = fetch) {
   try {
-    const response = await fetchAsset(backgroundManifest['room-night-wide'].src, { method: 'HEAD' });
-    return response.ok ? 'room-night-wide' : undefined;
+    const response = await fetchAsset(backgroundManifest['room-night-window'].src, { method: 'HEAD' });
+    return response.ok ? 'room-night-window' : undefined;
   } catch { return undefined; }
 }

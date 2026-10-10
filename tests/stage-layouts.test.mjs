@@ -63,3 +63,22 @@ test("invalid layout members fail before changing any character", async () => {
   assert.equal(states.get("a").visible, false);
   assert.equal(states.get("a").position, undefined);
 });
+
+test("an empty hide-others layout creates a clean background-only stage", async () => {
+  const visibility = new Map();
+  const characters = ["a", "b"].map(id => ({ id, name: id, renderer: "test" }));
+  const renderer = { key: "test", create(_host, character) {
+    return {
+      async show() { visibility.set(character.id, true); },
+      async hide() { visibility.set(character.id, false); },
+      setExpression() {}, playMotion() {}, setPosition() {}, destroy() {},
+    };
+  } };
+  const stage = new CharacterStage({}, characters, [renderer]);
+  await stage.applyLayout(createStageLayoutPreset("duo-left", ["a", "b"]));
+  assert.equal(visibility.get("a"), true);
+  assert.equal(visibility.get("b"), true);
+  await stage.applyLayout({ hideOthers: true, members: [] });
+  assert.equal(visibility.get("a"), false);
+  assert.equal(visibility.get("b"), false);
+});

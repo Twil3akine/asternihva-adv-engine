@@ -7,4 +7,5 @@ export const stageLayoutManifest = {
   "solo-noah": createStageLayoutPreset("solo-center", ["noah"]),
   "solo-seren-close": createStageLayoutPreset("solo-close", ["seren"]),
   narration: createStageLayoutPreset("narration", ["noah", "seren", "luminal"]),
+  "background-only": { hideOthers: true, members: [] },
 };
