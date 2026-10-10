@@ -167,7 +167,7 @@ export async function testDemoPlay() {
   assert(document.fonts.check('400 16px Ubuntu', 'EP.00 AUTO MENU'), 'Ubuntu did not load before play');
   const dialogue = document.querySelector('#dialogue'), text = document.querySelector('#text');
   const height = dialogue.getBoundingClientRect().height;
-  assert(Math.abs(dialogue.getBoundingClientRect().width / game.getBoundingClientRect().width - .74) < .01, 'Dialogue width is not 74% of the game surface');
+  assert(Math.abs(dialogue.getBoundingClientRect().width / game.getBoundingClientRect().width - .69) < .01, 'Dialogue width is not 74% of the game surface');
   const userSelect = element => {
     const style = getComputedStyle(element);
     return style.userSelect || style.webkitUserSelect;

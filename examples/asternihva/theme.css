@@ -75,7 +75,7 @@
 .game :is(.adv-control, .adv-panel-header h2) { font-family: Ubuntu, "Avenir Next", sans-serif; }
 
 .game {
-  --adv-dialog-width: 74%;
+  --adv-dialog-width: 69%;
   --adv-dialog-height: 20.4%;
   --adv-dialog-padding-top: .75cqw;
   --adv-dialog-padding-bottom: .6cqw;
