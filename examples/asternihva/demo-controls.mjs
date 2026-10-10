@@ -62,6 +62,14 @@ export function attachControls(root, ui, { auto = {} } = {}) {
     }
   });
   root.querySelectorAll('dialog').forEach(panel => panel.addEventListener('keydown', event => event.stopPropagation()));
+  root.querySelector('[data-menu-action="log"]').addEventListener('click', () => {
+    root.querySelector('#menu-panel').close();
+    const panel = root.querySelector('#log-panel');
+    const content = panel.querySelector('.adv-log-content');
+    ui.renderLog(content);
+    panel.showModal();
+    content.scrollTop = content.scrollHeight;
+  });
   root.querySelector('#restart').addEventListener('click', () => location.reload());
   window.addEventListener('pagehide', () => { stop(); stateObserver.disconnect(); pageObserver.disconnect(); }, { once: true });
 }

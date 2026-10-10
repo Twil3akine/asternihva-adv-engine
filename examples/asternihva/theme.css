@@ -45,3 +45,11 @@
 @media (prefers-reduced-motion: reduce) {
   .game::after, .game .adv-choice, .game .adv-choice::before { transition: none; }
 }
+
+.game .adv-menu-panel { width: 25cqw; max-height: 30cqw; padding: 1.8cqw; backdrop-filter: blur(8px); }
+.game .adv-menu-panel h2 { font-size: 1cqw; margin: 0 0 1.2cqw; color: var(--adv-muted-color); }
+.game .adv-menu-items { display: grid; gap: .3cqw; }
+.game .adv-menu-items form { margin: 0; }
+.game .adv-menu-items button { width: 100%; border: 0; border-left: 1px solid transparent; padding: .85cqw 1cqw; text-align: left; font-family: var(--adv-ui-font); font-size: 1.2cqw; transition: background 180ms ease, border-color 180ms ease; }
+.game .adv-menu-items button:hover, .game .adv-menu-items button:focus-visible { color: var(--adv-accent); border-color: var(--adv-accent); background: rgb(255 255 255 / .045); }
+@media (prefers-reduced-motion: reduce) { .game .adv-menu-items button { transition: none; } }

@@ -35,7 +35,14 @@
         <header class="adv-panel-header"><h2>LOG</h2><form method="dialog"><button aria-label="履歴を閉じる">閉じる ×</button></form></header>
         <div class="adv-log-content" role="list" aria-label="発言履歴"></div>
       </dialog>
-      <dialog id="menu-panel" class="adv-panel" aria-label="メニュー"><h2>MENU</h2><p>クリック・Enterで会話を進めます。AUTOは自動送り、SKIPは早送りです。選択肢は手動で選んでください。</p><button id="restart">最初から</button><form method="dialog"><button>会話へ戻る</button></form></dialog>
+      <dialog id="menu-panel" class="adv-panel adv-menu-panel" aria-label="メニュー">
+        <h2>MENU</h2>
+        <nav class="adv-menu-items" aria-label="メニュー操作">
+          <form method="dialog"><button>Resume</button></form>
+          <button data-menu-action="log">Log</button>
+          <button id="restart">Restart</button>
+        </nav>
+      </dialog>
     </main>
     <script type="module" src="./main.mjs"></script>
   </body>
