@@ -250,8 +250,8 @@ export const spriteRendererCss = `
   transform: translateX(-50%);
   transform-origin: 50% 100%;
   opacity: 0;
-  filter: brightness(.72) saturate(.8);
-  transition: opacity .28s ease, filter .28s ease, transform .35s cubic-bezier(.2,.8,.2,1);
+  filter: brightness(var(--adv-unfocus-brightness, .55));
+  transition: opacity var(--adv-focus-duration, 200ms) ease, filter var(--adv-focus-duration, 200ms) ease;
   pointer-events: none;
   display: grid;
   place-items: end center;
@@ -292,10 +292,12 @@ export const spriteRendererCss = `
     calc(-100% * var(--adv-portrait-anchor-y))
   );
 }
-.adv-sprite-character[data-visible="true"] { opacity: 1; }
+.adv-sprite-character[data-visible="true"] { opacity: var(--adv-unfocus-opacity, .82); }
 .adv-sprite-character[data-active="true"] {
-  filter: brightness(1) saturate(1);
-  transform: translateX(-50%) translateY(-1.5%) scale(1.025);
+  filter: brightness(var(--adv-focus-brightness, 1));
+}
+.adv-sprite-character[data-visible="true"][data-active="true"] {
+  opacity: var(--adv-focus-opacity, 1);
 }
 .adv-sprite-character[data-position="far-left"] { left: 10%; }
 .adv-sprite-character[data-position="left"] { left: 28%; }
