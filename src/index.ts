@@ -26,3 +26,4 @@ export type {
 } from "./types.js";
 export { gameViewportCss } from "./ui/game-viewport.js";
 export { defaultThemeCss } from "./ui/theme.js";
+export { calculateAutoDelay, defaultAutoConfig, type AutoConfig } from "./ui/auto-timing.js";

@@ -7,6 +7,7 @@ import {
   spriteRendererCss,
 } from "../../dist/index.js";
 
+import { demoUiConfig } from "./ui-config.mjs";
 import { DemoUi, attachControls } from "./demo-controls.mjs";
 import { loadDemoAssets } from "./demo-assets.mjs";
 
@@ -61,5 +62,5 @@ const ui = new DemoUi({
 });
 const stage = new CharacterStage(stageHost, game.characters, [new SpriteRenderer()]);
 const engine = new AdvEngine({ game, stage, ui });
-attachControls(root, ui);
+attachControls(root, ui, demoUiConfig);
 engine.run();
