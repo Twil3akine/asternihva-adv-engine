@@ -109,8 +109,9 @@
 .game .adv-settings-panel button:disabled { opacity: .4; cursor: default; }
 
 .game .background { background: linear-gradient(135deg, #080f20 0%, #172b46 65%, #0a1427 100%); }
-.game .adv-scenario-title { color: #dce2ed; }
-.game .adv-scenario-title { width: 24cqw; max-width: 42cqw; font: 500 2cqw/1.3 var(--adv-ui-font); letter-spacing: .015em; opacity: 1; text-shadow: 0 2px 12px rgb(0 0 0 / .9); }
-.game .adv-scenario-title[data-has-chapter="true"]::first-line { color: var(--adv-accent); font-size: .78cqw; letter-spacing: .16em; }
-.game .adv-scenario-title[data-has-title="false"] { font-size: .78cqw; letter-spacing: .16em; }
+.game .adv-scenario-title { color: #e5e8ef; }
+.game .adv-scenario-title { width: 28cqw; max-width: 42cqw; font: 500 1.65cqw/1.45 var(--adv-ui-font); letter-spacing: .02em; opacity: 1; text-shadow: 0 2px 12px rgb(0 0 0 / .95); }
+.game .adv-scenario-title[data-has-chapter="true"]::first-line { color: var(--adv-accent); font-size: .8cqw; letter-spacing: .18em; }
+.game .adv-scenario-title[data-has-title="false"] { font-size: .8cqw; letter-spacing: .18em; }
+.game[data-mode="intro"] .adv-scenario-title { visibility: hidden; }
 .game[data-debug="true"] .brand { top: 12%; }
