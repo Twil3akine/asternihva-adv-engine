@@ -264,6 +264,7 @@ export const spriteRendererCss = `
   filter: drop-shadow(0 18px 30px rgb(0 0 0 / .28));
 }
 .adv-sprite-visual {
+  isolation: isolate;
   position: relative;
   display: grid;
   place-items: end center;
@@ -272,6 +273,10 @@ export const spriteRendererCss = `
   min-width: 0;
   min-height: 0;
   transform-origin: 50% 100%;
+}
+.adv-sprite-visual img {
+  /* Add complementary fade weights without revealing the background. */
+  mix-blend-mode: plus-lighter;
 }
 .adv-sprite-character[data-display-mode="portrait"] { overflow: hidden; }
 .adv-sprite-character[data-display-mode="portrait"] img {
