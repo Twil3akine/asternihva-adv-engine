@@ -150,3 +150,19 @@ test("sprite initial fallback and legacy flat assets remain supported", async (t
   assert.deepEqual(host.children.map((root) => root.children[0].children[0].src),
     ["normal.svg", "default.svg", "smile.svg", undefined]);
 });
+
+test('sprite lazily decodes only its initial expression and loads another expression on demand once', async t => {
+  const previousDocument = globalThis.document;
+  const loads = [];
+  globalThis.document = { createElement(tag) { const element = new Element(); element.decode = () => { loads.push(element.src); return Promise.resolve(); }; return element; } };
+  t.after(() => { globalThis.document = previousDocument; });
+  const character = new SpriteRenderer({ crossfadeDuration: 0 }).create(new Element(), {
+    id: 'a', name: 'Alice', renderer: 'sprite', assets: { expressions: { normal: 'normal.svg', smile: 'smile.svg', unused: 'unused.svg' } },
+  });
+  await character.show();
+  assert.deepEqual(loads, ['normal.svg']);
+  await character.setExpression('smile');
+  await character.setExpression('normal');
+  await character.setExpression('smile');
+  assert.deepEqual(loads, ['normal.svg', 'smile.svg']);
+});

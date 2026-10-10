@@ -38,9 +38,15 @@ test("demo without a local manifest keeps a usable placeholder scenario", async 
 });
 
 test("missing local image falls back for one character without changing the others", async () => {
-  const result = await loadDemoAssets(fetchReady, async source => !source.endsWith("Seren_smile.png"));
-  assert.deepEqual(result.missing, ["Seren_smile.png"]);
+  const result = await loadDemoAssets(fetchReady, async source => !source.endsWith("Seren_neutral.png"));
+  assert.deepEqual(result.missing, ["Seren_neutral.png"]);
   assert.deepEqual(result.characters.map(character => character.local), [true, false, true]);
   assert.ok(result.characters[1].assets.expressions.normal.endsWith("seren-normal.svg"));
   assert.ok(result.characters[0].assets.expressions.normal.endsWith("Noah_neutral.png"));
+});
+
+test('demo probes only each character initial expression and never decodes unused assets', async () => {
+  const probes = [];
+  await loadDemoAssets(fetchReady, async source => { probes.push(source.split('/').pop()); return true; });
+  assert.deepEqual(probes.sort(), ['Luminal_neutral.png', 'Noah_neutral.png', 'Seren_neutral.png']);
 });

@@ -99,7 +99,6 @@ class SpriteCharacter implements SpriteRenderedCharacter {
     this.#visual.append(this.#image);
     host.append(this.#root);
 
-    for (const source of Object.values(this.#expressions)) this.#load(source);
     const initial = [character.defaultExpression, "normal", "default"]
       .find((name) => name !== undefined && this.#expressions[name]);
     this.#initial = this.setExpression(initial ?? Object.keys(this.#expressions)[0] ?? "");
@@ -217,7 +216,10 @@ class SpriteCharacter implements SpriteRenderedCharacter {
     if (cached) return cached;
     const image = document.createElement("img");
     image.src = source;
-    const loaded = image.decode().then(() => true, () => false);
+    const loaded = image.decode().then(() => true, () => {
+      this.#loads.delete(source);
+      return false;
+    });
     this.#loads.set(source, loaded);
     return loaded;
   }

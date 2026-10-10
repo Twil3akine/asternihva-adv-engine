@@ -3,19 +3,13 @@ import { assetManifest } from "./asset-manifest.mjs";
 const base = new URL("./", import.meta.url);
 const localRoot = new URL("public/characters/", base);
 
-async function decodeImage(source) {
-  const image = new Image();
-  image.src = source;
-  try {
-    await image.decode();
-    return true;
-  } catch {
-    return false;
-  }
+async function assetExists(source) {
+  try { return (await fetch(source, { method: "HEAD" })).ok; }
+  catch { return false; }
 }
 
 /** Demo-only discovery; private images are never needed by the engine build. */
-export async function loadDemoAssets(fetchManifest = fetch, probeImage = decodeImage) {
+export async function loadDemoAssets(fetchManifest = fetch, probeImage = assetExists) {
   let ready;
   try {
     const response = await fetchManifest(new URL(".local-assets.json", localRoot), { cache: "no-store" });
@@ -29,12 +23,14 @@ export async function loadDemoAssets(fetchManifest = fetch, probeImage = decodeI
     const expressions = Object.fromEntries(Object.entries(definition.expressions)
       .map(([id, filename]) => [id, new URL(`${definition.id}/${filename}`, localRoot).href]));
     const entries = Object.entries(expressions);
-    const availability = ready?.version === 1
-      ? await Promise.all(entries.map(async ([id, source]) => {
-          if (ready.characters?.[definition.id]?.[id] !== `${definition.id}/${definition.expressions[id]}`) return false;
-          try { return await probeImage(source); } catch { return false; }
-        }))
-      : entries.map(() => false);
+    const availability = entries.map(([id]) => ready?.version === 1 &&
+      ready.characters?.[definition.id]?.[id] === `${definition.id}/${definition.expressions[id]}`);
+    // Check only the first required expression. Other images load on demand in the renderer.
+    const initialIndex = entries.findIndex(([id]) => id === definition.defaultExpression);
+    if (availability[initialIndex]) {
+      try { availability[initialIndex] = await probeImage(entries[initialIndex][1]); }
+      catch { availability[initialIndex] = false; }
+    }
     const local = availability.every(Boolean);
     entries.forEach(([id], index) => {
       if (!availability[index]) missing.push(definition.expressions[id]);
