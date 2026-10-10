@@ -149,8 +149,12 @@ export async function testDemoPlay() {
   const dialogue = document.querySelector('#dialogue'), text = document.querySelector('#text');
   const height = dialogue.getBoundingClientRect().height;
   assert(Math.abs(dialogue.getBoundingClientRect().width / game.getBoundingClientRect().width - .74) < .01, 'Dialogue width is not 74% of the game surface');
-  assert(getComputedStyle(text).userSelect === 'none', 'Dialogue text can be selected');
-  assert(getComputedStyle(document.querySelector('#log-panel .adv-log-content')).userSelect === 'text', 'LOG text cannot be selected');
+  const userSelect = element => {
+    const style = getComputedStyle(element);
+    return style.userSelect || style.webkitUserSelect;
+  };
+  assert(userSelect(text) === 'none', 'Dialogue text can be selected');
+  assert(userSelect(document.querySelector('#log-panel .adv-log-content')) === 'text', 'LOG text cannot be selected');
   const openingBackground = document.querySelector('.adv-background-image');
   const stageRoots = [...document.querySelectorAll('#stage .adv-sprite-character')];
   assert(openingBackground?.src.endsWith('/room-night-window.png'), 'Opening narration is not framed on the window');
@@ -221,7 +225,7 @@ export async function testDemoPlay() {
       document.querySelector('[data-control="log"]').click();
       const panel = document.querySelector('#log-panel');
       assert(panel.open && panel.textContent.includes('今度は私ひとりの記憶にはならないから。'), 'Backlog did not preserve full node text');
-      assert(getComputedStyle(panel.querySelector('.adv-log-content')).userSelect === 'text', 'LOG copy text is disabled');
+      assert(userSelect(panel.querySelector('.adv-log-content')) === 'text', 'LOG copy text is disabled');
       panel.close(); checkedLog = true;
     }
     if (Number(game.dataset.page) > 1) longPages++;

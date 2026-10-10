@@ -27,5 +27,6 @@ test("the end card replaces the dialogue surface and dims the stage", async () =
   assert.match(html, /id="end-card"[^>]*hidden/);
   assert.match(html, /もう一度読む/);
   assert.match(css, /\.game\[data-mode="ended"\] #dialogue\s*\{\s*display:\s*none/);
+  assert.match(css, /\.game\[data-mode="ended"\] \.adv-scenario-title\s*\{\s*visibility:\s*hidden/);
   assert.match(css, /\.game\[data-mode="ended"\]::after\s*\{\s*opacity:\s*\.64/);
 });
