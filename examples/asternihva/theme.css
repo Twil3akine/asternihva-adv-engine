@@ -59,6 +59,16 @@
 @keyframes episode-title-in { from { opacity: 0; } to { opacity: 1; } }
 .game[data-ui-animation="off"] .episode-title { animation: none; transition: none; }
 @media (prefers-reduced-motion: reduce) { .game .episode-title { animation: none; transition: none; } }
+.game[data-mode="ended"] #dialogue { display: none; }
+.game[data-mode="ended"]::after { opacity: .64; }
+.game .end-card { position: absolute; z-index: 120; inset: 0; display: grid; align-content: center; justify-items: center; gap: 1.15cqw; color: #f3f4f7; text-align: center; text-shadow: 0 2px 16px rgb(0 0 0 / .9); }
+.game .end-card[hidden] { display: none; }
+.game .end-card__chapter { color: var(--adv-accent); font: 500 .9cqw/1.2 Ubuntu, sans-serif; letter-spacing: .24em; }
+.game .end-card__title { margin: 0; font: 500 2.25cqw/1.3 "Zen Kaku Gothic New", sans-serif; letter-spacing: .08em; }
+.game .end-card__replay { margin-top: .6cqw; border: 1px solid rgb(239 212 119 / .32); border-radius: .25cqw; padding: .65cqw 1.3cqw; background: rgb(6 11 25 / .4); color: var(--adv-text-color); font: 400 1.05cqw/1.4 "Zen Kaku Gothic New", sans-serif; cursor: pointer; transition: color 180ms ease, border-color 180ms ease, background 180ms ease; }
+.game .end-card__replay:hover, .game .end-card__replay:focus-visible { color: var(--adv-accent); border-color: var(--adv-accent); background: rgb(239 212 119 / .07); }
+.game[data-ui-animation="off"] .end-card__replay { transition: none; }
+@media (prefers-reduced-motion: reduce) { .game .end-card__replay { transition: none; } }
 .game :is(.adv-dialogue, .adv-choice, .adv-menu-panel, .adv-settings-panel, .adv-log-content) { font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; }
 .game :is(.adv-speaker, .adv-log-name) { font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; font-weight: 500; }
 .game :is(.adv-control, .adv-scenario-title, .adv-panel-header h2) { font-family: Ubuntu, "Avenir Next", sans-serif; }

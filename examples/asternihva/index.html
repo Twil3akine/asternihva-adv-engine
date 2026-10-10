@@ -36,6 +36,11 @@
         </nav>
       </section>
       <div id="choices" class="adv-choices" role="group" aria-label="選択肢"></div>
+      <section id="end-card" class="end-card" aria-live="polite" aria-labelledby="end-title" hidden>
+        <span class="end-card__chapter">— END —</span>
+        <h1 id="end-title" class="end-card__title"></h1>
+        <button class="end-card__replay" data-replay>もう一度読む</button>
+      </section>
       <dialog id="log-panel" class="adv-panel adv-log-panel" aria-label="会話履歴">
         <header class="adv-panel-header"><h2>LOG</h2><form method="dialog"><button aria-label="履歴を閉じる">閉じる ×</button></form></header>
         <div class="adv-log-content" role="list" aria-label="発言履歴"></div>

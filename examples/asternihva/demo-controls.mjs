@@ -25,15 +25,26 @@ export async function presentEpisodeTitle(root, element, metadata, { durationMs 
 
 export class DemoUi extends DomUi {
   history = [];
-  constructor(elements, { resolveIcon, ...uiOptions } = {}) {
+  constructor(elements, { resolveIcon, endCard, scenario, ...uiOptions } = {}) {
     super(elements, uiOptions);
     this.resolveIcon = resolveIcon;
+    this.endCard = endCard;
+    this.scenario = scenario;
+    this.root = elements.root;
+    this.endCard?.querySelector('.end-card__replay')?.addEventListener('click', () => location.reload());
   }
   renderLog(container) { renderLogEntries(container, this.history, this.resolveIcon); }
   presentLine(line) {
     // Keep the original full node text; pagination never changes the backlog.
     this.history.push(createLogEntry(line));
     return super.presentLine(line);
+  }
+  presentEnd() {
+    super.presentEnd();
+    this.root.querySelectorAll('dialog[open]').forEach(panel => panel.close());
+    const title = this.endCard?.querySelector('#end-title');
+    if (title) title.textContent = this.scenario?.title ?? '';
+    if (this.endCard) this.endCard.hidden = false;
   }
 }
 
