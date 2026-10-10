@@ -23,6 +23,12 @@ const style = document.createElement("style");
 style.textContent = gameViewportCss + spriteRendererCss + domUiCss;
 document.head.append(style);
 
+await Promise.all([
+  document.fonts.load('400 16px "Zen Kaku Gothic New"', "日本語の表示を確認します"),
+  document.fonts.load('500 16px "Zen Kaku Gothic New"', "Noah セレナ"),
+  document.fonts.load('400 16px Ubuntu', "EP.00 AUTO MENU"),
+].map(promise => promise.catch(() => [])));
+
 const motions = {
   bounce: { keyframes: [{ translate: "0 0" }, { translate: "0 -8px" }, { translate: "0 0" }], duration: 620 },
   nod: { keyframes: [{ rotate: "0deg" }, { rotate: "1deg" }, { rotate: "0deg" }], duration: 580 },

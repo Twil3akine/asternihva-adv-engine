@@ -1,4 +1,33 @@
 /* All project-specific colors and decoration live in the example. */
+@font-face {
+  font-family: "Zen Kaku Gothic New";
+  src: url("./public/fonts/ZenKakuGothicNew-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Zen Kaku Gothic New";
+  src: url("./public/fonts/ZenKakuGothicNew-Medium.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 500 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: Ubuntu;
+  src: url("./public/fonts/Ubuntu-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: Ubuntu;
+  src: url("./public/fonts/Ubuntu-Medium.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 500 600;
+  font-display: swap;
+}
+
 .game {
   --adv-text-font: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
   --adv-ui-font: Ubuntu, "Avenir Next", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
@@ -19,6 +48,9 @@
 .game .adv-control[aria-pressed="true"] { color: var(--adv-accent); }
 
 .game .adv-panel h2 { font-family: var(--adv-ui-font); font-weight: 500; letter-spacing: .12em; }
+.game :is(.adv-dialogue, .adv-choice, .adv-menu-panel, .adv-settings-panel, .adv-log-content) { font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; }
+.game :is(.adv-speaker, .adv-log-name) { font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; font-weight: 500; }
+.game :is(.adv-control, .adv-scenario-title, .adv-panel-header h2) { font-family: Ubuntu, "Avenir Next", sans-serif; }
 
 .game {
   --adv-dialog-width: 84%;
