@@ -15,7 +15,7 @@ export const assetManifest = [
       surprised: 'Noah_surprised.png',
       troubled: 'Noah_troubled.png',
     },
-    logPortrait: { scale: 5.2, anchorX: 0.5, anchorY: 0.163 },
+    logPortrait: { scale: 6.1, anchorX: 0.5, anchorY: 0.151 },
     portrait: { scale: 1.5, anchorX: 0.5, anchorY: -0.04 },
   },
   {
@@ -34,7 +34,7 @@ export const assetManifest = [
       surprised: 'Seren_surprised.png',
       troubled: 'Seren_troubled.png',
     },
-    logPortrait: { scale: 5.3, anchorX: 0.5, anchorY: 0.156 },
+    logPortrait: { scale: 6.0, anchorX: 0.5, anchorY: 0.146 },
     portrait: { scale: 1.5, anchorX: 0.5, anchorY: -0.04 },
   },
   {
@@ -53,7 +53,7 @@ export const assetManifest = [
       surprised: 'Luminal_surprised.png',
       troubled: 'Luminal_troubled.png',
     },
-    logPortrait: { scale: 5.3, anchorX: 0.5, anchorY: 0.167 },
+    logPortrait: { scale: 6.2, anchorX: 0.5, anchorY: 0.155 },
     portrait: { scale: 1.5, anchorX: 0.5, anchorY: -0.04 },
   },
 ];
