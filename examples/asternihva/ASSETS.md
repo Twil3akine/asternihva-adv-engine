@@ -10,13 +10,13 @@ npm run build
 npm run serve:example
 ```
 
-既定のコピー元は `/Users/rutt/mein/Asternihva Project/Image/standings/emotion` です。スクリプトは元画像を読み取るだけで、削除・改名・上書きしません。コピー先 `public/characters/` と導入済みmanifestはGit除外対象です。既存のコピー先に異なる内容がある場合は上書きせず停止します。
+既定のコピー元は `/Users/rutt/mein/Asternihva Project/Image/Standings/emotion` です。スクリプトは元画像を読み取るだけで、削除・改名・上書きしません。コピー先 `public/characters/` と導入済みmanifestはGit除外対象です。既存のコピー先に異なる内容がある場合は上書きせず停止します。更新素材を反映するときは `node scripts/import-asternihva-assets.mjs --replace-existing` を指定すると、Demo用コピーだけを置換します。
 
 画像が未導入・不足・読み込み失敗の場合は、該当キャラクターを既存SVGへ切り替え、画面上に案内します。他のキャラクターは実PNGを使用できます。画像の有無はEngineのbuild/testに影響しません。
 
 ## 確認した素材とexpression ID
 
-30枚すべて1024×1536、8bit RGBAの透過PNGです。各キャラクター10種類です。`neutral`だけを初期表情ID `normal` に対応させ、その他はファイル名の綴りを保持しています。
+30枚すべて4096×6144、8bit RGBAの透過PNGです。各キャラクター10種類です。`neutral`だけを初期表情ID `normal` に対応させ、その他はファイル名の綴りを保持しています。
 
 | ID | Noah | Seren | Luminal |
 |---|---|---|---|
@@ -32,6 +32,8 @@ npm run serve:example
 | troubled | Noah_troubled.png | Seren_troubled.png | Luminal_troubled.png |
 
 `Seren_embarrased.png` の綴り、および `relax` / `relaxed` の違いは素材名のままです。意図を推測して統一していません。冒頭は3人それぞれ `normal → smile → surprised` とmotionを確認できます。確認したNoahの3差分には、ドローンや巨大剣は含まれていません。
+
+LOGの顔アイコンは発言時のexpressionを同じ対応表から解決します。3人とも `logPortrait: { scale: 3.8, anchorX: 0.5, anchorY: 0.15 }` を使い、元画像を加工せず円形領域へ表示します。
 
 ## 表示設定
 
