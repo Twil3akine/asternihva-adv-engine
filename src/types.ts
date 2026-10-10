@@ -133,6 +133,7 @@ export interface RenderedCharacter {
   hide(): void | Promise<void>;
   setExpression(name: string): void | Promise<void>;
   playMotion(name: string): void | Promise<void>;
+  stopMotion?(): void;
   setPosition(position: StagePosition): void | Promise<void>;
   setActive?(active: boolean): void;
   destroy(): void;

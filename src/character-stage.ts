@@ -12,6 +12,7 @@ interface CharacterEntry {
 }
 
 export class CharacterStage {
+  #motionEnabled = true;
   readonly #characters = new Map<string, CharacterEntry>();
 
   constructor(
@@ -32,6 +33,11 @@ export class CharacterStage {
       const instance = renderer.create(host, character);
       this.#characters.set(character.id, { definition: character, instance, expression: character.defaultExpression });
     }
+  }
+
+  setMotionEnabled(enabled: boolean): void {
+    this.#motionEnabled = enabled;
+    if (!enabled) for (const entry of this.#characters.values()) entry.instance.stopMotion?.();
   }
 
   getName(characterId: string): string | undefined {
@@ -60,7 +66,7 @@ export class CharacterStage {
     if (command.show === true) {
       await instance.show();
     }
-    if (command.motion !== undefined) {
+    if (command.motion !== undefined && this.#motionEnabled) {
       await instance.playMotion(command.motion);
     }
     if (command.show === false) {

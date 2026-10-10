@@ -1,4 +1,4 @@
-import { DomUi, calculateAutoDelay } from "../../dist/index.js";
+import { DomUi, calculateAutoDelay, getAutoDelayMultiplier } from "../../dist/index.js";
 
 import { createLogEntry, renderLogEntries } from "./demo-log.mjs";
 
@@ -16,7 +16,7 @@ export class DemoUi extends DomUi {
   }
 }
 
-export function attachControls(root, ui, { auto = {} } = {}) {
+export function attachControls(root, ui, { auto = {} } = {}, settings) {
   const controls = root.querySelector('#controls');
   let mode, timer;
   const stop = () => {
@@ -28,12 +28,13 @@ export function attachControls(root, ui, { auto = {} } = {}) {
     clearTimeout(timer);
     if (root.dataset.mode === 'ended') { stop(); return; }
     if (!mode || root.dataset.mode !== 'line' || root.querySelector('dialog[open]')) return;
-    const delay = mode === 'skip' ? 150 : calculateAutoDelay(root.querySelector('#text').textContent, auto);
+    const delay = mode === 'skip' ? 150 : Math.round(calculateAutoDelay(root.querySelector('#text').textContent, auto) * (settings ? getAutoDelayMultiplier(settings.value) : 1));
     timer = setTimeout(() => {
       if (mode && root.dataset.mode === 'line' && !root.querySelector('dialog[open]')) root.querySelector('#dialogue').click();
       // The next visible page/node reschedules through its DOM update.
     }, delay);
   };
+  const unsubscribeSettings = settings?.subscribe(schedule);
   const stateObserver = new MutationObserver(schedule);
   stateObserver.observe(root, { attributes: true, attributeFilter: ['data-mode', 'data-page'] });
   const pageObserver = new MutationObserver(schedule);
@@ -71,5 +72,5 @@ export function attachControls(root, ui, { auto = {} } = {}) {
     content.scrollTop = content.scrollHeight;
   });
   root.querySelector('#restart').addEventListener('click', () => location.reload());
-  window.addEventListener('pagehide', () => { stop(); stateObserver.disconnect(); pageObserver.disconnect(); }, { once: true });
+  window.addEventListener('pagehide', () => { stop(); stateObserver.disconnect(); pageObserver.disconnect(); unsubscribeSettings?.(); }, { once: true });
 }

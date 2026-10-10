@@ -30,10 +30,17 @@ export class DomUi implements UiAdapter {
   #cleanup?: () => void;
   #background?: BackgroundPresenter;
   readonly #options: DomUiOptions;
+  #animationsEnabled = true;
 
   constructor(elements: DomUiElements, options: DomUiOptions = {}) {
     this.#options = options;
     this.#elements = elements;
+  }
+
+  setAnimationsEnabled(enabled: boolean): void {
+    this.#animationsEnabled = enabled;
+    this.#elements.root.dataset.uiAnimation = enabled ? "on" : "off";
+    this.#background?.setAnimationsEnabled(enabled);
   }
 
   setTitle(title?: string): void {
@@ -53,6 +60,7 @@ export class DomUi implements UiAdapter {
 
   presentBackground(background?: BackgroundDefinition): Promise<void> {
     this.#background ??= new BackgroundPresenter(this.#elements.background, this.#options.background);
+    this.#background.setAnimationsEnabled(this.#animationsEnabled);
     return this.#background.set(background);
   }
 
@@ -293,6 +301,13 @@ export const domUiCss = defaultThemeCss + backgroundPresenterCss + `
 .adv-viewport[data-speaker=""] .adv-sprite-character[data-visible="true"] {
   filter: brightness(var(--adv-narration-brightness));
   opacity: var(--adv-narration-opacity);
+}
+.adv-viewport[data-ui-animation="off"] { --adv-transition-duration: 0ms; --adv-choice-duration: 0ms; --adv-focus-duration: 0ms; }
+.adv-viewport[data-ui-animation="off"] :is(.adv-dialogue, .adv-choices, .adv-choice, .adv-panel, .adv-panel button),
+.adv-viewport[data-ui-animation="off"]::after { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .adv-viewport { --adv-transition-duration: 0ms; --adv-choice-duration: 0ms; --adv-focus-duration: 0ms; }
+  .adv-dialogue, .adv-choices, .adv-choice { animation: none; transition: none; }
 }
 @keyframes adv-dialogue-in { from { opacity: 0; } to { opacity: 1; } }
 `;

@@ -176,6 +176,11 @@ class SpriteCharacter implements SpriteRenderedCharacter {
     });
   }
 
+  stopMotion(): void {
+    this.#motion?.cancel();
+    this.#motion = undefined;
+  }
+
   setPosition(position: StagePosition): void {
     if (typeof position === "string") {
       this.#root.dataset.position = position;
