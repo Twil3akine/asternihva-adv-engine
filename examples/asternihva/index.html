@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Asternihva — web-adv-engine demo</title>
+    <title>Asternihva</title>
     <link rel="stylesheet" href="./style.css" />
     <link rel="stylesheet" href="./theme.css" />
   </head>
@@ -11,11 +11,11 @@
     <main id="game" class="game adv-viewport">
       <div id="background" class="background adv-background"></div>
       <div class="shade"></div>
-      <header class="brand">
+      <header class="brand" data-debug-panel hidden>
         <span>web-adv-engine / example</span>
         <strong id="title"></strong>
       </header>
-      <p id="asset-status" class="asset-status" role="status"></p>
+      <p id="asset-status" class="asset-status" role="status" hidden></p>
       <div class="stage-window adv-character-layer">
         <section id="stage" class="stage" aria-label="character stage"></section>
       </div>

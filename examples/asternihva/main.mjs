@@ -1,7 +1,6 @@
 import {
   AdvEngine,
   CharacterStage,
-  DomUi,
   SpriteRenderer,
   domUiCss,
   gameViewportCss,
@@ -24,15 +23,22 @@ const motions = {
   pulse: { keyframes: [{ scale: 1, opacity: 1 }, { scale: 1.02, opacity: 1 }, { scale: 1, opacity: 1 }], duration: 620 },
 };
 
+const debug = new URLSearchParams(location.search).get("debug") === "1";
 const loaded = await loadDemoAssets();
 const status = document.querySelector("#asset-status");
+const gameRoot = document.querySelector("#game");
+gameRoot.dataset.debug = String(debug);
+document.querySelector("[data-debug-panel]").hidden = !debug;
+status.hidden = !debug && !loaded.missing.length;
 status.textContent = loaded.missing.length
-  ? "ローカル画像が未導入または不足しています。該当キャラクターは仮画像で表示します。node scripts/import-asternihva-assets.mjsで導入できます。"
-  : "ローカルPNGを表示しています。狭い画面では立ち絵の欄を横にスクロールできます。";
-document.querySelector("#game").dataset.assets = loaded.missing.length ? "fallback" : "local";
+  ? debug
+    ? "ローカル画像が不足しています。node scripts/import-asternihva-assets.mjsで導入できます。"
+    : "立ち絵が未導入のため、仮画像で表示しています。"
+  : "Local PNG / expression crossfade / motion";
+gameRoot.dataset.assets = loaded.missing.length ? "fallback" : "local";
 
 const game = {
-  title: "Asternihva Project — engine demo",
+  title: "Asternihva Project",
   start: "intro",
   characters: loaded.characters.map(({ local, ...character }) => ({
     ...character,

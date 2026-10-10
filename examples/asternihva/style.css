@@ -13,3 +13,8 @@ button { font: inherit; }
 .brand { position: absolute; z-index: 120; top: 3%; left: 3%; display: grid; gap: 4px; }
 .brand span { font-size: .75rem; letter-spacing: .16em; opacity: .72; text-transform: uppercase; }
 .brand strong { font-size: 1.5rem; font-weight: 500; }
+[hidden] { display: none !important; }
+.game[data-debug="true"] .brand { padding: .5cqw .8cqw; background: rgb(5 7 16 / .8); }
+.game[data-debug="true"] .brand strong { font-size: 1cqw; }
+.game[data-debug="true"] .brand span { font-size: .7cqw; }
+.asset-status { top: 3%; left: auto; right: 3%; max-width: 45%; padding: .5cqw .8cqw; background: rgb(5 7 16 / .8); font-size: .8cqw; }
