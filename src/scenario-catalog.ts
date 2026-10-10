@@ -4,6 +4,7 @@ import type { GameDefinition, ScenarioMetadata } from "./types.js";
 export interface ScenarioCatalogMetadata extends ScenarioMetadata {
   id: string;
   description?: string;
+  order?: number;
 }
 
 export interface ScenarioCatalogEntry extends ScenarioCatalogMetadata {
@@ -18,6 +19,7 @@ export interface ScenarioPlayback {
 
 /** Ordered scenario definitions. Navigation and presentation remain with the game shell. */
 export class ScenarioCatalog {
+  #currentId?: string;
   readonly #entries = new Map<string, ScenarioCatalogEntry>();
 
   constructor(entries: readonly ScenarioCatalogEntry[] = []) {
@@ -30,7 +32,9 @@ export class ScenarioCatalog {
   }
 
   getScenarios(): readonly Readonly<ScenarioCatalogMetadata>[] {
-    return Array.from(this.#entries.keys(), id => this.getScenarioMetadata(id)!);
+    return Array.from(this.#entries.keys(), id => this.getScenarioMetadata(id)!).sort((a, b) =>
+      (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER) ||
+      (a.chapter ?? "").localeCompare(b.chapter ?? "", undefined, { numeric: true }));
   }
 
   getScenarioMetadata(id: string): Readonly<ScenarioCatalogMetadata> | undefined {
@@ -40,8 +44,18 @@ export class ScenarioCatalog {
       id: item.id,
       chapter: item.chapter ?? item.entry.scenario?.chapter,
       title: item.title ?? item.entry.scenario?.title,
-      description: item.description,
+      description: item.description ?? item.entry.scenario?.description,
+      order: item.order ?? item.entry.scenario?.order,
     });
+  }
+
+  getScenario(id: string): Readonly<ScenarioCatalogEntry> | undefined {
+    const item = this.#entries.get(id);
+    return item ? Object.freeze({ ...item, ...this.getScenarioMetadata(id) }) : undefined;
+  }
+
+  getCurrentScenario(): Readonly<ScenarioCatalogEntry> | undefined {
+    return this.#currentId ? this.getScenario(this.#currentId) : undefined;
   }
 
   /** Starts a fresh engine; the caller owns its stage/UI and eventual destruction. */
@@ -53,6 +67,7 @@ export class ScenarioCatalog {
       ...item.entry,
       scenario: { id, chapter: metadata.chapter, title: metadata.title },
     } });
+    this.#currentId = id;
     return { engine, finished: engine.run() };
   }
 }

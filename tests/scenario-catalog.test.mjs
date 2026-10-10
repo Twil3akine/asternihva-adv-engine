@@ -34,3 +34,16 @@ test('catalog is optional and direct engine execution remains supported', async 
   await engine.run();
   assert.equal(engine.ended, true);
 });
+
+test('catalog looks up three definitions, sorts by order, and tracks the current scenario', async () => {
+  const entries = [2, 0, 1].map(order => ({ id: `s${order}`, entry: { ...game, scenario: { id: `s${order}`, chapter: `CH.${order}`, title: 'Test scene', order } } }));
+  const catalog = new ScenarioCatalog(entries);
+  assert.deepEqual(catalog.getScenarios().map(item => item.id), ['s0', 's1', 's2']);
+  assert.equal(catalog.getCurrentScenario(), undefined);
+  assert.equal(catalog.getScenario('s1').entry, entries[2].entry);
+  assert.equal(catalog.getScenario('invalid'), undefined);
+  await catalog.startScenario('s1', options()).finished;
+  assert.equal(catalog.getCurrentScenario().id, 's1');
+  assert.throws(() => catalog.startScenario('invalid', options()), /Unknown scenario/);
+  assert.equal(catalog.getCurrentScenario().id, 's1');
+});
