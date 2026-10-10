@@ -24,7 +24,7 @@ export function attachSettings(root, settings, { ui, stage }) {
     settings.update({ [button.dataset.setting]: value === 'true' ? true : value === 'false' ? false : value });
   });
   const updateFullscreen = () => {
-    const supported = document.fullscreenEnabled && typeof root.requestFullscreen === 'function';
+    const supported = document.fullscreenEnabled && typeof document.documentElement.requestFullscreen === 'function';
     fullscreen.disabled = !supported;
     fullscreen.textContent = document.fullscreenElement ? 'Exit Fullscreen' : 'Enter Fullscreen';
     fullscreen.setAttribute('aria-pressed', String(Boolean(document.fullscreenElement)));
@@ -34,7 +34,7 @@ export function attachSettings(root, settings, { ui, stage }) {
   fullscreen.addEventListener('click', async () => {
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
-      else await root.requestFullscreen();
+      else await document.documentElement.requestFullscreen();
       fullscreen.removeAttribute('data-error');
     } catch {
       fullscreen.dataset.error = 'unavailable';

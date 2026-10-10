@@ -230,3 +230,25 @@ export async function testAssetsAndSettings() {
     }
   }
 }
+
+/** Fullscreen needs an actual browser user gesture; unsupported browsers return explicitly. */
+export async function testFullscreen() {
+  await until(() => document.querySelector('#game').dataset.mode === 'line', 'Demo did not enter dialogue');
+  const { menu, panel } = await openSettings();
+  const button = document.querySelector('#fullscreen');
+  if (button.disabled) { panel.close(); menu.close(); return { fullscreenSupported: false }; }
+  try {
+    button.click();
+    await until(() => Boolean(document.fullscreenElement) || button.dataset.error, 'Fullscreen did not respond');
+    assert(document.fullscreenElement, 'Browser denied fullscreen: ' + button.textContent);
+    const rect = document.querySelector('#game').getBoundingClientRect();
+    assert(Math.abs(rect.width / rect.height - 16 / 9) < .001, 'Fullscreen stretched the game viewport');
+    assert(rect.width <= innerWidth + 1 && rect.height <= innerHeight + 1, 'Fullscreen viewport does not fit');
+    await document.exitFullscreen();
+    await until(() => !document.fullscreenElement, 'Fullscreen did not exit');
+    return { fullscreenSupported: true, entered: true, ratio: rect.width / rect.height, exited: true };
+  } finally {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    panel.close(); menu.close();
+  }
+}
