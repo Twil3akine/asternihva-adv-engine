@@ -1,7 +1,7 @@
 import { renderChapterSelect } from './chapter-select.mjs';
 
 /** Navigation only. Scenario execution and game UI stay in their existing modules. */
-export function attachGameShell(root, catalog, { onStart, onLeave, onSettings }) {
+export function attachGameShell(root, catalog, { onStart, onLeave, onSettings, progress }) {
   const title = root.querySelector('#title-screen');
   const chapters = root.querySelector('#chapter-screen');
   let currentId;
@@ -14,7 +14,7 @@ export function attachGameShell(root, catalog, { onStart, onLeave, onSettings })
     root.dataset.mode = screen;
     title.hidden = screen !== 'title';
     chapters.hidden = screen !== 'chapter';
-    if (screen === 'chapter') renderChapterSelect(root.querySelector('#chapter-list'), catalog, start, currentId).focus();
+    if (screen === 'chapter') renderChapterSelect(root.querySelector('#chapter-list'), catalog, start, currentId ?? progress?.snapshot().lastPlayedId, progress).focus();
     else title.querySelector('button')?.focus();
   };
   const start = async id => {
@@ -29,7 +29,10 @@ export function attachGameShell(root, catalog, { onStart, onLeave, onSettings })
     try {
       const playback = await onStart(id);
       starting = false;
-      playback.finished.catch(error => {
+      progress?.markPlayed(id);
+      playback.finished.then(() => {
+        if (token === generation) progress?.markCompleted(id);
+      }).catch(error => {
         if (token === generation) {
           show('chapter');
           root.querySelector('#asset-status').hidden = false;

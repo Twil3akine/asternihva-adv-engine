@@ -9,6 +9,8 @@ import {
   spriteRendererCss,
 } from "../../dist/index.js";
 
+import { ChapterProgressStore } from "../../dist/web.js";
+
 import { backgroundManifest, initialBackground } from "./background-manifest.mjs";
 import { stageLayoutManifest } from "./stage-layout-manifest.mjs";
 import { assetManifest } from "./asset-manifest.mjs";
@@ -76,6 +78,7 @@ let shell, controls;
 let settingsStorage;
 try { settingsStorage = localStorage; } catch { /* Settings still work without persistence. */ }
 const settings = new GameSettingsStore(settingsStorage);
+const progress = new ChapterProgressStore(settingsStorage, "asternihva.chapter-progress");
 const scenarioEntries = localScenarios.map(definition => ({
   ...definition.scenario, entry: { ...sharedGame, ...definition },
 }));
@@ -109,6 +112,7 @@ attachSettings(root, settings, {
   },
 });
 shell = attachGameShell(root, catalog, {
+  progress,
   onLeave: disposePlayback,
   onSettings: () => document.querySelector('#settings-panel').showModal(),
   onStart: async id => {

@@ -83,7 +83,7 @@ class CustomRenderer implements CharacterRenderer<HTMLElement> {
 - `asternihva-adv-engine/live2d`: SDK-independent Live2D adapter
 - `asternihva-adv-engine/tooling`: scenario validation utilities
 
-The `core` entry can be imported in Node.js without browser globals. Browser renderers and UI require a DOM when instantiated.
+The `core` entry can be imported in Node.js without browser globals. Browser renderers and UI require a DOM when instantiated. `ChapterProgressStore` in `/web` stores played/completed chapter IDs and the last played ID through an injected storage adapter; it does not save node positions.
 
 ## Scenario catalog and validation
 

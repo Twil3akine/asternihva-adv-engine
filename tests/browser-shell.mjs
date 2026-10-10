@@ -87,7 +87,7 @@ export async function testGameShell() {
   await until(() => document.querySelectorAll("#chapter-list .chapter-entry").length === 3, "Catalog chapters were not rendered");
   const chapter = document.querySelector("#chapter-list .chapter-entry");
   assert(chapter.textContent.includes("EP.00") && chapter.textContent.includes("小さな光"), "Chapter metadata is incomplete");
-  assert(chapter.querySelectorAll("p").length === 2, "Chapter description is missing");
+  assert(chapter.querySelectorAll("p:not(.chapter-label):not(.chapter-progress)").length === 1, "Chapter description is missing");
   root.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
   await until(() => root.dataset.screen === "title", "Escape did not return from chapter selection to title");
 

@@ -1,5 +1,5 @@
 /** Metadata and order come from the catalog; presentation stays in the shell. */
-export function renderChapterSelect(container, catalog, onPlay, selectedId) {
+export function renderChapterSelect(container, catalog, onPlay, selectedId, progress) {
   container.replaceChildren();
   const rows = [];
   let selected = 0;
@@ -23,6 +23,12 @@ export function renderChapterSelect(container, catalog, onPlay, selectedId) {
       element.className = className;
       element.textContent = value;
       entry.append(element);
+    }
+    if (progress) {
+      const state = document.createElement('p');
+      state.className = 'chapter-progress';
+      state.textContent = progress.getStatus(metadata.id);
+      entry.append(state);
     }
     const button = document.createElement('button');
     button.type = 'button';

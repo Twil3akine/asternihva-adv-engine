@@ -170,3 +170,25 @@ test('chapter selection restores the current chapter and wraps arrow navigation'
     assert.equal(rows[2].dataset.selected, 'true');
   } finally { fixture.restoreDocument(); }
 });
+
+test('shell records play and completion and chapters show status', async () => {
+  const fixture = makeShellFixture();
+  const { ChapterProgressStore } = await import('../dist/web.js');
+  const progress = new ChapterProgressStore();
+  let finish;
+  const catalog = { getScenarios: () => [{ id: 'sample', title: 'Test scene' }], getScenarioMetadata: id => id === 'sample' ? { id } : undefined };
+  try {
+    const shell = attachGameShell(fixture.root, catalog, {
+      progress, onLeave() {}, onSettings() {},
+      onStart: () => ({ finished: new Promise(resolve => { finish = resolve; }) }),
+    });
+    shell.showChapters();
+    assert.equal(fixture.chapterList.children[0].children.find(child => child.className === 'chapter-progress').textContent, 'NEW');
+    await shell.start('sample');
+    assert.equal(progress.getStatus('sample'), 'PLAYED');
+    finish(); await Promise.resolve();
+    shell.showChapters();
+    assert.equal(fixture.chapterList.children[0].children.find(child => child.className === 'chapter-progress').textContent, 'CLEAR');
+    assert.equal(progress.snapshot().lastPlayedId, 'sample');
+  } finally { fixture.restoreDocument(); }
+});

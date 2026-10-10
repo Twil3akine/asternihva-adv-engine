@@ -171,3 +171,5 @@
 .game .chapter-entry[data-selected="true"] { border-left-color: var(--adv-accent); background: rgb(239 212 119 / .035); }
 .game .chapter-entry button { position: absolute; right: 0; top: 50%; transform: translateY(-50%); font-family: var(--adv-text-font); }
 .game .chapter-entry h3 { font-size: 1.65cqw; letter-spacing: .05em; }
+
+.game .chapter-entry .chapter-progress { color: var(--adv-muted-color); font: 400 .75cqw/1.2 var(--adv-ui-font); letter-spacing: .12em; }
