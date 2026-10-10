@@ -316,3 +316,14 @@ The demo's MENU includes Settings and browser Fullscreen (disabled if unsupporte
 The local background specification and generation prompt are in [examples/asternihva/BACKGROUNDS.md](examples/asternihva/BACKGROUNDS.md). Without local background artwork the demo uses a CSS gradient. Run `await (await import("/tests/browser-assets-settings.mjs")).testAssetsAndSettings()` on a fresh demo page for browser regression coverage.
 
 Startup measurement and limitations are recorded in [examples/asternihva/PERFORMANCE.md](examples/asternihva/PERFORMANCE.md). The final demo loads three initial character PNGs instead of all thirty; the background uses a gradient until local artwork is supplied.
+
+### Scenario catalog
+
+`ScenarioCatalog` is optional; direct `new AdvEngine({ game, stage, ui })` usage is unchanged.
+Pass ordered `{ id, chapter?, title?, description?, entry: GameDefinition }` entries.
+`getScenarios()` returns ordered metadata and `getScenarioMetadata(id)` returns metadata or
+`undefined`. Metadata falls back to `entry.scenario`; catalog overrides do not mutate that entry.
+`startScenario(id, { stage, ui })` starts a fresh engine and returns `{ engine, finished }`.
+Await `finished` for completion or execution errors. Unknown IDs throw before execution.
+The caller owns stage/UI creation and engine destruction. Title screens, chapter selection,
+and replay navigation belong to the game shell, rather than the engine.

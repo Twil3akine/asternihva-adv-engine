@@ -36,3 +36,4 @@ export { calculateAutoDelay, defaultAutoConfig, type AutoConfig } from "./ui/aut
 export { BackgroundPresenter, backgroundPresenterCss, type BackgroundPresenterOptions } from "./ui/background-presenter.js";
 export { DecodedImageCache, type ImageCacheOptions, type ImageLease } from "./assets/decoded-image-cache.js";
 export { GameSettingsStore, DEFAULT_GAME_SETTINGS, AUTO_SPEED_MULTIPLIERS, getAutoDelayMultiplier, type GameSettings, type AutoSpeed } from "./ui/settings.js";
+export { ScenarioCatalog, type ScenarioCatalogEntry, type ScenarioCatalogMetadata, type ScenarioPlayback } from "./scenario-catalog.js";
