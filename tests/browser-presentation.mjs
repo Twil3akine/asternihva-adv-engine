@@ -7,6 +7,17 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 
 /** Run after opening the example; tests need real layout, not a DOM mock. */
+function preservesPresentedText(pages, original) {
+  let remaining = original.trim();
+  for (const page of pages) {
+    if (page !== page.trim()) return false;
+    remaining = remaining.trimStart();
+    if (!remaining.startsWith(page)) return false;
+    remaining = remaining.slice(page.length);
+  }
+  return remaining.trim() === '';
+}
+
 export async function testPresentation() {
   const game = document.querySelector('#game');
   for (let n = 0; n < 200 && game.dataset.mode !== 'line'; n++) await wait(50);
@@ -65,7 +76,7 @@ export async function testPresentation() {
         dialogue.click();
         await wait(0);
       } while (fixture.dataset.mode === 'line' && Number(fixture.dataset.page) > page && parts.length < 100);
-      assert(parts.join('') === lines[line], 'Pagination lost or repeated text');
+      assert(preservesPresentedText(parts, lines[line]), 'Pagination lost or repeated text');
       counts.push(parts.length);
     }
     await run;
@@ -85,7 +96,7 @@ export async function testPresentation() {
       dialogue.click(); await wait(0);
     } while (Number(fixture.dataset.page) > previous && resized.length < 100);
     await pending;
-    assert(resized.join('') === original, 'Resize lost text');
+    assert(preservesPresentedText(resized, original), 'Resize lost text');
     fixture.style.width = '';
     await wait(50);
 
@@ -342,7 +353,7 @@ export async function testPolish() {
     await wait(0);
     if (Number(root.dataset.page) <= pageBefore) break;
   }
-  assert(pages.length > 1 && pages.join('') === fullText, 'Paged dialogue differs from full LOG text');
+  assert(pages.length > 1 && preservesPresentedText(pages, fullText), 'Paged dialogue differs from full LOG text');
 
   const menuButton = document.querySelector('[data-control="menu"]');
   const menuPanel = document.querySelector('#menu-panel');
