@@ -77,12 +77,26 @@
 .game {
   --adv-dialog-width: 74%;
   --adv-dialog-height: 20.4%;
-  --adv-dialog-padding-top: 2.4cqw;
-  --adv-dialog-padding-bottom: 1.8cqw;
+  --adv-dialog-padding-top: .45cqw;
+  --adv-dialog-padding-bottom: .6cqw;
   --adv-text-size: 1.4cqw;
   --adv-text-line-height: 1.65;
 }
-.game .adv-speaker { top: .6cqw; font-size: 1.05cqw; line-height: 1.25; padding-block-end: .2cqw; }
+.game .adv-dialogue {
+  display: grid;
+  grid-template-rows: 1.5cqw minmax(0, 1fr) 1.4cqw;
+  row-gap: .1cqw;
+}
+.game .adv-speaker {
+  position: static;
+  grid-row: 1;
+  justify-self: start;
+  font-size: 1.05cqw;
+  line-height: 1.25;
+  padding-block-end: .1cqw;
+}
+.game .adv-speaker[hidden] { display: block; visibility: hidden; }
+.game .adv-text { grid-row: 2; }
 .game .adv-control { padding-block: .15cqw; }
 
 .game {
