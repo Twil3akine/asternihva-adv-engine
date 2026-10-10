@@ -75,12 +75,12 @@
 .game .adv-control { padding-block: .15cqw; }
 
 .game {
-  --adv-choice-width: 44.2%;
-  --adv-choice-row-size: 4.3cqw;
-  --adv-choice-gap: .65cqw;
+  --adv-choice-width: 50%;
+  --adv-choice-row-size: 4.8cqw;
+  --adv-choice-gap: .75cqw;
   --adv-choice-border: rgb(231 201 105 / .13);
 }
-.game .adv-choice { padding-block: .4cqw; transition: background 180ms ease, border-color 180ms ease, transform 180ms ease; }
+.game .adv-choice { padding-block: .5cqw; font-size: 1.35cqw; transition: background 180ms ease, border-color 180ms ease, transform 180ms ease; }
 .game .adv-choice::before { color: var(--adv-muted-color); transition: color 180ms ease; }
 .game .adv-choice:hover, .game .adv-choice:focus-visible { border-color: rgb(239 212 119 / .6); }
 .game .adv-choice:hover::before, .game .adv-choice:focus-visible::before { color: var(--adv-accent); }
