@@ -4,6 +4,7 @@ import {
   DomUi,
   SpriteRenderer,
   domUiCss,
+  gameViewportCss,
   spriteRendererCss,
 } from "../../dist/index.js";
 
@@ -13,7 +14,7 @@ const base = new URL("./", import.meta.url);
 const asset = (name) => new URL(`assets/${name}`, base).href;
 
 const style = document.createElement("style");
-style.textContent = spriteRendererCss + domUiCss;
+style.textContent = gameViewportCss + spriteRendererCss + domUiCss;
 document.head.append(style);
 
 const motions = {
@@ -52,9 +53,4 @@ const ui = new DomUi({
 });
 const stage = new CharacterStage(stageHost, game.characters, [new SpriteRenderer()]);
 const engine = new AdvEngine({ game, stage, ui });
-const observer = new MutationObserver(() => {
-  const active = stageHost.querySelector('[data-active="true"]');
-  active?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-});
-observer.observe(stageHost, { attributes: true, subtree: true, attributeFilter: ["data-active"] });
 engine.run();

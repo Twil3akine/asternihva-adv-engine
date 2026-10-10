@@ -24,3 +24,4 @@ export type {
   StagePosition,
   UiAdapter,
 } from "./types.js";
+export { gameViewportCss } from "./ui/game-viewport.js";
