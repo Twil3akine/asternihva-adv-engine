@@ -8,6 +8,7 @@ import {
   spriteRendererCss,
 } from "../../dist/index.js";
 
+import { DemoUi, attachControls } from "./demo-controls.mjs";
 import { loadDemoAssets } from "./demo-assets.mjs";
 
 const base = new URL("./", import.meta.url);
@@ -42,7 +43,7 @@ const game = {
 
 const root = document.querySelector("#game");
 const stageHost = document.querySelector("#stage");
-const ui = new DomUi({
+const ui = new DemoUi({
   root,
   background: document.querySelector("#background"),
   title: document.querySelector("#title"),
@@ -54,4 +55,5 @@ const ui = new DomUi({
 });
 const stage = new CharacterStage(stageHost, game.characters, [new SpriteRenderer()]);
 const engine = new AdvEngine({ game, stage, ui });
+attachControls(root, ui);
 engine.run();

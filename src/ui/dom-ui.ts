@@ -122,19 +122,35 @@ export class DomUi implements UiAdapter {
     this.#elements.text.scrollTop = 0;
     this.#elements.choices.replaceChildren();
     this.#elements.root.dataset.mode = "choice";
+    this.#elements.choices.dataset.selected = "false";
+    this.#elements.choices.dataset.columns = choice.options.length > 4 ? "2" : "1";
+    this.#elements.choices.style.setProperty("--adv-choice-rows", String(Math.ceil(choice.options.length / (choice.options.length > 4 ? 2 : 1))));
     if (this.#elements.pageIndicator) this.#elements.pageIndicator.textContent = "";
 
     return new Promise((resolve) => {
+      const controller = new AbortController();
+      let selected = false;
+      let animation: Animation | undefined;
+      this.#cleanup = () => { controller.abort(); animation?.cancel(); };
       choice.options.forEach((label, index) => {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "adv-choice";
         button.textContent = label;
-        button.addEventListener("click", (event) => {
+        button.addEventListener("click", async (event) => {
           event.stopPropagation();
+          if (selected) return;
+          selected = true;
+          this.#elements.choices.dataset.selected = "true";
+          const duration = Number.parseFloat(getComputedStyle(this.#elements.root).getPropertyValue("--adv-choice-duration")) || 180;
+          animation = this.#elements.choices.animate?.([{ opacity: 1 }, { opacity: 0 }], { duration });
+          await animation?.finished.catch(() => {});
+          if (controller.signal.aborted) return;
+          controller.abort();
+          this.#cleanup = undefined;
           this.#elements.choices.replaceChildren();
           resolve(index);
-        }, { once: true });
+        }, { signal: controller.signal });
         this.#elements.choices.append(button);
       });
     });
@@ -199,12 +215,30 @@ export const domUiCss = `
   line-height: 1.65;
 }
 .adv-page-indicator { position: absolute; right: 2.2cqw; bottom: .8cqw; font-size: 1cqw; opacity: .65; }
-.adv-choices { display: grid; gap: .625rem; }
-.adv-choice {
-  appearance: none; border: 1px solid rgb(255 255 255 / .28);
-  border-radius: .5rem; padding: .7rem 1rem;
-  background: rgb(255 255 255 / .09); color: inherit;
-  font: inherit; text-align: left; cursor: pointer;
+.adv-choices {
+  position: absolute; z-index: 110; left: 24%; right: 24%; bottom: 30%;
+  display: grid; gap: .7cqw;
+  grid-auto-rows: min(5cqw, calc(25cqw / var(--adv-choice-rows, 1)));
+  animation: adv-dialogue-in .18s ease;
 }
+.adv-choices:empty { display: none; }
+.adv-choices[data-columns="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.adv-choices[data-selected="true"] { pointer-events: none; }
+.adv-choice {
+  appearance: none; border: 1px solid rgb(210 220 240 / .3);
+  border-radius: .4cqw; padding: .6cqw 1.4cqw;
+  background: rgb(8 13 25 / .88); backdrop-filter: blur(8px); color: inherit;
+  font: inherit; font-size: 1.25cqw; line-height: 1.4;
+  text-align: left; cursor: pointer;
+  transition: background .18s ease, transform .18s ease;
+}
+.adv-choice:hover, .adv-choice:focus-visible { background: rgb(38 47 65 / .95); transform: translateY(-1px); }
+.adv-controls { position: absolute; right: 4.2cqw; bottom: .65cqw; display: flex; gap: 1.4cqw; }
+.adv-control { appearance: none; padding: .3cqw 0; border: 0; background: none; color: #a6b0c2; font-size: .85cqw; letter-spacing: .12em; cursor: pointer; }
+.adv-control:hover, .adv-control[aria-pressed="true"] { color: #d9e6ff; }
+.adv-panel { width: 52cqw; max-height: 38cqw; border: 1px solid rgb(210 220 240 / .3); border-radius: .6cqw; padding: 2cqw; color: #f4f6fc; background: rgb(8 13 25 / .96); font-size: 1.2cqw; }
+.adv-panel::backdrop { background: rgb(0 0 0 / .55); }
+.adv-log-content { overflow: auto; max-height: 27cqw; white-space: pre-wrap; line-height: 1.65; }
+.adv-panel button { color: inherit; background: transparent; border: 1px solid rgb(210 220 240 / .3); padding: .5em 1em; cursor: pointer; }
 @keyframes adv-dialogue-in { from { opacity: 0; } to { opacity: 1; } }
 `;

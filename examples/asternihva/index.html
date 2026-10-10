@@ -23,8 +23,16 @@
         <div id="speaker" class="adv-speaker"></div>
         <div id="text" class="adv-text"></div>
         <span id="page-indicator" class="adv-page-indicator" aria-label="ページ送り"></span>
-        <div id="choices" class="adv-choices"></div>
+        <nav id="controls" class="adv-controls" aria-label="ゲーム操作">
+          <button class="adv-control" data-control="auto" aria-pressed="false">AUTO</button>
+          <button class="adv-control" data-control="skip" aria-pressed="false">SKIP</button>
+          <button class="adv-control" data-control="log">LOG</button>
+          <button class="adv-control" data-control="menu">MENU</button>
+        </nav>
       </section>
+      <div id="choices" class="adv-choices" role="group" aria-label="選択肢"></div>
+      <dialog id="log-panel" class="adv-panel" aria-label="会話履歴"><h2>LOG</h2><div class="adv-log-content"></div><form method="dialog"><button>閉じる</button></form></dialog>
+      <dialog id="menu-panel" class="adv-panel" aria-label="メニュー"><h2>MENU</h2><p>クリック・Enterで会話を進めます。AUTOは自動送り、SKIPは早送りです。選択肢は手動で選んでください。</p><button id="restart">最初から</button><form method="dialog"><button>会話へ戻る</button></form></dialog>
     </main>
     <script type="module" src="./main.mjs"></script>
   </body>
