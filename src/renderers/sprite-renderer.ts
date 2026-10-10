@@ -1,3 +1,4 @@
+import { DecodedImageCache, type ImageCacheOptions, type ImageLease } from "../assets/decoded-image-cache.js";
 import type {
   CharacterDefinition,
   CharacterRenderer,
@@ -7,6 +8,8 @@ import type {
 
 export interface SpriteRendererOptions {
   className?: string;
+  imageCache?: DecodedImageCache;
+  assetCache?: ImageCacheOptions;
   /** Expression crossfade duration in milliseconds; 0 disables it. */
   crossfadeDuration?: number;
 }
@@ -56,15 +59,17 @@ class SpriteCharacter implements SpriteRenderedCharacter {
   readonly #image: HTMLImageElement;
   readonly #expressions: Record<string, string>;
   readonly #motions: Record<string, SpriteMotion>;
-  readonly #loads = new Map<string, Promise<boolean>>();
+  readonly #cache: DecodedImageCache;
+  #lease?: ImageLease;
   #source?: string;
   #expressionToken = 0;
   #initial: Promise<void>;
   #motion?: Animation;
   readonly #crossfadeDuration: number;
-  #fade?: { outgoing: HTMLImageElement; animations: Animation[] };
+  #fade?: { outgoing: HTMLImageElement; animations: Animation[]; lease?: ImageLease };
 
-  constructor(host: HTMLElement, character: CharacterDefinition, options: SpriteRendererOptions) {
+  constructor(host: HTMLElement, character: CharacterDefinition, options: SpriteRendererOptions, cache: DecodedImageCache) {
+    this.#cache = cache;
     this.#crossfadeDuration = options.crossfadeDuration ?? 180;
     const assets = character.assets?.expressions ?? character.assets ?? {};
     this.#expressions = Object.fromEntries(
@@ -118,12 +123,17 @@ class SpriteCharacter implements SpriteRenderedCharacter {
     if (!source) return;
     const token = ++this.#expressionToken;
     if (source === this.#source) return;
-    if (await this.#load(source) && token === this.#expressionToken) {
+    const lease = await this.#cache.acquire(source);
+    if (!lease) return;
+    if (token !== this.#expressionToken) { lease.release(); return; }
+    {
       this.#cancelFade();
       const previous = this.#source;
+      const previousLease = this.#lease;
+      this.#lease = lease;
       this.#image.src = source;
       this.#source = source;
-      if (!previous || this.#crossfadeDuration === 0 || !this.#image.animate) return;
+      if (!previous || this.#crossfadeDuration === 0 || !this.#image.animate) { previousLease?.release(); return; }
       const outgoing = document.createElement("img");
       outgoing.src = previous;
       outgoing.alt = "";
@@ -132,6 +142,7 @@ class SpriteCharacter implements SpriteRenderedCharacter {
       const timing = { duration: this.#crossfadeDuration, easing: "linear", fill: "both" } as const;
       const fade = {
         outgoing,
+        lease: previousLease,
         animations: [
           this.#image.animate([{ opacity: 0 }, { opacity: 1 }], timing),
           outgoing.animate([{ opacity: 1 }, { opacity: 0 }], timing),
@@ -201,6 +212,8 @@ class SpriteCharacter implements SpriteRenderedCharacter {
     this.#expressionToken += 1;
     this.#motion?.cancel();
     this.#cancelFade();
+    this.#lease?.release();
+    this.#lease = undefined;
     this.#root.remove();
   }
 
@@ -208,26 +221,17 @@ class SpriteCharacter implements SpriteRenderedCharacter {
     if (!this.#fade) return;
     for (const animation of this.#fade.animations) animation.cancel();
     this.#fade.outgoing.remove();
+    this.#fade.lease?.release();
     this.#fade = undefined;
   }
 
-  #load(source: string): Promise<boolean> {
-    const cached = this.#loads.get(source);
-    if (cached) return cached;
-    const image = document.createElement("img");
-    image.src = source;
-    const loaded = image.decode().then(() => true, () => {
-      this.#loads.delete(source);
-      return false;
-    });
-    this.#loads.set(source, loaded);
-    return loaded;
-  }
+
 }
 
 export class SpriteRenderer implements CharacterRenderer {
   readonly key = "sprite";
   readonly #options: SpriteRendererOptions;
+  readonly #cache: DecodedImageCache;
 
   constructor(options: SpriteRendererOptions = {}) {
     if (options.crossfadeDuration !== undefined &&
@@ -235,10 +239,11 @@ export class SpriteRenderer implements CharacterRenderer {
       throw new Error("crossfadeDuration must be a finite, non-negative number.");
     }
     this.#options = options;
+    this.#cache = options.imageCache ?? new DecodedImageCache(options.assetCache);
   }
 
   create(host: HTMLElement, character: CharacterDefinition): SpriteRenderedCharacter {
-    return new SpriteCharacter(host, character, this.#options);
+    return new SpriteCharacter(host, character, this.#options, this.#cache);
   }
 }
 

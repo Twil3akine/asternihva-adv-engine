@@ -1,22 +1,27 @@
+import { DecodedImageCache, type ImageCacheOptions, type ImageLease } from "../assets/decoded-image-cache.js";
 import type { BackgroundDefinition } from "../types.js";
 
 export interface BackgroundPresenterOptions {
   transitionDuration?: number;
+  imageCache?: DecodedImageCache;
+  assetCache?: ImageCacheOptions;
 }
 
 export class BackgroundPresenter {
   readonly #host: HTMLElement;
-  readonly #loads = new Map<string, Promise<HTMLImageElement | undefined>>();
+  readonly #cache: DecodedImageCache;
+  #lease?: ImageLease;
   readonly #duration: number;
   #image?: HTMLImageElement;
   #source?: string;
   #token = 0;
   #destroyed = false;
   #animationsEnabled = true;
-  #fade?: { outgoing: HTMLImageElement; animations: Animation[] };
+  #fade?: { outgoing: HTMLImageElement; animations: Animation[]; lease?: ImageLease };
 
   constructor(host: HTMLElement, options: BackgroundPresenterOptions = {}) {
     this.#host = host;
+    this.#cache = options.imageCache ?? new DecodedImageCache(options.assetCache);
     this.#duration = options.transitionDuration ?? 300;
     if (!Number.isFinite(this.#duration) || this.#duration < 0) {
       throw new Error("Background transitionDuration must be finite and non-negative.");
@@ -34,6 +39,8 @@ export class BackgroundPresenter {
     if (!background) {
       this.#cancelFade();
       this.#image?.remove();
+      this.#lease?.release();
+      this.#lease = undefined;
       this.#image = undefined;
       this.#source = undefined;
       this.#host.style.setProperty("--adv-background-overlay", "0");
@@ -47,10 +54,15 @@ export class BackgroundPresenter {
       this.#apply(this.#image!, anchorX, anchorY, overlay);
       return;
     }
-    const image = await this.#load(background.src);
-    if (!image || this.#destroyed || token !== this.#token) return;
+    const lease = await this.#cache.acquire(background.src);
+    if (!lease) return;
+    if (this.#destroyed || token !== this.#token) { lease.release(); return; }
+    const image = document.createElement("img");
+    image.src = background.src;
     this.#cancelFade();
     const outgoing = this.#image;
+    const previousLease = this.#lease;
+    this.#lease = lease;
     this.#image = image;
     this.#source = background.src;
     image.className = "adv-background-image";
@@ -61,10 +73,11 @@ export class BackgroundPresenter {
     const reducedMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (!outgoing || !this.#animationsEnabled || reducedMotion || this.#duration === 0 || !image.animate) {
       outgoing?.remove();
+      previousLease?.release();
       return;
     }
     const timing = { duration: this.#duration, easing: "linear", fill: "both" } as const;
-    const fade = { outgoing, animations: [
+    const fade = { outgoing, lease: previousLease, animations: [
       image.animate([{ opacity: 0 }, { opacity: 1 }], timing),
       outgoing.animate([{ opacity: 1 }, { opacity: 0 }], timing),
     ] };
@@ -74,7 +87,7 @@ export class BackgroundPresenter {
   }
 
   async prefetch(background: BackgroundDefinition): Promise<void> {
-    if (!this.#destroyed) await this.#load(background.src);
+    if (!this.#destroyed) await this.#cache.prefetch(background.src);
   }
 
   destroy(): void {
@@ -82,7 +95,8 @@ export class BackgroundPresenter {
     this.#token++;
     this.#cancelFade();
     this.#image?.remove();
-    this.#loads.clear();
+    this.#lease?.release();
+    this.#lease = undefined;
   }
 
   #apply(image: HTMLImageElement, anchorX: number, anchorY: number, overlay: number): void {
@@ -94,21 +108,11 @@ export class BackgroundPresenter {
     if (!this.#fade) return;
     for (const animation of this.#fade.animations) animation.cancel();
     this.#fade.outgoing.remove();
+    this.#fade.lease?.release();
     this.#fade = undefined;
   }
 
-  #load(source: string): Promise<HTMLImageElement | undefined> {
-    const cached = this.#loads.get(source);
-    if (cached) return cached;
-    const image = document.createElement("img");
-    image.src = source;
-    const load = image.decode().then(() => image, () => {
-      this.#loads.delete(source);
-      return undefined;
-    });
-    this.#loads.set(source, load);
-    return load;
-  }
+
 }
 
 export const backgroundPresenterCss = `
