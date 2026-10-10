@@ -136,9 +136,38 @@ export async function testPresentation() {
 
 export async function testDemoPlay() {
   const game = document.querySelector('#game');
+  const introCard = document.querySelector('#episode-title');
+  let sawIntro = false;
+  const introObserver = new MutationObserver(() => { if (!introCard.hidden) sawIntro = true; });
+  introObserver.observe(introCard, { attributes: true, attributeFilter: ['hidden'] });
   for (let n = 0; n < 200 && game.dataset.mode !== 'line'; n++) await wait(50);
+  introObserver.disconnect();
+  assert(sawIntro, 'Episode title card did not appear before the opening line');
+  assert(introCard.hidden, 'Episode title card did not fade out before play');
+  assert(document.fonts.check('400 16px "Zen Kaku Gothic New"', '日本語の表示を確認します'), 'Zen Kaku Gothic New did not load before play');
+  assert(document.fonts.check('400 16px Ubuntu', 'EP.00 AUTO MENU'), 'Ubuntu did not load before play');
   const dialogue = document.querySelector('#dialogue'), text = document.querySelector('#text');
   const height = dialogue.getBoundingClientRect().height;
+  assert(Math.abs(dialogue.getBoundingClientRect().width / game.getBoundingClientRect().width - .74) < .01, 'Dialogue width is not 74% of the game surface');
+  assert(getComputedStyle(text).userSelect === 'none', 'Dialogue text can be selected');
+  assert(getComputedStyle(document.querySelector('#log-panel .adv-log-content')).userSelect === 'text', 'LOG text cannot be selected');
+  const openingBackground = document.querySelector('.adv-background-image');
+  const stageRoots = [...document.querySelectorAll('#stage .adv-sprite-character')];
+  assert(openingBackground?.src.endsWith('/room-night-window.png'), 'Opening narration is not framed on the window');
+  assert(stageRoots.every(root => root.dataset.visible === 'false'), 'Opening narration should show the background without sprites');
+  const typography = {
+    scenario: getComputedStyle(document.querySelector('#scenario-title')).fontFamily,
+    dialogue: getComputedStyle(text).fontFamily,
+    name: getComputedStyle(document.querySelector('#speaker')).fontFamily,
+    controls: getComputedStyle(document.querySelector('[data-control="auto"]')).fontFamily,
+    choice: getComputedStyle(document.querySelector('.adv-choice') ?? document.querySelector('#text')).fontFamily,
+    menu: getComputedStyle(document.querySelector('.adv-menu-items button')).fontFamily,
+    log: getComputedStyle(document.querySelector('.adv-log-content')).fontFamily,
+    settings: getComputedStyle(document.querySelector('.adv-settings-panel h3')).fontFamily,
+    end: getComputedStyle(document.querySelector('.end-card__title')).fontFamily,
+  };
+  assert(typography.scenario.startsWith('Ubuntu') && typography.controls.startsWith('Ubuntu'), 'Latin UI does not use Ubuntu');
+  assert([typography.dialogue, typography.name, typography.menu, typography.log, typography.settings, typography.end].every(value => value.startsWith('"Zen Kaku Gothic New"')), `Japanese UI does not use Zen Kaku Gothic New: ${JSON.stringify(typography)}`);
   const expressions = new Map(['noah', 'seren', 'luminal'].map(id => [id, new Set()]));
   const layoutSizes = new Set();
   let windowBackgroundSeen = false, closeShotSeen = false;
@@ -156,9 +185,11 @@ export async function testDemoPlay() {
   while (game.dataset.mode !== 'ended' && steps++ < 100) {
     await wait(700);
     assert(dialogue.getBoundingClientRect().height === height, 'Dialogue height changed');
-    if (game.dataset.mode === 'choice') {
-      choices = true;
-      document.querySelector('.adv-choice').click();
+      if (game.dataset.mode === 'choice') {
+        choices = true;
+        const option = document.querySelector('.adv-choice');
+        assert(option && getComputedStyle(option).fontFamily.startsWith('"Zen Kaku Gothic New"'), 'Choice text does not use the Japanese face');
+        document.querySelector('.adv-choice').click();
       await wait(250);
       continue;
     }
@@ -181,19 +212,25 @@ export async function testDemoPlay() {
       assert(image.complete && image.naturalWidth > 0, 'Demo image missing');
       expressions.get(root.dataset.character).add(image.src.split('/').pop());
       const style = getComputedStyle(root);
-      const expected = speaker ? root.dataset.character === speaker ? 1 : .55 : .6;
-      assert(Math.abs(Number(style.filter.match(/brightness\(([^)]+)\)/)[1]) - expected) < .001, `Demo focus: character=${root.dataset.character}, speaker=${speaker}, expected=${expected}, actual=${style.filter}`);
+      if (root.dataset.visible === 'true') {
+        const expected = speaker ? root.dataset.character === speaker ? 1 : .55 : .6;
+        assert(Math.abs(Number(style.filter.match(/brightness\(([^)]+)\)/)[1]) - expected) < .001, `Demo focus: character=${root.dataset.character}, speaker=${speaker}, expected=${expected}, actual=${style.filter}`);
+      }
     }
     if (speaker === 'seren' && text.textContent.includes('あの光、覚えているわ')) {
       document.querySelector('[data-control="log"]').click();
       const panel = document.querySelector('#log-panel');
       assert(panel.open && panel.textContent.includes('今度は私ひとりの記憶にはならないから。'), 'Backlog did not preserve full node text');
+      assert(getComputedStyle(panel.querySelector('.adv-log-content')).userSelect === 'text', 'LOG copy text is disabled');
       panel.close(); checkedLog = true;
     }
     if (Number(game.dataset.page) > 1) longPages++;
     dialogue.click(); await wait(50);
   }
   assert(game.dataset.mode === 'ended' && steps < 100, 'Demo did not end');
+  assert(!document.querySelector('#end-card').hidden && document.querySelector('#end-title').textContent === '小さな光', 'Dedicated episode end card did not appear');
+  assert(getComputedStyle(dialogue).display === 'none', 'Normal dialogue remained visible after the ending');
+  assert(document.querySelector('[data-replay]')?.textContent.trim() === 'もう一度読む', 'End replay action is missing');
   assert(checkedLog && longPages >= 1 && choices, 'Missing long dialogue/log/choice');
   assert([1, 2, 3].every(size => layoutSizes.has(size)), `Missing stage layouts: ${[...layoutSizes]}`);
   assert(windowBackgroundSeen, 'Window background did not appear for the light scene');
@@ -302,12 +339,19 @@ export async function testPolish() {
   const logAction = menuPanel.querySelector('[data-menu-action="log"]');
   const restart = menuPanel.querySelector('#restart');
   assert(resume && resume.textContent.trim() === 'ゲームに戻る', 'MENU game return action is missing');
-  assert(logAction && logAction.textContent.trim() === 'Log', 'MENU Log action is missing');
+  assert(logAction && logAction.textContent.trim() === 'ログ', 'MENU Log action is missing');
+  assert(menuPanel.querySelector('[data-menu-action="settings"]').textContent.trim() === '設定', 'MENU Settings action is missing');
   assert(restart && restart.textContent.trim() === '最初から', 'MENU restart action is missing');
   logAction.click();
   assert(!menuPanel.open && logPanel.open, 'MENU Log action did not switch to LOG');
   logPanel.close();
   menuButton.click();
+  menuPanel.querySelector('[data-menu-action="settings"]').click();
+  const settingsPanel = document.querySelector('#settings-panel');
+  assert(settingsPanel.open, 'Settings did not open from MENU');
+  assert(getComputedStyle(settingsPanel.querySelector('h3')).fontFamily.startsWith('"Zen Kaku Gothic New"'), 'Settings text does not use the Japanese face');
+  settingsPanel.querySelector('[data-settings-back]').click();
+  assert(menuPanel.open, 'Settings back did not return to MENU');
   menuPanel.querySelector('[data-menu-action="resume"]').click();
   assert(!menuPanel.open, 'MENU Resume action did not close the menu');
 

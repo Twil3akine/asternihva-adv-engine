@@ -74,14 +74,17 @@ const ui = new DemoUi({
   background: document.querySelector("#background"),
   title: document.querySelector("#title"),
   scenarioTitle: document.querySelector("#scenario-title"),
-  endCard: document.querySelector("#end-card"),
-  scenario: game.scenario,
   speaker: document.querySelector("#speaker"),
   text: document.querySelector("#text"),
   pageIndicator: document.querySelector("#page-indicator"),
   choices: document.querySelector("#choices"),
   advanceTarget: document.querySelector("#dialogue"),
-}, { resolveIcon: entry => resolveLogPortrait(entry, logIcons), background: { imageCache, transitionDuration: 320 } });
+}, {
+  resolveIcon: entry => resolveLogPortrait(entry, logIcons),
+  endCard: document.querySelector("#end-card"),
+  scenario: game.scenario,
+  background: { imageCache, transitionDuration: 320 },
+});
 const stage = new CharacterStage(stageHost, game.characters, [new SpriteRenderer({ imageCache })]);
 const engine = new AdvEngine({ game, stage, ui });
 let settingsStorage;
