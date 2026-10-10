@@ -65,3 +65,8 @@
 .game .adv-settings-panel button:hover, .game .adv-settings-panel button:focus-visible { background: rgb(255 255 255 / .05); border-color: rgb(239 212 119 / .3); }
 .game .adv-settings-panel button[aria-pressed="true"] { color: var(--adv-accent); border-color: rgb(239 212 119 / .4); background: rgb(239 212 119 / .06); }
 .game .adv-settings-panel button:disabled { opacity: .4; cursor: default; }
+
+.game .background { background: linear-gradient(135deg, #080f20 0%, #172b46 65%, #0a1427 100%); }
+.game .adv-scenario-title { color: #dce2ed; }
+.game .adv-scenario-title::first-line { color: var(--adv-accent); }
+.game[data-debug="true"] .brand { top: 12%; }

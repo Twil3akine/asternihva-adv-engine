@@ -3,11 +3,13 @@ import {
   CharacterStage,
   SpriteRenderer,
   GameSettingsStore,
+  DecodedImageCache,
   domUiCss,
   gameViewportCss,
   spriteRendererCss,
 } from "../../dist/index.js";
 
+import { backgroundManifest, initialBackground } from "./background-manifest.mjs";
 import { assetManifest } from "./asset-manifest.mjs";
 import { resolveLogPortrait } from "./demo-log.mjs";
 import { attachSettings } from "./demo-settings.mjs";
@@ -15,8 +17,6 @@ import { demoUiConfig } from "./ui-config.mjs";
 import { DemoUi, attachControls } from "./demo-controls.mjs";
 import { loadDemoAssets } from "./demo-assets.mjs";
 
-const base = new URL("./", import.meta.url);
-const asset = (name) => new URL(`assets/${name}`, base).href;
 
 const style = document.createElement("style");
 style.textContent = gameViewportCss + spriteRendererCss + domUiCss;
@@ -29,7 +29,7 @@ const motions = {
 };
 
 const debug = new URLSearchParams(location.search).get("debug") === "1";
-const loaded = await loadDemoAssets();
+const [loaded, firstBackground] = await Promise.all([loadDemoAssets(), initialBackground()]);
 const status = document.querySelector("#asset-status");
 const gameRoot = document.querySelector("#game");
 gameRoot.dataset.debug = String(debug);
@@ -44,6 +44,8 @@ gameRoot.dataset.assets = loaded.missing.length ? "fallback" : "local";
 
 const game = {
   title: "Asternihva Project",
+  scenario: { id: "ep00", chapter: "EP.00", title: "小さな光" },
+  backgrounds: backgroundManifest,
   start: "intro",
   characters: loaded.characters.map(({ local, ...character }) => ({
     ...character,
@@ -58,17 +60,19 @@ const logIcons = Object.fromEntries(loaded.characters.map(character => [characte
   expressions: character.assets.expressions,
   portrait: assetManifest.find(entry => entry.id === character.id).logPortrait,
 }]));
+const imageCache = new DecodedImageCache({ maxDecodedImages: 8 });
 const ui = new DemoUi({
   root,
   background: document.querySelector("#background"),
   title: document.querySelector("#title"),
+  scenarioTitle: document.querySelector("#scenario-title"),
   speaker: document.querySelector("#speaker"),
   text: document.querySelector("#text"),
   pageIndicator: document.querySelector("#page-indicator"),
   choices: document.querySelector("#choices"),
   advanceTarget: document.querySelector("#dialogue"),
-}, { resolveIcon: entry => resolveLogPortrait(entry, logIcons) });
-const stage = new CharacterStage(stageHost, game.characters, [new SpriteRenderer()]);
+}, { resolveIcon: entry => resolveLogPortrait(entry, logIcons), background: { imageCache, transitionDuration: 320 } });
+const stage = new CharacterStage(stageHost, game.characters, [new SpriteRenderer({ imageCache })]);
 const engine = new AdvEngine({ game, stage, ui });
 let settingsStorage;
 try { settingsStorage = localStorage; } catch { /* Settings still work without persistence. */ }

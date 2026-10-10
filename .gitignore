@@ -12,3 +12,6 @@ coverage/
 
 # Private, locally imported Asternihva character artwork and readiness manifest.
 examples/asternihva/public/characters/
+
+# Local background artwork is not licensed for repository distribution.
+examples/asternihva/public/backgrounds/

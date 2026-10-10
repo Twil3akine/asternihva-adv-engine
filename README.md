@@ -298,3 +298,19 @@ Real layout regression tests are in [tests/browser-presentation.mjs](tests/brows
 For updated local artwork, use `node scripts/import-asternihva-assets.mjs --replace-existing`. This explicitly refreshes demo copies only; the original source files are unchanged and PNGs remain ignored by Git.
 
 Run `await (await import("/tests/browser-presentation.mjs")).testPolish()` on a fresh demo page to verify visible-page AUTO timing, full-text expression-aware LOG entries, latest-entry scroll, pagination and MENU actions. `testDemoPlay()` covers the scenario through its ending.
+
+### Scenario metadata, backgrounds and image loading
+
+`GameDefinition.scenario` accepts optional `{ id, chapter, title }`. `UiAdapter.setScenarioMetadata()` receives these strings; `DomUiElements.scenarioTitle` displays chapter/title without requiring a heading when absent.
+
+Define `GameDefinition.backgrounds` as `{ [id]: { src, anchorX?, anchorY?, overlay? } }` and reference an ID from the existing `{ type: "scene", background: id }` node. Direct URLs and old `UiAdapter.setBackground(source)` implementations remain supported. The additive `presentBackground(definition)` hook passes framing to adapters. `DomUi` decodes before its default 300ms crossfade; `new DomUi(elements, { background: { transitionDuration: 320 } })` configures duration (0 disables it). Missing images retain the current background. Anchor/overlay values are between 0 and 1. A nearby next background is prefetched during dialogue, stopping at choices, jumps and explicit scene exits.
+
+`SpriteRenderer` loads only the initial expression and requests other expressions on first use. `DecodedImageCache({ maxDecodedImages: 8 })` is an LRU cache shared by characters in one renderer. Inject the same `imageCache` into SpriteRenderer and DomUi's background options to share a total budget. Leases protect current, pending and crossfade images; protected images may temporarily exceed the limit, which is restored as leases release. Eviction drops the app's image references and clears their sources. The browser controls its own HTTP/decoded resource caches; this API cannot force the browser to reclaim physical memory immediately.
+
+### Settings
+
+`GameSettingsStore(storage?, key?)` exposes immutable `value`, validated `update(patch)` and `subscribe(listener)`. It stores `{ version: 1, settings }` under `web-adv-engine:settings:v1` by default and falls back safely if storage is unavailable or invalid. Defaults are normal AUTO, character motion ON and UI animation ON. AUTO multipliers are slow 1.3, normal 1.0 and fast 0.7. `CharacterStage.setMotionEnabled(false)` suppresses new motion commands and calls optional renderer `stopMotion()`; `DomUi.setAnimationsEnabled(false)` disables UI/background transitions independently of character expression crossfades.
+
+The demo's MENU includes Settings and browser Fullscreen (disabled if unsupported). Escape returns Settings → Menu → Game. Text Speed is omitted because the current renderer presents a whole page without a typewriter effect. Audio settings are omitted because audio is not implemented. Settings persistence is separate from scenario state and snapshots.
+
+The local background specification and generation prompt are in [examples/asternihva/BACKGROUNDS.md](examples/asternihva/BACKGROUNDS.md). Without local background artwork the demo uses a CSS gradient. Run `await (await import("/tests/browser-assets-settings.mjs")).testAssetsAndSettings()` on a fresh demo page for browser regression coverage.

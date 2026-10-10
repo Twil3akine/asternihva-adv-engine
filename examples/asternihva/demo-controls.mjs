@@ -4,8 +4,8 @@ import { createLogEntry, renderLogEntries } from "./demo-log.mjs";
 
 export class DemoUi extends DomUi {
   history = [];
-  constructor(elements, { resolveIcon } = {}) {
-    super(elements);
+  constructor(elements, { resolveIcon, ...uiOptions } = {}) {
+    super(elements, uiOptions);
     this.resolveIcon = resolveIcon;
   }
   renderLog(container) { renderLogEntries(container, this.history, this.resolveIcon); }

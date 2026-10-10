@@ -33,7 +33,7 @@ npm run serve:example
 
 `Seren_embarrased.png` の綴り、および `relax` / `relaxed` の違いは素材名のままです。意図を推測して統一していません。冒頭は3人それぞれ `normal → smile → surprised` とmotionを確認できます。確認したNoahの3差分には、ドローンや巨大剣は含まれていません。
 
-LOGの顔アイコンは発言時のexpressionを同じ対応表から解決します。3人とも `logPortrait: { scale: 3.8, anchorX: 0.5, anchorY: 0.15 }` を使い、元画像を加工せず円形領域へ表示します。
+LOGの顔アイコンは発言時のexpressionを同じ対応表から解決します。Noahは `3.9 / 0.5 / 0.16`、Serenは `3.9 / 0.5 / 0.155`、Luminalは `3.8 / 0.5 / 0.16` のscale / anchorX / anchorYを使い、元画像を加工せず円形領域へ表示します。
 
 ## 表示設定
 
