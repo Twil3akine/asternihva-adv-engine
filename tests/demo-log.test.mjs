@@ -113,9 +113,9 @@ test("renderLogEntries adds portrait style values and safely falls back when an 
 test('demo log framing resolves independently from stage framing for all characters', async () => {
   const { assetManifest } = await import('../examples/asternihva/asset-manifest.mjs');
   assert.deepEqual(assetManifest.map(({ id, logPortrait }) => [id, logPortrait.scale, logPortrait.anchorX, logPortrait.anchorY]), [
-    ['noah', 3.8, 0.5, 0.175],
-    ['seren', 3.85, 0.5, 0.17],
-    ['luminal', 3.9, 0.5, 0.18],
+    ['noah', 5.2, 0.5, 0.163],
+    ['seren', 5.3, 0.5, 0.156],
+    ['luminal', 5.3, 0.5, 0.167],
   ]);
   for (const character of assetManifest) {
     const portrait = resolveLogPortrait({ speakerId: character.id, expressionId: 'normal' }, {
