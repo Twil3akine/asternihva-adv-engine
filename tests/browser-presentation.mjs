@@ -3,6 +3,13 @@ import { AdvEngine, DomUi, SpriteRenderer, calculateAutoDelay } from '../dist/in
 import { fitDialoguePage } from '../dist/ui/dialogue-paging.js';
 import { demoUiConfig } from '../examples/asternihva/ui-config.mjs';
 
+const { loadLocalScenarios } = await import('../examples/asternihva/local-scenarios.mjs');
+const demoScenario = (await loadLocalScenarios())[0];
+const demoNodes = Object.values(demoScenario.scenes).flat();
+const longSeren = demoNodes.find(node => node.type === 'line' && node.speaker === 'seren' && node.text.includes('\n\n')).text;
+const longPrefix = longSeren.split('\n')[0].slice(0, 16);
+const lightPrefix = demoNodes.find(node => node.type === 'line' && node.speaker === 'noah' && node.expression === 'surprised').text.slice(0, 12);
+
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 
@@ -37,7 +44,7 @@ export async function testPresentation() {
   const scenarioTitle = document.querySelector('#scenario-title');
   const titleRect = scenarioTitle.getBoundingClientRect();
   const titleSize = Number.parseFloat(getComputedStyle(scenarioTitle).fontSize);
-  assert(getComputedStyle(scenarioTitle).fontFamily.startsWith('"Zen Kaku Gothic New"'), 'Japanese scenario title falls back outside the loaded Japanese face');
+  assert(getComputedStyle(scenarioTitle).fontFamily.replaceAll('"', '').startsWith('Zen Kaku Gothic New'), 'Japanese scenario title falls back outside the loaded Japanese face');
   assert(scenarioTitle.textContent === 'EP.00\n小さな光', 'Scenario title is missing its two-line metadata');
   assert(titleRect.width >= titleSize * 3.5 && titleRect.height >= titleSize * 1.6, 'Scenario title wrapped too narrowly or is too small');
   assert(titleRect.bottom < document.querySelector('#dialogue').getBoundingClientRect().top, 'Scenario title overlaps the dialogue');
@@ -197,9 +204,9 @@ export async function testDemoPlay() {
     settings: getComputedStyle(document.querySelector('.adv-settings-panel h3')).fontFamily,
     end: getComputedStyle(document.querySelector('.end-card__title')).fontFamily,
   };
-  assert(typography.scenario.startsWith('"Zen Kaku Gothic New"'), 'Japanese scenario title does not use Zen Kaku Gothic New');
+  assert(typography.scenario.replaceAll('"', '').startsWith('Zen Kaku Gothic New'), 'Japanese scenario title does not use Zen Kaku Gothic New');
   assert(getComputedStyle(document.querySelector('#scenario-title'), '::first-line').fontFamily.startsWith('Ubuntu') && typography.controls.startsWith('Ubuntu'), 'Latin episode label or controls do not use Ubuntu');
-  assert([typography.dialogue, typography.name, typography.menu, typography.log, typography.settings, typography.end].every(value => value.startsWith('"Zen Kaku Gothic New"')), `Japanese UI does not use Zen Kaku Gothic New: ${JSON.stringify(typography)}`);
+  assert([typography.dialogue, typography.name, typography.menu, typography.log, typography.settings, typography.end].every(value => value.replaceAll('"', '').startsWith('Zen Kaku Gothic New')), `Japanese UI does not use Zen Kaku Gothic New: ${JSON.stringify(typography)}`);
   const expressions = new Map(['noah', 'seren', 'luminal'].map(id => [id, new Set()]));
   const layoutSizes = new Set();
   let windowBackgroundSeen = false, closeShotSeen = false;
@@ -220,7 +227,7 @@ export async function testDemoPlay() {
       if (game.dataset.mode === 'choice') {
         choices = true;
         const option = document.querySelector('.adv-choice');
-        assert(option && getComputedStyle(option).fontFamily.startsWith('"Zen Kaku Gothic New"'), 'Choice text does not use the Japanese face');
+        assert(option && getComputedStyle(option).fontFamily.replaceAll('"', '').startsWith('Zen Kaku Gothic New'), 'Choice text does not use the Japanese face');
         document.querySelector('.adv-choice').click();
       await wait(250);
       continue;
@@ -230,11 +237,11 @@ export async function testDemoPlay() {
     const speaker = game.dataset.speaker;
     const roots = [...document.querySelectorAll('#stage .adv-sprite-character')];
     layoutSizes.add(roots.filter(root => root.dataset.visible === 'true').length);
-    if (text.textContent.includes('待って。また光った')) {
+    if (text.textContent.includes(lightPrefix)) {
       const background = document.querySelector('.adv-background-image');
       windowBackgroundSeen = Boolean(background?.src.endsWith('/room-night-window.png'));
     }
-    if (speaker === 'seren' && text.textContent.includes('あの光、覚えているわ')) {
+    if (speaker === 'seren' && text.textContent.includes(longPrefix)) {
       closeShotSeen = roots.find(root => root.dataset.character === 'seren')?.style.getPropertyValue('--adv-scale') === '1.08';
     }
     for (const root of roots) {
@@ -249,10 +256,10 @@ export async function testDemoPlay() {
         assert(Math.abs(Number(style.filter.match(/brightness\(([^)]+)\)/)[1]) - expected) < .001, `Demo focus: character=${root.dataset.character}, speaker=${speaker}, expected=${expected}, actual=${style.filter}`);
       }
     }
-    if (speaker === 'seren' && text.textContent.includes('あの光、覚えているわ')) {
+    if (speaker === 'seren' && text.textContent.includes(longPrefix)) {
       document.querySelector('[data-control="log"]').click();
       const panel = document.querySelector('#log-panel');
-      assert(panel.open && panel.textContent.includes('今度は私ひとりの記憶にはならないから。'), 'Backlog did not preserve full node text');
+      assert(panel.open && panel.textContent.includes(longSeren), 'Backlog did not preserve full node text');
       assert(userSelect(panel.querySelector('.adv-log-content')) === 'text', 'LOG copy text is disabled');
       panel.close(); checkedLog = true;
     }
@@ -301,12 +308,12 @@ export async function testPolish() {
   };
 
   await waitForLine();
-  for (let n = 0; n < 30 && !text.textContent.includes('あの光、覚えているわ'); n++) {
+  for (let n = 0; n < 30 && !text.textContent.includes(longPrefix); n++) {
     if (root.dataset.mode === 'choice') document.querySelector('.adv-choice').click();
     else await advanceNode();
     await wait(0);
   }
-  assert(root.dataset.mode === 'line' && text.textContent.includes('あの光、覚えているわ'), 'Could not reach Seren’s long dialogue');
+  assert(root.dataset.mode === 'line' && text.textContent.includes(longPrefix), 'Could not reach Seren’s long dialogue');
   await wait(250);
 
   const auto = document.querySelector('[data-control="auto"]');
@@ -343,10 +350,10 @@ export async function testPolish() {
   assert(content.scrollTop + content.clientHeight >= content.scrollHeight - 2, 'LOG did not scroll to its latest entry');
 
   const longEntry = articles.find(article => article.querySelector('.adv-log-name')?.textContent === 'Seren' &&
-    article.querySelector('.adv-log-text')?.textContent.includes('あの光、覚えているわ'));
+    article.querySelector('.adv-log-text')?.textContent.includes(longPrefix));
   assert(longEntry, 'LOG did not retain Seren’s full dialogue entry');
   const fullText = longEntry.querySelector('.adv-log-text').textContent;
-  assert(fullText.includes('今度は私ひとりの記憶にはならないから。') && fullText.includes('\n\n'), 'LOG lost the full multiline node text');
+  assert(fullText === longSeren && fullText.includes('\n\n'), 'LOG lost the full multiline node text');
   assert(expectedDelay !== calculateAutoDelay(fullText, demoUiConfig.auto), 'AUTO timing did not depend on the current page');
   const stageImage = document.querySelector('#stage [data-character="seren"] img');
   const logImage = longEntry.querySelector('.adv-log-avatar img');
@@ -382,7 +389,7 @@ export async function testPolish() {
   menuPanel.querySelector('[data-menu-action="settings"]').click();
   const settingsPanel = document.querySelector('#settings-panel');
   assert(settingsPanel.open, 'Settings did not open from MENU');
-  assert(getComputedStyle(settingsPanel.querySelector('h3')).fontFamily.startsWith('"Zen Kaku Gothic New"'), 'Settings text does not use the Japanese face');
+  assert(getComputedStyle(settingsPanel.querySelector('h3')).fontFamily.replaceAll('"', '').startsWith('Zen Kaku Gothic New'), 'Settings text does not use the Japanese face');
   settingsPanel.querySelector('[data-settings-back]').click();
   assert(menuPanel.open, 'Settings back did not return to MENU');
   menuPanel.querySelector('[data-menu-action="resume"]').click();

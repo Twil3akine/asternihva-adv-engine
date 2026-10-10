@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { calculateAutoDelay, defaultAutoConfig } from '../dist/index.js';
 
 test('AUTO waits longer for long visible pages and counts graphemes', () => {
-  assert.ok(calculateAutoDelay('うん。') < calculateAutoDelay('窓の外で、小さな光が瞬いていた。'.repeat(3)));
+  assert.ok(calculateAutoDelay('うん。') < calculateAutoDelay('長さの違うテキストを比較します。'.repeat(3)));
   const config = { baseDelayMs: 0, perCharacterMs: 10, punctuationDelayMs: 0, minDelayMs: 0 };
   assert.equal(calculateAutoDelay('か\u3099👨‍👩‍👧‍👦', config), 20);
 });
