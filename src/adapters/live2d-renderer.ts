@@ -79,7 +79,7 @@ class Live2DCharacter implements RenderedCharacter {
   }
 }
 
-export class Live2DRenderer implements CharacterRenderer {
+export class Live2DRenderer implements CharacterRenderer<HTMLElement> {
   readonly key = "live2d";
   readonly #options: Live2DRendererOptions;
 

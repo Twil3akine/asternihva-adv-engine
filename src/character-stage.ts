@@ -12,14 +12,14 @@ interface CharacterEntry {
   expression?: string;
 }
 
-export class CharacterStage {
+export class CharacterStage<Host = unknown> {
   #motionEnabled = true;
   readonly #characters = new Map<string, CharacterEntry>();
 
   constructor(
-    host: HTMLElement,
+    host: Host,
     characters: readonly CharacterDefinition[],
-    renderers: readonly CharacterRenderer[],
+    renderers: readonly CharacterRenderer<Host>[],
   ) {
     const rendererMap = new Map(renderers.map((renderer) => [renderer.key, renderer]));
 

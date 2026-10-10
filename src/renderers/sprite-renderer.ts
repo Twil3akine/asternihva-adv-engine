@@ -233,7 +233,7 @@ class SpriteCharacter implements SpriteRenderedCharacter {
 
 }
 
-export class SpriteRenderer implements CharacterRenderer {
+export class SpriteRenderer implements CharacterRenderer<HTMLElement> {
   readonly key = "sprite";
   readonly #options: SpriteRendererOptions;
   readonly #cache: DecodedImageCache;

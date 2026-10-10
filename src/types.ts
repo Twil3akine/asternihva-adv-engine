@@ -80,6 +80,8 @@ export interface EndNode {
 export type AdvNode = LineNode | ChoiceNode | JumpNode | SetNode | SceneNode | EndNode;
 
 export interface ScenarioMetadata {
+  description?: string;
+  order?: number;
   id?: string;
   title?: string;
   chapter?: string;
@@ -156,9 +158,9 @@ export interface RenderedCharacter {
   destroy(): void;
 }
 
-export interface CharacterRenderer {
+export interface CharacterRenderer<Host = unknown> {
   readonly key: string;
-  create(host: HTMLElement, character: CharacterDefinition): RenderedCharacter;
+  create(host: Host, character: CharacterDefinition): RenderedCharacter;
 }
 
 export interface EngineSnapshot {
