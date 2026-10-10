@@ -13,6 +13,10 @@ export const defaultThemeCss = `
   --adv-dialog-padding-bottom: 2.2cqw;
   --adv-dialog-height: 24%;
   --adv-dialog-blur: 8px;
+  --adv-text-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --adv-ui-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --adv-text-weight: 400;
+  --adv-name-weight: 600;
   --adv-text-size: 1.55cqw;
   --adv-text-line-height: 1.65;
   --adv-choice-bg: rgb(8 13 25 / .88);

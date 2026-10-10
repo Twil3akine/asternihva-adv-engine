@@ -197,7 +197,8 @@ export const domUiCss = defaultThemeCss + `
   background: var(--adv-dialog-bg);
   backdrop-filter: blur(var(--adv-dialog-blur));
   color: var(--adv-text-color);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--adv-text-font);
+  font-weight: var(--adv-text-weight);
   animation: adv-dialogue-in var(--adv-transition-duration) ease;
 }
 .adv-speaker {
@@ -208,7 +209,8 @@ export const domUiCss = defaultThemeCss + `
   border-block-end: 1px solid var(--adv-accent);
   color: var(--adv-name-color);
   font-size: 1.2cqw;
-  font-weight: 600;
+  font-family: var(--adv-ui-font);
+  font-weight: var(--adv-name-weight);
   letter-spacing: .12em;
 }
 .adv-text {
@@ -239,9 +241,9 @@ export const domUiCss = defaultThemeCss + `
 }
 .adv-choice:hover, .adv-choice:focus-visible { background: var(--adv-choice-hover-bg); transform: translateY(-1px); }
 .adv-controls { position: absolute; right: 4.2cqw; bottom: .65cqw; display: flex; gap: 1.4cqw; }
-.adv-control { appearance: none; padding: .3cqw 0; border: 0; background: none; color: var(--adv-muted-color); font-size: .85cqw; letter-spacing: .12em; cursor: pointer; }
+.adv-control { appearance: none; padding: .3cqw 0; border: 0; background: none; color: var(--adv-muted-color); font-family: var(--adv-ui-font); font-size: .85cqw; letter-spacing: .12em; cursor: pointer; }
 .adv-control:hover, .adv-control[aria-pressed="true"] { color: var(--adv-name-color); }
-.adv-panel { width: 52cqw; max-height: 38cqw; border: 1px solid var(--adv-dialog-border); border-radius: .6cqw; padding: 2cqw; color: var(--adv-text-color); background: var(--adv-panel-bg); font-size: 1.2cqw; }
+.adv-panel { width: 52cqw; max-height: 38cqw; border: 1px solid var(--adv-dialog-border); border-radius: .6cqw; padding: 2cqw; color: var(--adv-text-color); background: var(--adv-panel-bg); font-family: var(--adv-text-font); font-size: 1.2cqw; }
 .adv-panel::backdrop { background: rgb(0 0 0 / .55); }
 .adv-log-content { overflow: auto; max-height: 27cqw; white-space: pre-wrap; line-height: var(--adv-text-line-height); }
 .adv-panel button { color: inherit; background: transparent; border: 1px solid var(--adv-dialog-border); padding: .5em 1em; cursor: pointer; }

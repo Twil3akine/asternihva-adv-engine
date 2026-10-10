@@ -1,5 +1,10 @@
 /* All project-specific colors and decoration live in the example. */
 .game {
+  --adv-text-font: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  --adv-ui-font: Ubuntu, "Avenir Next", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  --adv-text-weight: 400;
+  --adv-name-weight: 500;
+  --adv-text-line-height: 1.7;
   --adv-dialog-bg: rgb(6 11 25 / .84);
   --adv-dialog-border: rgb(231 201 105 / .32);
   --adv-accent: #efd477;
@@ -12,3 +17,5 @@
 .game .adv-speaker::before { content: "✦"; margin-inline-end: .6em; font-size: .75em; }
 .game .adv-choice::before { content: "›"; color: var(--adv-accent); margin-inline-end: 1em; }
 .game .adv-control[aria-pressed="true"] { color: var(--adv-accent); }
+
+.game .adv-panel h2 { font-family: var(--adv-ui-font); font-weight: 500; letter-spacing: .12em; }
