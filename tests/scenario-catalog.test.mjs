@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ScenarioCatalog, AdvEngine } from '../dist/index.js';
 const game = { start: 'start', characters: [], scenario: { title: 'Original', chapter: 'ONE' }, scenes: { start: [{ type: 'end' }] } };
-const options = () => ({ stage: { destroy() {} }, ui: { setScenarioMetadata(value) { this.metadata = value; }, presentEnd() {} } });
+const options = () => ({ stage: { setActive() {}, destroy() {} }, ui: { setScenarioMetadata(value) { this.metadata = value; }, presentEnd() {} } });
 test('scenario catalog preserves order and reuses metadata with optional descriptions', () => {
   const catalog = new ScenarioCatalog([{ id: 'b', entry: game }, { id: 'a', title: 'Override', description: 'About', entry: game }]);
   assert.deepEqual(catalog.getScenarios().map(item => item.id), ['b', 'a']);
