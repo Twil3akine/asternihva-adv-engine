@@ -99,6 +99,7 @@ async function testBackgroundPresenter() {
   try {
     assert(fixture.querySelectorAll(".adv-background-image").length === 0, "Background fixture already contains images");
     await presenter.set({ src: room.href });
+    assert(getComputedStyle(fixture.querySelector(".adv-background-visual")).isolation === "isolate", "Background images blend with the fallback gradient");
     let image = fixture.querySelector(".adv-background-image");
     assert(image?.naturalWidth > 0, "Bundled room SVG did not decode in the isolated background fixture");
     assert(new URL(image.src).pathname.endsWith("/assets/room.svg"), "Background presenter loaded the wrong room asset");

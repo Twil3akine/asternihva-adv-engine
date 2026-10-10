@@ -9,6 +9,7 @@ export interface BackgroundPresenterOptions {
 
 export class BackgroundPresenter {
   readonly #host: HTMLElement;
+  readonly #visual: HTMLDivElement;
   readonly #cache: DecodedImageCache;
   #lease?: ImageLease;
   readonly #duration: number;
@@ -26,6 +27,9 @@ export class BackgroundPresenter {
     if (!Number.isFinite(this.#duration) || this.#duration < 0) {
       throw new Error("Background transitionDuration must be finite and non-negative.");
     }
+    this.#visual = document.createElement("div");
+    this.#visual.className = "adv-background-visual";
+    host.append(this.#visual);
   }
 
   setAnimationsEnabled(enabled: boolean): void {
@@ -69,7 +73,7 @@ export class BackgroundPresenter {
     image.alt = "";
     image.setAttribute("aria-hidden", "true");
     this.#apply(image, anchorX, anchorY, overlay);
-    this.#host.append(image);
+    this.#visual.append(image);
     const reducedMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (!outgoing || !this.#animationsEnabled || reducedMotion || this.#duration === 0 || !image.animate) {
       outgoing?.remove();
@@ -95,6 +99,7 @@ export class BackgroundPresenter {
     this.#token++;
     this.#cancelFade();
     this.#image?.remove();
+    this.#visual.remove();
     this.#lease?.release();
     this.#lease = undefined;
   }
@@ -116,5 +121,6 @@ export class BackgroundPresenter {
 }
 
 export const backgroundPresenterCss = `
+.adv-background-visual { position: absolute; inset: 0; isolation: isolate; }
 .adv-background-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; mix-blend-mode: plus-lighter; }
 `;

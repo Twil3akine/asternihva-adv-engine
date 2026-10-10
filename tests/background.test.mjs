@@ -42,7 +42,8 @@ function setup(t, options = {}) {
     return image;
   } };
   t.after(() => { globalThis.document = previous; globalThis.matchMedia = previousMatch; });
-  return { loads, animations, pending, host: new Element() };
+  const host = new Element();
+  return { loads, animations, pending, host, get images() { return host.children[0]?.children ?? []; } };
 }
 const tick = () => new Promise(resolve => setTimeout(resolve, 0));
 
@@ -50,7 +51,7 @@ test('initial background decodes only its image and applies anchors and overlay'
   const h = setup(t), presenter = new BackgroundPresenter(h.host);
   await presenter.set({ src: 'first', anchorX: .3, anchorY: .4, overlay: .2 });
   assert.deepEqual(h.loads, ['first']);
-  assert.equal(h.host.children[0].style.objectPosition, '30% 40%');
+  assert.equal(h.images[0].style.objectPosition, '30% 40%');
   assert.equal(h.host.style['--adv-background-overlay'], '0.2');
   assert.equal(h.animations.length, 0);
 });
@@ -58,13 +59,13 @@ test('background transitions begin after decode and keep the previous image', as
   const h = setup(t), presenter = new BackgroundPresenter(h.host, { transitionDuration: 350 });
   await presenter.set({ src: 'first' });
   const change = presenter.set({ src: 'pending' });
-  assert.equal(h.host.children.length, 1);
+  assert.equal(h.images.length, 1);
   assert.equal(h.animations.length, 0);
   h.pending.get('pending')(); await tick();
-  assert.equal(h.host.children.length, 2);
+  assert.equal(h.images.length, 2);
   assert.equal(h.animations[0].timing.duration, 350);
   h.animations.forEach(animation => animation.finish()); await change;
-  assert.deepEqual(h.host.children.map(image => image.src), ['pending']);
+  assert.deepEqual(h.images.map(image => image.src), ['pending']);
 });
 test('same background updates framing without loading or animation; failure keeps it', async t => {
   const h = setup(t), presenter = new BackgroundPresenter(h.host);
@@ -72,8 +73,8 @@ test('same background updates framing without loading or animation; failure keep
   await presenter.set({ src: 'first', anchorY: .7 });
   await presenter.set({ src: 'broken' });
   assert.deepEqual(h.loads, ['first', 'broken']);
-  assert.equal(h.host.children[0].src, 'first');
-  assert.equal(h.host.children[0].style.objectPosition, '50% 70%');
+  assert.equal(h.images[0].src, 'first');
+  assert.equal(h.images[0].style.objectPosition, '50% 70%');
   assert.equal(h.animations.length, 0);
 });
 test('zero duration and reduced motion disable background crossfade', async t => {
@@ -90,13 +91,21 @@ test('rapid background requests ignore stale decode and clear removes pending im
   const pending = presenter.set({ src: 'pending' });
   await presenter.set({ src: 'next' });
   h.pending.get('pending')(); await pending;
-  assert.deepEqual(h.host.children.map(image => image.src), ['next']);
-  await presenter.set(); assert.equal(h.host.children.length, 0);
+  assert.deepEqual(h.images.map(image => image.src), ['next']);
+  await presenter.set(); assert.equal(h.images.length, 0);
 });
 test('prefetched background decodes once and does not change the stage', async t => {
   const h = setup(t), presenter = new BackgroundPresenter(h.host, { transitionDuration: 0 });
   await presenter.set({ src: 'first' }); await presenter.prefetch({ src: 'next' });
-  assert.equal(h.host.children[0].src, 'first');
+  assert.equal(h.images[0].src, 'first');
   await presenter.set({ src: 'next' });
   assert.deepEqual(h.loads, ['first', 'next']);
+});
+
+test('background images are isolated from the host fallback gradient while crossfading', async t => {
+  const h = setup(t), presenter = new BackgroundPresenter(h.host);
+  await presenter.set({ src: 'first' });
+  assert.equal(h.host.children[0].className, 'adv-background-visual');
+  assert.equal(h.images[0].className, 'adv-background-image');
+  presenter.destroy(); assert.equal(h.host.children.length, 0);
 });
