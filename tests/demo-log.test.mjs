@@ -109,3 +109,14 @@ test("renderLogEntries adds portrait style values and safely falls back when an 
   assert.equal(avatar.removed, true);
   assert.ok(article.classes.has("adv-log-entry--without-icon"));
 });
+
+test('demo log framing resolves independently from stage framing for all characters', async () => {
+  const { assetManifest } = await import('../examples/asternihva/asset-manifest.mjs');
+  for (const character of assetManifest) {
+    const portrait = resolveLogPortrait({ speakerId: character.id, expressionId: 'normal' }, {
+      [character.id]: { expressions: { normal: '/portrait.png' }, portrait: character.logPortrait },
+    });
+    assert.deepEqual({ scale: portrait.scale, anchorX: portrait.anchorX, anchorY: portrait.anchorY }, character.logPortrait);
+    assert.notDeepEqual(character.logPortrait, character.portrait);
+  }
+});
