@@ -21,6 +21,9 @@ export const defaultThemeCss = `
   --adv-text-line-height: 1.65;
   --adv-choice-bg: rgb(8 13 25 / .88);
   --adv-choice-hover-bg: rgb(38 47 65 / .95);
+  --adv-log-icon-size: clamp(48px, 4.5cqw, 64px);
+  --adv-log-entry-gap: 1.2cqw;
+  --adv-log-separator: rgb(210 220 240 / .12);
   --adv-panel-bg: rgb(8 13 25 / .96);
   --adv-transition-duration: 200ms;
   --adv-choice-duration: 180ms;

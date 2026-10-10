@@ -288,3 +288,11 @@ Use `.adv-viewport` with `gameViewportCss` for a centered 16:9 surface. Put back
 The Asternihva example opens as a PC game screen. Add `?debug=1` to show the engine heading and local-asset status. Missing local art still shows a concise notice in normal mode. AUTO advances dialogue pages, SKIP advances them faster, LOG retains full original lines, and MENU pauses automatic input while open. Choices remain manual. These demo controls do not add engine save/audio features.
 
 Real layout regression tests are in [tests/browser-presentation.mjs](tests/browser-presentation.mjs). After building and serving the example, run `await (await import("/tests/browser-presentation.mjs")).testPresentation()` in the browser console. It checks measured 1/2/3+ page dialogue, resize, full-text preservation, themes, focus, 12 choices, motion and crossfade without browser automation dependencies.
+
+### Text-aware AUTO and expression-aware log
+
+`calculateAutoDelay(visiblePageText, config, minimumDurationMs?)` computes a bounded base delay plus grapheme count and punctuation pauses. `AutoConfig` provides `baseDelayMs`, `perCharacterMs`, `punctuationDelayMs`, `minDelayMs` and `maxDelayMs`. Pass the currently displayed page, not the whole scenario line. The optional minimum duration leaves room for another presentation source without adding audio to the engine. The example configuration lives in `examples/asternihva/ui-config.mjs`.
+
+`DialoguePresentation.expression` is an optional logical expression ID. `CharacterStage.getExpression()` returns the latest requested ID after a successful renderer operation, including scene commands and inherited expressions. Renderers that silently ignore unknown IDs cannot confirm an effective image; the log resolver safely omits an unknown icon. History stores one immutable record per original line (`speakerId`, `displayName`, `fullText`, `expressionId`, `narration`), without asset paths. The example resolves icons from its own character expression maps and per-character `logPortrait` settings. Opening LOG scrolls to the newest entry once; browsing older entries never triggers automatic scrolling.
+
+For updated local artwork, use `node scripts/import-asternihva-assets.mjs --replace-existing`. This explicitly refreshes demo copies only; the original source files are unchanged and PNGs remain ignored by Git.

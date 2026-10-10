@@ -117,6 +117,7 @@ export class AdvEngine {
           speakerId: node.speaker,
           speakerName: node.speaker ? this.#stage.getName(node.speaker) : undefined,
           text: node.text,
+          expression: node.speaker ? this.#stage.getExpression?.(node.speaker) : undefined,
         });
 
         if (node.next) {

@@ -7,6 +7,8 @@ import {
   spriteRendererCss,
 } from "../../dist/index.js";
 
+import { assetManifest } from "./asset-manifest.mjs";
+import { resolveLogPortrait } from "./demo-log.mjs";
 import { demoUiConfig } from "./ui-config.mjs";
 import { DemoUi, attachControls } from "./demo-controls.mjs";
 import { loadDemoAssets } from "./demo-assets.mjs";
@@ -50,6 +52,10 @@ const game = {
 
 const root = document.querySelector("#game");
 const stageHost = document.querySelector("#stage");
+const logIcons = Object.fromEntries(loaded.characters.map(character => [character.id, {
+  expressions: character.assets.expressions,
+  portrait: assetManifest.find(entry => entry.id === character.id).logPortrait,
+}]));
 const ui = new DemoUi({
   root,
   background: document.querySelector("#background"),
@@ -59,7 +65,7 @@ const ui = new DemoUi({
   pageIndicator: document.querySelector("#page-indicator"),
   choices: document.querySelector("#choices"),
   advanceTarget: document.querySelector("#dialogue"),
-});
+}, { resolveIcon: entry => resolveLogPortrait(entry, logIcons) });
 const stage = new CharacterStage(stageHost, game.characters, [new SpriteRenderer()]);
 const engine = new AdvEngine({ game, stage, ui });
 attachControls(root, ui, demoUiConfig);

@@ -8,6 +8,7 @@ import type {
 interface CharacterEntry {
   definition: CharacterDefinition;
   instance: RenderedCharacter;
+  expression?: string;
 }
 
 export class CharacterStage {
@@ -29,12 +30,16 @@ export class CharacterStage {
       }
 
       const instance = renderer.create(host, character);
-      this.#characters.set(character.id, { definition: character, instance });
+      this.#characters.set(character.id, { definition: character, instance, expression: character.defaultExpression });
     }
   }
 
   getName(characterId: string): string | undefined {
     return this.#characters.get(characterId)?.definition.name;
+  }
+
+  getExpression(characterId: string): string | undefined {
+    return this.#characters.get(characterId)?.expression;
   }
 
   async command(command: CharacterCommand): Promise<void> {
@@ -50,6 +55,7 @@ export class CharacterStage {
     }
     if (command.expression !== undefined) {
       await instance.setExpression(command.expression);
+      entry.expression = command.expression;
     }
     if (command.show === true) {
       await instance.show();

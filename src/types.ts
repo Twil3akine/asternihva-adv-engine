@@ -86,6 +86,8 @@ export interface GameDefinition {
 }
 
 export interface DialoguePresentation {
+  /** Latest requested logical expression; never a renderer asset path. */
+  expression?: string;
   speakerId?: string;
   speakerName?: string;
   text: string;
