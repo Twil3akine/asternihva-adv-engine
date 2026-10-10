@@ -19,6 +19,10 @@ export const defaultThemeCss = `
   --adv-name-weight: 600;
   --adv-text-size: 1.55cqw;
   --adv-text-line-height: 1.65;
+  --adv-choice-width: 52%;
+  --adv-choice-gap: .7cqw;
+  --adv-choice-row-size: 5cqw;
+  --adv-choice-border: var(--adv-dialog-border);
   --adv-choice-bg: rgb(8 13 25 / .88);
   --adv-choice-hover-bg: rgb(38 47 65 / .95);
   --adv-log-icon-size: clamp(48px, 4.5cqw, 64px);

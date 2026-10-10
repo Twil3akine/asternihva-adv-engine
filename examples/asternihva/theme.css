@@ -29,3 +29,19 @@
 }
 .game .adv-speaker { top: .6cqw; font-size: 1.05cqw; line-height: 1.25; padding-block-end: .2cqw; }
 .game .adv-control { padding-block: .15cqw; }
+
+.game {
+  --adv-choice-width: 44.2%;
+  --adv-choice-row-size: 4.3cqw;
+  --adv-choice-gap: .65cqw;
+  --adv-choice-border: rgb(231 201 105 / .13);
+}
+.game .adv-choice { padding-block: .4cqw; transition: background 180ms ease, border-color 180ms ease, transform 180ms ease; }
+.game .adv-choice::before { color: var(--adv-muted-color); transition: color 180ms ease; }
+.game .adv-choice:hover, .game .adv-choice:focus-visible { border-color: rgb(239 212 119 / .6); }
+.game .adv-choice:hover::before, .game .adv-choice:focus-visible::before { color: var(--adv-accent); }
+.game::after { content: ""; position: absolute; inset: 0; z-index: 20; pointer-events: none; background: #000; opacity: 0; transition: opacity 180ms ease; }
+.game[data-mode="choice"]::after { opacity: .12; }
+@media (prefers-reduced-motion: reduce) {
+  .game::after, .game .adv-choice, .game .adv-choice::before { transition: none; }
+}

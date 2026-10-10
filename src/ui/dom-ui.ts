@@ -223,16 +223,16 @@ export const domUiCss = defaultThemeCss + `
 }
 .adv-page-indicator { position: absolute; right: 2.2cqw; bottom: .8cqw; font-size: 1cqw; opacity: .65; }
 .adv-choices {
-  position: absolute; z-index: 110; left: 24%; right: 24%; bottom: 30%;
-  display: grid; gap: .7cqw;
-  grid-auto-rows: min(5cqw, calc(25cqw / var(--adv-choice-rows, 1)));
+  position: absolute; z-index: 110; left: calc((100% - var(--adv-choice-width)) / 2); width: var(--adv-choice-width); bottom: 30%;
+  display: grid; gap: var(--adv-choice-gap);
+  grid-auto-rows: min(var(--adv-choice-row-size), calc(25cqw / var(--adv-choice-rows, 1)));
   animation: adv-dialogue-in .18s ease;
 }
 .adv-choices:empty { display: none; }
 .adv-choices[data-columns="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .adv-choices[data-selected="true"] { pointer-events: none; }
 .adv-choice {
-  appearance: none; border: 1px solid var(--adv-dialog-border);
+  appearance: none; border: 1px solid var(--adv-choice-border);
   border-radius: .4cqw; padding: .6cqw 1.4cqw;
   background: var(--adv-choice-bg); backdrop-filter: blur(var(--adv-dialog-blur)); color: inherit;
   font: inherit; color: var(--adv-text-color); font-size: 1.25cqw; line-height: 1.4;
