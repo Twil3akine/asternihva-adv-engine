@@ -226,7 +226,7 @@ export const domUiCss = defaultThemeCss + backgroundPresenterCss + `
   position: absolute;
   z-index: 100;
   box-sizing: border-box;
-  left: 5%; right: 5%; bottom: 3.6%;
+  left: 50%; width: var(--adv-dialog-width); bottom: 3.6%; transform: translateX(-50%);
   display: flex; flex-direction: column;
   block-size: var(--adv-dialog-height);
   padding: var(--adv-dialog-padding-top) var(--adv-dialog-padding-inline) var(--adv-dialog-padding-bottom);
