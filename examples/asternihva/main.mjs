@@ -17,6 +17,7 @@ import { attachSettings } from "./demo-settings.mjs";
 import { demoUiConfig } from "./ui-config.mjs";
 import { DemoUi, attachControls, presentEpisodeTitle } from "./demo-controls.mjs";
 import { attachGameShell } from './game-shell.mjs';
+import { motions } from "./motions.mjs";
 import { loadLocalScenarios } from "./local-scenarios.mjs";
 import { loadDemoAssets } from "./demo-assets.mjs";
 
@@ -31,11 +32,6 @@ await Promise.all([
   document.fonts.load('400 16px Ubuntu', "EP.00 AUTO MENU"),
 ].map(promise => promise.catch(() => [])));
 
-const motions = {
-  bounce: { keyframes: [{ translate: "0 0" }, { translate: "0 -8px" }, { translate: "0 0" }], duration: 620 },
-  nod: { keyframes: [{ rotate: "0deg" }, { rotate: "1deg" }, { rotate: "0deg" }], duration: 580 },
-  pulse: { keyframes: [{ scale: 1, opacity: 1 }, { scale: 1.02, opacity: 1 }, { scale: 1, opacity: 1 }], duration: 620 },
-};
 
 const debug = new URLSearchParams(location.search).get("debug") === "1";
 const [loaded, firstBackground] = await Promise.all([loadDemoAssets(), initialBackground()]);
