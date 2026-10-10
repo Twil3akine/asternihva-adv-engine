@@ -161,6 +161,18 @@ test("DomUi always shows the same down cue while page state stays internal", asy
   await pending;
 });
 
+test("the single down cue also remains unchanged on a final page before node advance", async t => {
+  const { elements } = fakeUi(t);
+  const indicator = new Element();
+  const ui = new DomUi({ ...elements, pageIndicator: indicator });
+  const pending = ui.presentLine({ text: "短い台詞。" });
+  assert.equal(indicator.textContent, "▼");
+  elements.advanceTarget.dispatchEvent(new Event("click"));
+  await pending;
+  assert.equal(indicator.textContent, "▼");
+  assert.doesNotMatch(indicator.textContent, /\d|[>/]/);
+});
+
 test("DomUi choices resolve exactly once after the selection fade", async t => {
   const { elements, ui } = fakeUi(t);
   let finish, timing;
