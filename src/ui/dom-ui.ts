@@ -103,7 +103,7 @@ export class DomUi implements UiAdapter {
         text.scrollTop = 0;
         this.#elements.root.dataset.page = String(page);
         if (this.#elements.pageIndicator) {
-          this.#elements.pageIndicator.textContent = `${page > 1 ? page + " " : ""}${end < line.text.length ? "›" : "▼"}`;
+          this.#elements.pageIndicator.textContent = "▼";
         }
       };
       render();

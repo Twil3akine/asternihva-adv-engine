@@ -195,13 +195,12 @@ export async function testPolish() {
   };
   const advanceNode = async () => {
     for (let n = 0; n < 100; n++) {
-      const lastPage = pageIndicator.textContent.includes('▼');
       const pageBefore = Number(root.dataset.page);
       const textBefore = text.textContent;
       dialogue.click();
       await waitForPresentationChange(pageBefore, textBefore);
       if (root.dataset.mode !== 'line') return;
-      if (lastPage) return;
+      if (Number(root.dataset.page) <= pageBefore) return;
     }
     throw new Error('Could not advance past current dialogue node');
   };
@@ -262,9 +261,11 @@ export async function testPolish() {
   const pages = [];
   for (let n = 0; n < 100; n++) {
     pages.push(text.textContent);
-    if (pageIndicator.textContent.includes('▼')) break;
+    assert(pageIndicator.textContent === '▼', 'Page cue should stay minimal');
+    const pageBefore = Number(root.dataset.page);
     dialogue.click();
     await wait(0);
+    if (Number(root.dataset.page) <= pageBefore) break;
   }
   assert(pages.length > 1 && pages.join('') === fullText, 'Paged dialogue differs from full LOG text');
 

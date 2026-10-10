@@ -138,6 +138,29 @@ test("DomUi resize preserves the current page offset and the complete original t
   assert.equal(elements.text.scrollTop, 0);
 });
 
+test("DomUi always shows the same down cue while page state stays internal", async t => {
+  const { elements } = fakeUi(t);
+  elements.text.clientHeight = 40;
+  const indicator = new Element();
+  const pagedUi = new DomUi({ ...elements, pageIndicator: indicator });
+  const original = "長い文章です。".repeat(10);
+  const pending = pagedUi.presentLine({ text: original });
+  let done = false;
+  pending.then(() => { done = true; });
+  assert.equal(indicator.textContent, "▼");
+  assert.equal(elements.root.dataset.page, "1");
+  elements.advanceTarget.dispatchEvent(new Event("click"));
+  await Promise.resolve();
+  assert.equal(indicator.textContent, "▼");
+  assert.equal(elements.root.dataset.page, "2");
+  while (!done) {
+    elements.advanceTarget.dispatchEvent(new Event("click"));
+    await Promise.resolve();
+    assert.equal(indicator.textContent, "▼");
+  }
+  await pending;
+});
+
 test("DomUi choices resolve exactly once after the selection fade", async t => {
   const { elements, ui } = fakeUi(t);
   let finish, timing;
