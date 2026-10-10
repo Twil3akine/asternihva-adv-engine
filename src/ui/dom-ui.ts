@@ -1,3 +1,4 @@
+import { fitDialoguePage } from "./dialogue-paging.js";
 import type {
   ChoicePresentation,
   DialoguePresentation,
@@ -12,6 +13,7 @@ export interface DomUiElements {
   text: HTMLElement;
   choices: HTMLElement;
   advanceTarget?: HTMLElement;
+  pageIndicator?: HTMLElement;
 }
 
 export class DomUi implements UiAdapter {
@@ -48,19 +50,46 @@ export class DomUi implements UiAdapter {
     this.#elements.root.dataset.mode = "line";
 
     return new Promise((resolve) => {
+      let start = 0;
+      let end = 0;
+      let page = 1;
+      let disposed = false;
+      const render = () => {
+        const text = this.#elements.text;
+        end = text.clientHeight > 0 && text.clientWidth > 0
+          ? fitDialoguePage(line.text, start, candidate => {
+              text.textContent = candidate;
+              return text.scrollHeight <= text.clientHeight + 1 && text.scrollWidth <= text.clientWidth + 1;
+            })
+          : line.text.length;
+        text.textContent = line.text.slice(start, end);
+        text.scrollTop = 0;
+        this.#elements.root.dataset.page = String(page);
+        if (this.#elements.pageIndicator) {
+          this.#elements.pageIndicator.textContent = `${page > 1 ? page + " " : ""}${end < line.text.length ? "›" : "▼"}`;
+        }
+      };
+      render();
+      const observer = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(() => {
+        if (!disposed) render();
+      });
+      observer?.observe(this.#elements.text);
+      globalThis.document?.fonts?.ready.then(() => { if (!disposed) render(); });
       const target = this.#elements.advanceTarget ?? this.#elements.root;
       const controller = new AbortController();
       const finish = () => {
+        disposed = true;
+        observer?.disconnect();
         controller.abort();
         this.#cleanup = undefined;
         resolve();
       };
 
       const advance = () => {
-        const text = this.#elements.text;
-        if (text.scrollHeight > text.clientHeight &&
-            text.scrollTop + text.clientHeight < text.scrollHeight - 1) {
-          text.scrollTop = text.scrollHeight;
+        if (end < line.text.length) {
+          start = end;
+          page++;
+          render();
           return;
         }
         finish();
@@ -69,6 +98,7 @@ export class DomUi implements UiAdapter {
       window.addEventListener(
         "keydown",
         (event) => {
+          if (event.defaultPrevented || (event.target as Element | null)?.closest?.("button, input, textarea, select, dialog[open]")) return;
           if (["Enter", " ", "ArrowRight"].includes(event.key)) {
             event.preventDefault();
             advance();
@@ -76,7 +106,12 @@ export class DomUi implements UiAdapter {
         },
         { signal: controller.signal },
       );
-      this.#cleanup = () => controller.abort();
+      window.addEventListener("resize", render, { signal: controller.signal });
+      this.#cleanup = () => {
+        disposed = true;
+        observer?.disconnect();
+        controller.abort();
+      };
     });
   }
 
@@ -87,6 +122,7 @@ export class DomUi implements UiAdapter {
     this.#elements.text.scrollTop = 0;
     this.#elements.choices.replaceChildren();
     this.#elements.root.dataset.mode = "choice";
+    if (this.#elements.pageIndicator) this.#elements.pageIndicator.textContent = "";
 
     return new Promise((resolve) => {
       choice.options.forEach((label, index) => {
@@ -117,6 +153,7 @@ export class DomUi implements UiAdapter {
     this.setActiveSpeaker(undefined);
     this.#elements.text.textContent = "The End";
     this.#elements.root.dataset.mode = "ended";
+    if (this.#elements.pageIndicator) this.#elements.pageIndicator.textContent = "";
   }
 
   #cancelPending(): void {
@@ -155,12 +192,13 @@ export const domUiCss = `
 }
 .adv-text {
   flex: 1 1 auto; min-block-size: 0;
-  overflow-y: auto;
+  overflow: hidden;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   font-size: 1.55cqw;
   line-height: 1.65;
 }
+.adv-page-indicator { position: absolute; right: 2.2cqw; bottom: .8cqw; font-size: 1cqw; opacity: .65; }
 .adv-choices { display: grid; gap: .625rem; }
 .adv-choice {
   appearance: none; border: 1px solid rgb(255 255 255 / .28);

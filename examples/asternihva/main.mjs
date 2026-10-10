@@ -48,6 +48,7 @@ const ui = new DomUi({
   title: document.querySelector("#title"),
   speaker: document.querySelector("#speaker"),
   text: document.querySelector("#text"),
+  pageIndicator: document.querySelector("#page-indicator"),
   choices: document.querySelector("#choices"),
   advanceTarget: document.querySelector("#dialogue"),
 });

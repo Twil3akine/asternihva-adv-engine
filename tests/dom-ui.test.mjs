@@ -8,7 +8,8 @@ class Element extends EventTarget {
   hidden = false;
   children = [];
   scrollTop = 0;
-  scrollHeight = 0;
+  clientWidth = 100;
+  get scrollHeight() { return this.clientHeight ? Math.ceil(this.textContent.length / 10) * 20 : 0; }
   clientHeight = 0;
   replaceChildren() { this.children = []; }
 }
@@ -51,7 +52,7 @@ test("DomUi replaces the last clickable line with a visible end state", async (t
   assert.equal(elements.root.dataset.mode, "ended");
 });
 
-test("DomUi keeps short and multiline lines readable before advancing long text", async (t) => {
+test("DomUi keeps short and multiline lines readable and advances the node only after every long-text page", async (t) => {
   const previousWindow = globalThis.window;
   globalThis.window = new EventTarget();
   t.after(() => {
@@ -62,7 +63,7 @@ test("DomUi keeps short and multiline lines readable before advancing long text"
     ["root", "background", "speaker", "text", "choices", "advanceTarget"]
       .map((name) => [name, new Element()]),
   );
-  const lines = ["短い台詞です。", "一行目です。\n二行目です。", "長文の台詞です。"];
+  const lines = ["短い台詞です。", "一行目です。\n二行目です。", "長文の台詞です。".repeat(12)];
   const ui = new DomUi(elements);
   const stage = { setActive() {}, getName() { return "Alice"; }, destroy() {} };
   const engine = new AdvEngine({
@@ -79,20 +80,22 @@ test("DomUi keeps short and multiline lines readable before advancing long text"
   assert.equal(elements.text.textContent, lines[1]);
   assert.equal(elements.text.scrollTop, 0);
 
+  elements.text.clientHeight = 40;
   elements.advanceTarget.dispatchEvent(new Event("click", { cancelable: true }));
   await new Promise((resolve) => setTimeout(resolve, 0));
-  assert.equal(elements.text.textContent, lines[2]);
-  elements.text.scrollHeight = 240;
-  elements.text.clientHeight = 100;
-  const scrollKey = new Event("keydown", { cancelable: true });
-  Object.defineProperty(scrollKey, "key", { value: "Enter" });
-  window.dispatchEvent(scrollKey);
-  assert.equal(scrollKey.defaultPrevented, true);
-  assert.equal(elements.text.scrollTop, 240);
-  assert.equal(elements.text.textContent, lines[2]);
-  assert.equal(engine.ended, false);
-
-  elements.advanceTarget.dispatchEvent(new Event("click", { cancelable: true }));
+  assert.notEqual(elements.text.textContent, lines[2]);
+  const pages = [];
+  while (!engine.ended) {
+    pages.push(elements.text.textContent);
+    assert.equal(elements.text.scrollTop, 0);
+    const key = new Event("keydown", { cancelable: true });
+    Object.defineProperty(key, "key", { value: "Enter" });
+    window.dispatchEvent(key);
+    assert.equal(key.defaultPrevented, true);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
   await run;
+  assert.ok(pages.length >= 3);
+  assert.equal(pages.join(""), lines[2]);
   assert.equal(elements.root.dataset.mode, "ended");
 });
