@@ -158,7 +158,7 @@ export async function testDemoPlay() {
       assert(image.complete && image.naturalWidth > 0, 'Demo image missing');
       expressions.get(root.dataset.character).add(image.src.split('/').pop());
       const style = getComputedStyle(root);
-      const expected = speaker ? root.dataset.character === speaker ? 1 : .55 : .9;
+      const expected = speaker ? root.dataset.character === speaker ? 1 : .55 : .6;
       assert(Math.abs(Number(style.filter.match(/brightness\(([^)]+)\)/)[1]) - expected) < .001, 'Demo focus');
     }
     if (speaker === 'seren' && text.textContent.includes('あの光、覚えているわ')) {

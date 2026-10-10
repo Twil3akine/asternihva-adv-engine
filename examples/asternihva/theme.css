@@ -4,6 +4,8 @@
   --adv-dialog-border: rgb(231 201 105 / .32);
   --adv-accent: #efd477;
   --adv-name-color: #efd477;
+  --adv-narration-brightness: .6;
+  --adv-narration-opacity: .88;
   --adv-choice-bg: rgb(6 11 25 / .9);
   --adv-choice-hover-bg: rgb(36 36 31 / .96);
 }
