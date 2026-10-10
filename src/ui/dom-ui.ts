@@ -127,65 +127,46 @@ export class DomUi implements UiAdapter {
 
 export const domUiCss = `
 .adv-dialogue {
-  --adv-dialogue-block-size: clamp(12rem, 29vh, 18rem);
-  --adv-dialogue-inline-padding: clamp(1.25rem, 4vw, 2.375rem);
   position: absolute;
   z-index: 100;
   box-sizing: border-box;
-  left: max(24px, 6vw);
-  right: max(24px, 6vw);
-  bottom: max(24px, 4vh);
-  display: flex;
-  flex-direction: column;
-  gap: .5rem;
-  block-size: var(--adv-dialogue-block-size);
-  max-block-size: calc(100dvh - max(24px, 4vh) - 3rem);
-  padding: 2rem var(--adv-dialogue-inline-padding) 1.25rem;
-  border: 1px solid rgb(255 255 255 / .32);
-  border-radius: 24px;
-  background: rgb(10 13 30 / .82);
-  backdrop-filter: blur(22px) saturate(1.2);
-  box-shadow: 0 26px 70px rgb(0 0 0 / .28);
-  color: white;
+  left: 5%; right: 5%; bottom: 3.6%;
+  display: flex; flex-direction: column;
+  block-size: 24%;
+  padding: 3.2cqw 2.2cqw 2.2cqw;
+  border: 1px solid rgb(210 220 240 / .25);
+  border-radius: .65cqw;
+  background: rgb(8 13 25 / .8);
+  backdrop-filter: blur(8px);
+  color: #f4f6fc;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  animation: adv-dialogue-in .2s ease;
 }
 .adv-speaker {
   position: absolute;
-  top: -16px;
-  left: var(--adv-dialogue-inline-padding);
-  padding: .5rem 1rem;
-  border-radius: 999px;
-  background: rgb(110 111 190 / .94);
-  font-weight: 700;
-  letter-spacing: .04em;
+  top: .8cqw; left: 2.2cqw;
+  min-inline-size: 8cqw;
+  padding-block-end: .3cqw;
+  border-block-end: 1px solid rgb(160 190 230 / .5);
+  color: #d9e6ff;
+  font-size: 1.2cqw;
+  font-weight: 600;
+  letter-spacing: .12em;
 }
 .adv-text {
-  flex: 1 1 auto;
-  min-block-size: 0;
+  flex: 1 1 auto; min-block-size: 0;
   overflow-y: auto;
-  overscroll-behavior: contain;
   white-space: pre-wrap;
-  font-size: clamp(1rem, 2.1vw, 1.75rem);
-  line-height: 1.6;
+  overflow-wrap: anywhere;
+  font-size: 1.55cqw;
+  line-height: 1.65;
 }
-.adv-choices {
-  display: grid;
-  flex: 0 1 auto;
-  gap: .625rem;
-  max-block-size: 48%;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
+.adv-choices { display: grid; gap: .625rem; }
 .adv-choice {
-  appearance: none;
-  border: 1px solid rgb(255 255 255 / .28);
-  border-radius: 14px;
-  padding: .8125rem 1.0625rem;
-  background: rgb(255 255 255 / .09);
-  color: white;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: transform .15s ease, background .15s ease;
+  appearance: none; border: 1px solid rgb(255 255 255 / .28);
+  border-radius: .5rem; padding: .7rem 1rem;
+  background: rgb(255 255 255 / .09); color: inherit;
+  font: inherit; text-align: left; cursor: pointer;
 }
-.adv-choice:hover { transform: translateX(6px); background: rgb(255 255 255 / .16); }
+@keyframes adv-dialogue-in { from { opacity: 0; } to { opacity: 1; } }
 `;

@@ -1,0 +1,4 @@
+/* Project styling stays outside the engine's default presentation. */
+.game .adv-dialogue { border-color: rgb(231 201 105 / .32); background: rgb(6 11 25 / .84); }
+.game .adv-speaker { color: #efd477; border-color: rgb(239 212 119 / .65); }
+.game .adv-speaker::before { content: "✦"; margin-inline-end: .6em; font-size: .75em; }
