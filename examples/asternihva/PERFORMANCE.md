@@ -13,7 +13,7 @@
 
 初期表示時間は23.1%、PNG転送bodyは89.8%減りました。初期表情の3枚だけをロードし、未使用の27枚は取得・decodeしていません。最終実装では各初期PNGにHEAD確認とGETがあるため、Resource Timing上は6 entriesです。HEADのbodyは0で、3 GETのbody合計が上表の値です。
 
-本素材の `public/backgrounds/room-night.png` は未導入です。最初の背景だけをHEADで確認し、404の場合はCSS gradientを表示しています。背景画像のdecodeは0回でした。背景が導入されれば、初期背景1枚が加わります。
+この計測は背景画像を追加する前に行ったため、当時は `public/backgrounds/room-night.png` がなく、背景decodeは0回でした。現在のDemoは、ローカルに置いた `room-night-wide.png` を初期表示時に読み込み、窓側シーンへ進んだ後に `room-night-window.png` を読み込みます。ファイルは合計約3.5MBで、どちらもGit管理対象外です。キャラクター表情画像を最初からまとめてdecodeしない方針は維持しています。
 
 ## 表情切替
 

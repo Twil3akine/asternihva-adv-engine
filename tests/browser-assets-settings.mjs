@@ -142,16 +142,16 @@ export async function testAssetsAndSettings() {
   await until(() => game.dataset.mode === "line", "Demo did not enter dialogue");
   assert(scenarioTitle.textContent === "EP.00\n小さな光", `Scenario title was ${JSON.stringify(scenarioTitle.textContent)}`);
 
-  const backgroundUrl = new URL("../examples/asternihva/public/backgrounds/room-night.png", import.meta.url);
+  const backgroundUrl = new URL("../examples/asternihva/public/backgrounds/room-night-wide.png", import.meta.url);
   const requestedBackground = performance.getEntriesByType("resource").some(entry => new URL(entry.name).pathname === backgroundUrl.pathname);
-  assert(requestedBackground, "Demo did not request the room-night background metadata asset");
+  assert(requestedBackground, "Demo did not request the room-night-wide background asset");
   const backgroundResponse = await fetch(backgroundUrl, { method: "HEAD", cache: "no-store" });
   const actualBackground = background.querySelector(".adv-background-image");
   if (!backgroundResponse.ok) {
-    assert(!actualBackground, "Missing room-night asset unexpectedly produced a background image");
-    assert(getComputedStyle(background).backgroundImage.includes("linear-gradient"), "Missing room-night asset did not leave the CSS gradient visible");
+    assert(!actualBackground, "Missing room-night-wide asset unexpectedly produced a background image");
+    assert(getComputedStyle(background).backgroundImage.includes("linear-gradient"), "Missing room-night-wide asset did not leave the CSS gradient visible");
   } else {
-    assert(actualBackground?.complete && actualBackground.naturalWidth > 0, "Available room-night asset did not load");
+    assert(actualBackground?.complete && actualBackground.naturalWidth > 0, "Available room-night-wide asset did not load");
   }
 
   const backgroundPresenter = await testBackgroundPresenter();
