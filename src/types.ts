@@ -121,6 +121,7 @@ export interface UiAdapter {
   presentEnd(): void | Promise<void>;
   setBackground?(source?: string): void | Promise<void>;
   presentBackground?(background?: BackgroundDefinition): void | Promise<void>;
+  prefetchBackground?(background: BackgroundDefinition): void | Promise<void>;
   setActiveSpeaker?(characterId?: string): void;
   setTitle?(title?: string): void;
   setScenarioMetadata?(metadata?: ScenarioMetadata): void;

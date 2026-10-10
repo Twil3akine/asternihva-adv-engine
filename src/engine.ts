@@ -81,6 +81,7 @@ export class AdvEngine {
           return;
         }
 
+        this.#prefetchNextBackground();
         await this.#execute(node);
       }
     } finally {
@@ -164,6 +165,20 @@ export class AdvEngine {
       case "end":
         await this.#finish();
         return;
+    }
+  }
+
+  #prefetchNextBackground(): void {
+    if (!this.#ui.prefetchBackground || this.#game.scenes[this.#sceneId]?.[this.#nodeIndex]?.type !== "line") return;
+    const nearby = this.#game.scenes[this.#sceneId]!.slice(this.#nodeIndex + 1, this.#nodeIndex + 6);
+    for (const node of nearby) {
+      if (node.type === "choice" || node.type === "jump" || node.type === "end") break;
+      if (node.type === "scene" && node.background) {
+        const definition = this.#game.backgrounds?.[node.background] ?? { src: node.background };
+        void Promise.resolve(this.#ui.prefetchBackground(definition)).catch(() => {});
+        break;
+      }
+      if ("next" in node && node.next) break;
     }
   }
 
