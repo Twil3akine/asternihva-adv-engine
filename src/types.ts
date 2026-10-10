@@ -77,7 +77,14 @@ export interface EndNode {
 
 export type AdvNode = LineNode | ChoiceNode | JumpNode | SetNode | SceneNode | EndNode;
 
+export interface ScenarioMetadata {
+  id?: string;
+  title?: string;
+  chapter?: string;
+}
+
 export interface GameDefinition {
+  scenario?: ScenarioMetadata;
   title?: string;
   start: string;
   characters: CharacterDefinition[];
@@ -106,6 +113,7 @@ export interface UiAdapter {
   setBackground?(source?: string): void | Promise<void>;
   setActiveSpeaker?(characterId?: string): void;
   setTitle?(title?: string): void;
+  setScenarioMetadata?(metadata?: ScenarioMetadata): void;
   destroy?(): void;
 }
 

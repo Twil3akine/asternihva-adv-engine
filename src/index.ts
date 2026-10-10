@@ -20,6 +20,7 @@ export type {
   RenderedCharacter,
   Scalar,
   SceneNode,
+  ScenarioMetadata,
   SetNode,
   StagePosition,
   UiAdapter,

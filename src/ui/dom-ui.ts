@@ -4,12 +4,14 @@ import type {
   ChoicePresentation,
   DialoguePresentation,
   UiAdapter,
+  ScenarioMetadata,
 } from "../types.js";
 
 export interface DomUiElements {
   root: HTMLElement;
   background: HTMLElement;
   title?: HTMLElement;
+  scenarioTitle?: HTMLElement;
   speaker: HTMLElement;
   text: HTMLElement;
   choices: HTMLElement;
@@ -27,6 +29,13 @@ export class DomUi implements UiAdapter {
 
   setTitle(title?: string): void {
     if (this.#elements.title) this.#elements.title.textContent = title ?? "";
+  }
+
+  setScenarioMetadata(metadata?: ScenarioMetadata): void {
+    const element = this.#elements.scenarioTitle;
+    if (!element) return;
+    element.textContent = [metadata?.chapter, metadata?.title].filter(Boolean).join("\n");
+    element.hidden = !element.textContent;
   }
 
   setBackground(source?: string): void {
@@ -184,6 +193,7 @@ export class DomUi implements UiAdapter {
 }
 
 export const domUiCss = defaultThemeCss + `
+.adv-scenario-title { position: absolute; z-index: 80; top: 3.5%; left: 4%; margin: 0; white-space: pre-line; font: 500 1cqw/1.6 var(--adv-ui-font); color: var(--adv-muted-color); text-shadow: 0 1px 5px #000; opacity: .85; pointer-events: none; }
 .adv-dialogue {
   position: absolute;
   z-index: 100;

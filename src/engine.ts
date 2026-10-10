@@ -32,6 +32,7 @@ export class AdvEngine {
     this.#sceneId = options.game.start;
     this.#state = { ...options.game.initialState };
     this.#ui.setTitle?.(options.game.title);
+    this.#ui.setScenarioMetadata?.(options.game.scenario);
   }
 
   get state(): Readonly<Record<string, Scalar>> {
