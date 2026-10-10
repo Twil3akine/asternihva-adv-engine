@@ -77,7 +77,7 @@
 .game {
   --adv-dialog-width: 74%;
   --adv-dialog-height: 20.4%;
-  --adv-dialog-padding-top: .45cqw;
+  --adv-dialog-padding-top: .75cqw;
   --adv-dialog-padding-bottom: .6cqw;
   --adv-text-size: 1.4cqw;
   --adv-text-line-height: 1.65;
