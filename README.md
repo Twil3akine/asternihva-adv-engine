@@ -416,3 +416,11 @@ consumer. Test supported screens at `npm run mobile:test`: actual generic sample
 on desktop, iPhone-like and Android-like Chromium touch contexts, including
 portrait rotation, safe-area simulation, short viewport and Save/Load. Emulation
 is not a physical iPhone/Safari guarantee; confirm on real devices before launch.
+## Consumer deployment preparation
+
+Keep game sources, character/asset definitions, theme and deployment settings in
+the consumer. [Architecture and hosting guidance](docs/consumer-deployment.md)
+compares Workers Static Assets and Pages. `templates/consumer/` contains inactive
+Wrangler/manual CI examples, cache headers and a local production-output check.
+No deployment workflow is enabled in this engine repository. Built browser data
+is public even when the game's source repository is private.
