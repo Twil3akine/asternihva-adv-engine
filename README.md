@@ -310,3 +310,13 @@ intro/playback and closes its audio context. A cancelled run is never marked CLE
 When browser storage is denied, the example reports that saves last only for the
 current page session. Hosts should report storage quota errors instead of silently
 claiming durable saves.
+
+`ScenarioCatalog.createScenario(id, options)` selects and constructs an engine
+without executing its opening nodes. Use it when a host must retain a handle
+before `restoreSaveState()` and cancel a chapter switch. Catalog metadata overrides
+are applied consistently for new and loaded engines. `stop()`/`destroy()` during
+restore invalidates that restore; it reports `SaveError("busy")` after the pending
+adapter operation settles and does not commit saved variables/progress. A cancelled
+or failed restore cannot be saved until another restore or playback reaches a safe
+checkpoint. Renderer adapters must suppress late work after their own destruction.
+Destroyed engines cannot be run, restored, or saved; construct a fresh engine.

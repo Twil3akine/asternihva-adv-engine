@@ -47,3 +47,17 @@ test('catalog looks up three definitions, sorts by order, and tracks the current
   assert.throws(() => catalog.startScenario('invalid', options()), /Unknown scenario/);
   assert.equal(catalog.getCurrentScenario().id, 's1');
 });
+
+test('catalog creates a selected engine without running nodes and preserves catalog metadata', async () => {
+  const catalog = new ScenarioCatalog([{ id: 'sample', title: 'Override', entry: game }]);
+  const presentation = options();
+  let ended = false; presentation.ui.presentEnd = () => { ended = true; };
+  const engine = catalog.createScenario('sample', presentation);
+  assert.equal(catalog.getCurrentScenario().id, 'sample');
+  assert.equal(ended, false);
+  assert.equal(presentation.ui.metadata.title, 'Override');
+  assert.throws(() => catalog.createScenario('missing', presentation), /Unknown scenario/);
+  assert.equal(catalog.getCurrentScenario().id, 'sample');
+  await engine.run(); assert.equal(ended, true);
+  engine.destroy();
+});

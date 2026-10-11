@@ -161,9 +161,7 @@ shell = attachGameShell(root, catalog, {
       signal.throwIfAborted();
       // Construct the matching stage before restoring a catalog save; never run intro nodes first.
       if (saveState) {
-        const { AdvEngine } = await import('../../dist/core.js');
-        signal.throwIfAborted();
-        engine = currentEngine = new AdvEngine({ game: { ...definition, scenario: { ...definition.scenario, id } }, stage, ui, audio, saves, progress, autosave: true, onAutosaveError: reportError });
+        engine = currentEngine = catalog.createScenario(id, { stage, ui, audio, saves, progress, autosave: true, onAutosaveError: reportError });
         await engine.restoreSaveState(saveState);
         signal.throwIfAborted();
         return { engine, finished: engine.run() };

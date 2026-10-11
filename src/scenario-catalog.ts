@@ -64,22 +64,32 @@ export class ScenarioCatalog {
     const record = await options.saves.load(slot);
     const item = this.#entries.get(record.state.scenarioId);
     if (!item) throw new SaveError("scenario-missing", "Saved scenario is not in this catalog.");
-    const engine = new AdvEngine({ ...options, game: { ...item.entry, scenario: { ...item.entry.scenario, id: item.id } } });
+    const engine = this.#makeEngine(item.id, options);
     await engine.restoreSaveState(record.state);
     this.#currentId = item.id;
     return { engine, finished: engine.run() };
   }
 
-  /** Starts a fresh engine; the caller owns its stage/UI and eventual destruction. */
-  startScenario(id: string, options: Omit<AdvEngineOptions, "game">): ScenarioPlayback {
+  #makeEngine(id: string, options: Omit<AdvEngineOptions, "game">): AdvEngine {
     const item = this.#entries.get(id);
     if (!item) throw new Error(`Unknown scenario: ${id}`);
     const metadata = this.getScenarioMetadata(id)!;
-    const engine = new AdvEngine({ ...options, game: {
+    return new AdvEngine({ ...options, game: {
       ...item.entry,
       scenario: { id, chapter: metadata.chapter, title: metadata.title },
     } });
+  }
+
+  /** Selects and constructs a scenario without running its initial nodes. Caller owns destruction. */
+  createScenario(id: string, options: Omit<AdvEngineOptions, "game">): AdvEngine {
+    const engine = this.#makeEngine(id, options);
     this.#currentId = id;
+    return engine;
+  }
+
+  /** Starts a fresh engine; the caller owns its stage/UI and eventual destruction. */
+  startScenario(id: string, options: Omit<AdvEngineOptions, "game">): ScenarioPlayback {
+    const engine = this.createScenario(id, options);
     return { engine, finished: engine.run() };
   }
 }

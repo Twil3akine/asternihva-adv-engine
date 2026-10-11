@@ -101,3 +101,104 @@ test('scalar variable keys cannot replace the runtime object prototype',()=>{
   const state=JSON.parse('{"__proto__":"hello","constructor":"safe"}');const f=fixture({game:{initialState:state}});
   assert.equal(Object.getPrototypeOf(f.engine.state),null);assert.equal(f.engine.snapshot().state.__proto__,'hello');
 });
+
+test('destroy during restore cancels before committing runtime state or progress', async () => {
+  let release, entered;
+  const gate = new Promise(resolve => { entered = resolve; });
+  const played = [];
+  const f = fixture({ effect(method) { if (method === 'setPosition') { entered(); return new Promise(resolve => { release = resolve; }); } }, options: { progress: { markPlayed: id => played.push(id), markCompleted() {} } } });
+  const state = f.engine.createSaveState(); state.runtime.state.seen = true;
+  const loading = f.engine.restoreSaveState(state);
+  await gate;
+  f.engine.destroy(); f.engine.destroy(); release();
+  await assert.rejects(loading, error => error.code === 'busy');
+  assert.equal(f.engine.state.seen, false);
+  assert.deepEqual(played, []);
+  assert.equal(f.calls.filter(([method]) => method === 'destroy').length, 1);
+  assert.equal(f.calls.some(([method]) => method === 'background'), false);
+  assert.throws(() => f.engine.createSaveState(), error => error.code === 'busy');
+  await assert.rejects(f.engine.run(), /destroyed/);
+});
+
+test('stop during audio restoration blocks later presentation and permits a fresh load after settling', async () => {
+  let release, entered;
+  const gate = new Promise(resolve => { entered = resolve; });
+  let blocked = true;
+  const audio = { snapshot: () => ({}), restore() { if (blocked) { entered(); return new Promise(resolve => { release = resolve; }); } }, destroy() {} };
+  const f = fixture({ options: { audio } });
+  const state = f.engine.createSaveState(); state.runtime.state.seen = true;
+  const loading = f.engine.restoreSaveState(state);
+  await gate; f.engine.stop(); release();
+  await assert.rejects(loading, error => error.code === 'busy');
+  assert.equal(f.engine.state.seen, false);
+  assert.equal(f.calls.some(([method]) => method === 'setPosition'), false);
+  assert.throws(() => f.engine.createSaveState(), error => error.code === 'busy');
+  blocked = false;
+  await f.engine.restoreSaveState(state);
+  assert.equal(f.engine.state.seen, true);
+  assert.doesNotThrow(() => f.engine.createSaveState());
+  f.engine.destroy();
+});
+
+test('a previous execution failure does not prevent restoring a valid checkpoint', async () => {
+  const f = fixture({ game: { scenes: { 'scene-a': [{ type: 'jump', next: 'missing' }], 'scene-b': [{ type: 'line', text: 'hello' }] } } });
+  const saved = f.engine.createSaveState(); saved.runtime.sceneId = 'scene-b';
+  await assert.rejects(f.engine.run(), /Unknown jump target/);
+  await f.engine.restoreSaveState(saved);
+  await atLine(f);
+  assert.equal(f.pending.at(-1).line.text, 'hello');
+  f.engine.stop(); await f.run;
+});
+
+test('legacy restore waits for a stopped renderer transition to settle', async () => {
+  let release;
+  const f = fixture({ effect(method) { if (method === 'setPosition') return new Promise(resolve => { release = resolve; }); } });
+  const saved = f.engine.snapshot(); const running = f.engine.run(); await tick(); f.engine.stop();
+  assert.throws(() => f.engine.restore(saved), error => error.code === 'busy');
+  release(); await running;
+  assert.doesNotThrow(() => f.engine.restore(saved));
+  f.engine.destroy();
+});
+
+ test('scene exhaustion beyond its length remains a compatible terminal checkpoint', async () => {
+  const f = fixture({ game: { scenes: { 'scene-a': [{ type: 'jump', next: 'scene-b#100' }], 'scene-b': [] } } });
+  await f.engine.run();
+  const saved = f.engine.createSaveState();
+  assert.equal(saved.runtime.nodeIndex, 100); assert.equal(saved.ended, true);
+  await f.engine.restoreSaveState(saved);
+  assert.equal(f.engine.ended, true);
+  f.engine.destroy();
+});
+
+test('stop during background restoration does not commit saved variables or progress', async () => {
+  const f = fixture();
+  let release, entered;
+  const gate = new Promise(resolve => { entered = resolve; });
+  f.ui.presentBackground = () => { entered(); return new Promise(resolve => { release = resolve; }); };
+  const saved = f.engine.createSaveState(); saved.runtime.state.seen = true;
+  const loading = f.engine.restoreSaveState(saved);
+  await gate; f.engine.stop(); release();
+  await assert.rejects(loading, error => error.code === 'busy');
+  assert.equal(f.engine.state.seen, false);
+  assert.throws(() => f.engine.createSaveState(), error => error.code === 'busy');
+  f.engine.destroy();
+});
+
+test('catalog loads use catalog metadata overrides consistently with fresh starts', async () => {
+  const f = fixture();
+  await f.engine.save('manual-1');
+  let metadata;
+  f.ui.setScenarioMetadata = value => { metadata = value; };
+  const catalog = new ScenarioCatalog([{ id: 'sample', title: 'Selected', chapter: 'ONE', entry: f.game }]);
+  const playback = await catalog.loadScenario('manual-1', { saves: f.saves, stage: f.stage, ui: f.ui });
+  assert.deepEqual(metadata, { id: 'sample', title: 'Selected', chapter: 'ONE' });
+  playback.engine.stop(); await playback.finished;
+  playback.engine.destroy();
+});
+
+for (const target of ['toString', '__proto__', 'constructor']) test(`runtime rejects inherited scene target ${target}`, async () => {
+  const f = fixture({ game: { scenes: { 'scene-a': [{ type: 'jump', next: target }] } } });
+  await assert.rejects(f.engine.run(), /Unknown jump target/);
+  assert.equal(f.engine.ended, false);
+  f.engine.destroy();
+});

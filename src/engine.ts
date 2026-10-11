@@ -36,6 +36,7 @@ export class AdvEngine {
   #nodeIndex = 0;
   #running = false;
   #ended = false;
+  #destroyed = false;
   readonly #options: AdvEngineOptions;
   #background?: string;
   #layout?: string;
@@ -78,7 +79,7 @@ export class AdvEngine {
   }
 
   restore(snapshot: EngineSnapshot): void {
-    if (this.#running || this.#loading) throw new SaveError("busy", "Stop playback before restoring a legacy snapshot.");
+    if (this.#inFlight || this.#loading || this.#destroyed) throw new SaveError("busy", "Stop and settle playback before restoring a legacy snapshot.");
     if (!isScalarState(snapshot.state) || !Number.isSafeInteger(snapshot.nodeIndex) || snapshot.nodeIndex < 0) throw new SaveError("corrupted", "Invalid runtime snapshot.");
     if (!Object.hasOwn(this.#game.scenes, snapshot.sceneId)) {
       throw new Error(`Cannot restore unknown scene: ${snapshot.sceneId}`);
@@ -92,7 +93,7 @@ export class AdvEngine {
   }
 
   createSaveState(): SaveState {
-    if (!this.#safe || this.#loading) throw new SaveError("busy", "Wait for a logical checkpoint before saving.");
+    if (!this.#safe || this.#loading || this.#destroyed) throw new SaveError("busy", "Wait for a logical checkpoint before saving.");
     const scenarioId = this.#game.scenario?.id;
     if (!scenarioId) throw new SaveError("scenario-missing", "A stable scenario ID is required to save.");
     return { version: 1, scenarioId, runtime: this.snapshot(), ended: this.#ended,
@@ -116,7 +117,7 @@ export class AdvEngine {
   /** Stops the old run and reconstructs presentation. Call run() to resume input. */
   async restoreSaveState(state: SaveState): Promise<void> {
     validateSaveState(state);
-    if (this.#loading) throw new SaveError("busy", "A load is already in progress.");
+    if (this.#loading || this.#destroyed) throw new SaveError("busy", "The engine cannot start a load now.");
     if (state.scenarioId !== this.#game.scenario?.id) throw new SaveError("scenario-missing", "Load this save through its scenario catalog entry.");
     if (!Object.hasOwn(this.#game.scenes, state.runtime.sceneId)) throw new SaveError("corrupted", "Saved scene is unavailable.");
     const ids = new Set(this.#game.characters.map(c => c.id));
@@ -130,27 +131,39 @@ export class AdvEngine {
     if (state.audio?.bgm && this.#game.audioAssets && !Object.hasOwn(this.#game.audioAssets, state.audio.bgm.id)) throw new SaveError("corrupted", "Saved BGM is unavailable.");
     const copy = structuredClone(state);
     this.#loading = true;
+    this.#safe = false;
     this.stop();
+    const epoch = this.#epoch;
+    const active = () => {
+      if (this.#destroyed || epoch !== this.#epoch) throw new SaveError("busy", "Save restoration was cancelled.");
+    };
     try {
       // Renderer transitions settle before the saved presentation is applied.
-      await this.#task;
+      // A failed old run does not prevent loading a known-good checkpoint.
+      await this.#task?.catch(() => {});
+      active();
       await this.#options.audio?.restore(copy.audio);
+      active();
       await this.#stage.restore(copy.presentation.characters);
+      active();
       await this.#setBackground(copy.presentation.background);
+      active();
       this.#layout = copy.presentation.layout;
       this.#sceneId = copy.runtime.sceneId;
       this.#nodeIndex = copy.runtime.nodeIndex;
       for (const key of Object.keys(this.#state)) delete this.#state[key];
       Object.assign(this.#state, copy.runtime.state);
       this.#ended = copy.ended;
-      this.#safe = true;
       this.#ui.setActiveSpeaker?.(undefined);
-      this.#options.progress?.markPlayed(copy.scenarioId);
       if (copy.ended) await this.#ui.presentEnd();
+      active();
+      this.#safe = true;
+      this.#options.progress?.markPlayed(copy.scenarioId);
     } finally { this.#loading = false; }
   }
 
   run(): Promise<void> {
+    if (this.#destroyed) return Promise.reject(new Error("Engine is destroyed."));
     if (this.#inFlight || this.#ended || this.#loading) return this.#task ?? Promise.resolve();
     this.#running = true;
     this.#inFlight = true;
@@ -165,7 +178,7 @@ export class AdvEngine {
     let automaticSteps = 0;
     try {
       while (this.#running && epoch === this.#epoch) {
-        const scene = this.#game.scenes[this.#sceneId];
+        const scene = Object.hasOwn(this.#game.scenes, this.#sceneId) ? this.#game.scenes[this.#sceneId] : undefined;
         if (!scene) throw new Error(`Unknown scene: ${this.#sceneId}`);
         const node = scene[this.#nodeIndex];
         if (!node) { await this.#finish(); return; }
@@ -206,6 +219,8 @@ export class AdvEngine {
   }
 
   destroy(): void {
+    if (this.#destroyed) return;
+    this.#destroyed = true;
     this.stop();
     this.#stage.destroy();
     this.#ui.destroy?.();
@@ -346,7 +361,7 @@ export class AdvEngine {
     const indexText = hashIndex >= 0 ? target.slice(hashIndex + 1) : "0";
     const nodeIndex = Number(indexText);
 
-    if (!this.#game.scenes[sceneId]) {
+    if (!Object.hasOwn(this.#game.scenes, sceneId)) {
       throw new Error(`Unknown jump target scene: ${sceneId}`);
     }
     if (!Number.isInteger(nodeIndex) || nodeIndex < 0) {
