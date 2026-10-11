@@ -1,9 +1,12 @@
+import { DEFAULT_AUDIO_VOLUMES, isAudioVolumes, type AudioVolumes, type AudioController } from "../audio.js";
 export type AutoSpeed = "slow" | "normal" | "fast";
 
 export interface GameSettings {
   autoSpeed: AutoSpeed;
   characterMotion: boolean;
   uiAnimation: boolean;
+  /** Absent in legacy settings; audio uses full-volume defaults. */
+  audio?: AudioVolumes;
 }
 
 export const DEFAULT_GAME_SETTINGS: Readonly<GameSettings> = Object.freeze({
@@ -26,14 +29,15 @@ type SettingsListener = (settings: Readonly<GameSettings>) => void;
 function isSettings(value: unknown): value is GameSettings {
   if (typeof value !== "object" || value === null) return false;
   const candidate = value as Record<string, unknown>;
-  return Object.keys(candidate).length === 3
+  return Object.keys(candidate).every(key => ["autoSpeed", "characterMotion", "uiAnimation", "audio"].includes(key))
+    && (candidate.audio === undefined || isAudioVolumes(candidate.audio))
     && (candidate.autoSpeed === "slow" || candidate.autoSpeed === "normal" || candidate.autoSpeed === "fast")
     && typeof candidate.characterMotion === "boolean"
     && typeof candidate.uiAnimation === "boolean";
 }
 
 function snapshot(settings: GameSettings): Readonly<GameSettings> {
-  return Object.freeze({ ...settings });
+  return Object.freeze({ ...settings, ...(settings.audio ? { audio: Object.freeze({ ...settings.audio }) } : {}) });
 }
 
 export function getAutoDelayMultiplier(settings: Pick<GameSettings, "autoSpeed">): number {
@@ -61,7 +65,7 @@ export class GameSettingsStore {
     }
 
     const keys = Object.keys(patch);
-    if (keys.some(key => key !== "autoSpeed" && key !== "characterMotion" && key !== "uiAnimation")) {
+    if (keys.some(key => key !== "autoSpeed" && key !== "characterMotion" && key !== "uiAnimation" && key !== "audio")) {
       throw new TypeError("Settings patch contains an unsupported setting.");
     }
 
@@ -72,7 +76,8 @@ export class GameSettingsStore {
 
     if (next.autoSpeed === this.settings.autoSpeed
       && next.characterMotion === this.settings.characterMotion
-      && next.uiAnimation === this.settings.uiAnimation) {
+      && next.uiAnimation === this.settings.uiAnimation
+      && JSON.stringify(next.audio) === JSON.stringify(this.settings.audio)) {
       return this.settings;
     }
 
@@ -80,6 +85,11 @@ export class GameSettingsStore {
     this.save();
     for (const listener of this.listeners) listener(this.settings);
     return this.settings;
+  }
+
+  bindAudio(audio: AudioController): () => void {
+    audio.setVolumes(this.settings.audio ?? DEFAULT_AUDIO_VOLUMES);
+    return this.subscribe(settings => audio.setVolumes(settings.audio ?? DEFAULT_AUDIO_VOLUMES));
   }
 
   subscribe(listener: SettingsListener): () => void {

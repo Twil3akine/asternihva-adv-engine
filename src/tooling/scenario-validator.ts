@@ -160,6 +160,10 @@ function validatePresentation(
   add: AddDiagnostic,
 ): void {
   const game = item.entry;
+  if ((node.type === "audio" && node.id && !Object.hasOwn(game.audioAssets ?? {}, node.id)) ||
+      (node.type === "line" && node.voice && !Object.hasOwn(game.audioAssets ?? {}, node.voice))) {
+    add("error", item.id, "unknown audio asset", location);
+  }
   if ((node.type === "line" || node.type === "scene") && node.layout && !game.stageLayouts?.[node.layout]) {
     add("error", item.id, `unknown layout "${node.layout}"`, location);
   }

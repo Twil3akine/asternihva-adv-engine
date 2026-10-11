@@ -1,3 +1,5 @@
+import { InputRouter, type KeyBinding } from "../input.js";
+import { BrowserKeyboardInput } from "./keyboard-input.js";
 import { BackgroundPresenter, backgroundPresenterCss, type BackgroundPresenterOptions } from "./background-presenter.js";
 import { defaultThemeCss } from "./theme.js";
 import { fitDialoguePage } from "./dialogue-paging.js";
@@ -23,6 +25,9 @@ export interface DomUiElements {
 
 export interface DomUiOptions {
   background?: BackgroundPresenterOptions;
+  input?: InputRouter;
+  keyboard?: boolean;
+  bindings?: readonly KeyBinding[];
 }
 
 export class DomUi implements UiAdapter {
@@ -31,11 +36,15 @@ export class DomUi implements UiAdapter {
   #background?: BackgroundPresenter;
   readonly #options: DomUiOptions;
   #animationsEnabled = true;
+  readonly #input: InputRouter;
 
   constructor(elements: DomUiElements, options: DomUiOptions = {}) {
     this.#options = options;
+    this.#input = options.input ?? new InputRouter();
     this.#elements = elements;
   }
+
+  get input(): InputRouter { return this.#input; }
 
   setAnimationsEnabled(enabled: boolean): void {
     this.#animationsEnabled = enabled;
@@ -116,7 +125,11 @@ export class DomUi implements UiAdapter {
       globalThis.document?.fonts?.ready.then(() => { if (!disposed) render(); });
       const target = this.#elements.advanceTarget ?? this.#elements.root;
       const controller = new AbortController();
+      let unsubscribe: (() => void) | undefined;
+      let keyboard: BrowserKeyboardInput | undefined;
       const finish = () => {
+        if (disposed) return;
+        unsubscribe?.(); keyboard?.destroy();
         disposed = true;
         observer?.disconnect();
         controller.abort();
@@ -125,6 +138,7 @@ export class DomUi implements UiAdapter {
       };
 
       const advance = () => {
+        if (disposed) return;
         if (end < displayText.length) {
           start = end;
           page++;
@@ -140,21 +154,18 @@ export class DomUi implements UiAdapter {
           "button, a, input, textarea, select, [contenteditable], dialog, .adv-controls, .adv-choices, [data-adv-interactive]",
         ));
       target.addEventListener("click", (event) => {
-        if (!blocksAdvance(event)) advance();
+        if (!blocksAdvance(event)) this.#input.dispatch("advance");
       }, { signal: controller.signal });
-      window.addEventListener(
-        "keydown",
-        (event) => {
-          if (blocksAdvance(event)) return;
-          if (["Enter", " ", "ArrowRight"].includes(event.key)) {
-            event.preventDefault();
-            advance();
-          }
-        },
-        { signal: controller.signal },
-      );
+      unsubscribe = this.#input.subscribe(action => {
+        if (action !== "advance" || disposed || this.#elements.root.dataset.mode !== "line" || this.#elements.root.querySelector?.("dialog[open]")) return false;
+        advance(); return true;
+      });
+      if (this.#options.keyboard !== false) keyboard = new BrowserKeyboardInput(this.#input, {
+        context: () => "line", bindings: this.#options.bindings, shouldHandle: event => !blocksAdvance(event),
+      });
       window.addEventListener("resize", render, { signal: controller.signal });
       this.#cleanup = () => {
+        unsubscribe?.(); keyboard?.destroy();
         disposed = true;
         observer?.disconnect();
         controller.abort();
@@ -178,12 +189,32 @@ export class DomUi implements UiAdapter {
       const controller = new AbortController();
       let selected = false;
       let animation: Animation | undefined;
-      this.#cleanup = () => { controller.abort(); animation?.cancel(); };
+      let focused = 0;
+      const buttons: HTMLButtonElement[] = [];
+      const unsubscribe = this.#input.subscribe(action => {
+        if (selected || this.#elements.root.dataset.mode !== "choice" || this.#elements.root.querySelector?.("dialog[open]")) return false;
+        if (action === "up" || action === "down") {
+          focused = (focused + (action === "up" ? -1 : 1) + buttons.length) % buttons.length;
+          buttons[focused]?.focus?.(); return true;
+        }
+        if (action === "confirm") { buttons[focused]?.click?.(); return true; }
+        return false;
+      });
+      const keyboard = this.#options.keyboard === false ? undefined : new BrowserKeyboardInput(this.#input, {
+        context: () => "choice", bindings: this.#options.bindings,
+        shouldHandle: event => this.#elements.root.dataset.mode === "choice" && !this.#elements.root.querySelector?.("dialog[open]") &&
+          !Boolean((event.target as Element | null)?.closest?.("input, textarea, select, [contenteditable], dialog, .adv-controls")) &&
+          (!((event.target as Element | null)?.closest?.("button, a")) || this.#elements.choices.contains?.(event.target as Node)),
+      });
+      const cleanup = () => { unsubscribe(); keyboard?.destroy(); controller.abort(); animation?.cancel(); };
+      this.#cleanup = cleanup;
       choice.options.forEach((label, index) => {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "adv-choice";
         button.textContent = label;
+        buttons.push(button);
+        button.addEventListener("focus", () => { focused = index; }, { signal: controller.signal });
         button.addEventListener("click", async (event) => {
           event.stopPropagation();
           if (selected) return;
@@ -195,15 +226,18 @@ export class DomUi implements UiAdapter {
           animation = this.#elements.choices.animate?.([{ opacity: 1 }, { opacity: 0 }], { duration });
           await animation?.finished.catch(() => {});
           if (controller.signal.aborted) return;
-          controller.abort();
+          cleanup();
           this.#cleanup = undefined;
           this.#elements.choices.replaceChildren();
           resolve(index);
         }, { signal: controller.signal });
         this.#elements.choices.append(button);
       });
+      buttons[0]?.focus?.();
     });
   }
+
+  cancelPending(): void { this.#cancelPending(); }
 
   destroy(): void {
     this.#background?.destroy();
