@@ -114,3 +114,37 @@ The local game shell loads private definitions from the ignored `scenario/` dire
 ## License
 
 MIT. See [LICENSE](./LICENSE).
+
+## Asset tooling
+
+Install the optional image converter with `npm install sharp` and run:
+
+```sh
+asternihva-adv-engine asset build assets.json public/generated
+# From a checkout:
+npm run assets -- assets.json public/generated
+```
+
+Manifest paths resolve relative to the JSON file:
+
+```json
+{
+  "version": 1,
+  "assets": [{
+    "id": "alice", "source": "source.png", "format": "webp",
+    "maxWidth": 1600, "maxHeight": 1600,
+    "thumbnail": { "size": 192, "format": "png" }
+  }]
+}
+```
+
+PNG and WebP retain alpha, resize inside bounds without enlarging, and emit
+content-hashed files plus `assets.generated.json`. Thumbnail generation retains
+aspect ratio without cropping. Source/config/converter fingerprints skip unchanged
+assets; output hashes also detect missing or corrupt generated files. Stale
+hashed files are reported and retained for review. IDs must use letters, digits,
+underscores or hyphens. No source images are included in the package.
+
+`buildAssets`, `validateAssetManifest`, and their types are available from
+`/tooling`. Inject an `ImageTransformer` with a stable version string for other
+converters; only the CLI needs Sharp. `/tooling` uses Node filesystem APIs.
