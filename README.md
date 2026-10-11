@@ -114,3 +114,24 @@ The local game shell loads private definitions from the ignored `scenario/` dire
 ## License
 
 MIT. See [LICENSE](./LICENSE).
+
+## Input actions
+
+`InputRouter` in `/core` accepts `advance`, `confirm`, `cancel`, `menu`, `log`,
+`auto`, `skip`, `up`, `down`, `quickSave` and `quickLoad`. Subscribe handlers that
+return `true` to consume an action; higher-priority handlers run first.
+Touch buttons and future gamepad adapters can call `dispatch` directly.
+`resolveKeyInput` maps physical keys without DOM dependencies.
+
+`BrowserKeyboardInput` in `/web` translates browser key events. Defaults use
+Enter/Space/ArrowRight for line advance, Enter/Space to confirm choices,
+ArrowUp/ArrowDown for choice navigation, Escape for menu/cancel, L/A/S for
+log/auto/skip, F5/F9 for quick save/load. Only handled actions prevent the browser
+default; composition, repeat and modifier combinations are ignored unless mapped.
+Editable elements and native controls keep their keys.
+
+`DomUi` accepts `{ input, keyboard, bindings }` and exposes `.input`; it handles
+line/choice actions. The application subscribes menu/log/auto/skip/save/load
+handlers on the same router. Set `keyboard: false` when the host owns keyboard
+listeners. Custom bindings replace the default list. Overlay handlers should use
+a higher priority and consume actions while open.

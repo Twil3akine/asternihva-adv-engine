@@ -28,3 +28,5 @@ export type {
   StageLayoutPreset,
   UiAdapter,
 } from "./types.js";
+
+export { InputRouter, resolveKeyInput, DEFAULT_KEY_BINDINGS, type InputAction, type InputHandler, type PhysicalKeyInput, type KeyBinding } from "./input.js";
