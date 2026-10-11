@@ -1,8 +1,8 @@
 import { createStageLayoutPreset } from '../../dist/core.js';
 const asset = name => new URL(`./assets/${name}`, import.meta.url).href;
 export const characters = [
-  { id: 'alice', name: 'Alice', renderer: 'sprite', defaultExpression: 'normal', assets: { expressions: { normal: asset('alice-normal.svg'), smile: asset('alice-smile.svg') }, displayMode: 'contain' } },
-  { id: 'bob', name: 'Bob', renderer: 'sprite', defaultExpression: 'normal', assets: { expressions: { normal: asset('bob-normal.svg') }, displayMode: 'contain' } },
+  { id: 'alice', name: 'Alice', renderer: 'sprite', defaultExpression: 'normal', assets: { expressions: { normal: asset('alice-normal.svg'), smile: asset('alice-smile.svg') }, displayMode: 'fullbody' } },
+  { id: 'bob', name: 'Bob', renderer: 'sprite', defaultExpression: 'normal', assets: { expressions: { normal: asset('bob-normal.svg') }, displayMode: 'fullbody' } },
 ];
 export const backgrounds = { 'sample-room': { src: asset('sample-room.svg') } };
 export const layouts = { duo: createStageLayoutPreset('duo-left', ['alice', 'bob']) };

@@ -368,3 +368,18 @@ Use `catalog.createScenario(id, options)` to retain the engine handle before an
 async restore, then `restoreSaveState` and `run`. A renderer construction failure
 releases instances it already created; missing renderer registrations fail first.
 Do not share a stage/UI between simultaneously running engines.
+
+## Independent consumer verification
+
+`npm run consumer:test` packs the package, copies `tests/fixtures/consumer/` into
+an external temporary project, installs the tarball and typechecks its own
+scenario/host. The bundle uses only documented `/core` and `/web` imports. The
+HTTP server exposes only consumer output, not this checkout. Chromium plays
+Title → Dialogue → Choice → expression/background → line and choice Save/Load
+→ End with the project's own SVGs. Bundler checks reject checkout/example imports.
+Install Playwright Chromium, or set `CHROMIUM_EXECUTABLE_PATH`. CI runs the E2E.
+
+A consumer owns its page, navigation, registries and lifecycle. Sample helpers
+are outside package exports. For TypeScript sprite assets, use `satisfies SpriteAssets`
+from `/web` to check renderer-specific settings (`fullbody` or `portrait`). The
+open-ended CharacterDefinition.assets also supports custom renderer contracts.
