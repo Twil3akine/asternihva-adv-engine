@@ -17,11 +17,17 @@ export interface ScenarioValidationResult {
   valid: boolean;
 }
 
+export interface ScenarioValidationOptions {
+  /** Additional authoring warnings, including unused registry entries and empty scenes. */
+  lint?: boolean;
+}
+
 export type ValidatableScenario = ScenarioCatalogEntry & { order?: number };
 
 /** Validate catalog metadata and references without loading browser or renderer code. */
 export function validateScenarios(
   scenarios: readonly ValidatableScenario[],
+  options: ScenarioValidationOptions = {},
 ): ScenarioValidationResult {
   const diagnostics: ScenarioDiagnostic[] = [];
   const add = (
@@ -49,7 +55,7 @@ export function validateScenarios(
     }
   }
 
-  for (const item of scenarios) validateScenario(item, add);
+  for (const item of scenarios) validateScenario(item, add, options);
 
   const errors = diagnostics.filter((diagnostic) => diagnostic.severity === "error").length;
   const warnings = diagnostics.length - errors;
@@ -63,9 +69,10 @@ type AddDiagnostic = (
   location?: string,
 ) => void;
 
-function validateScenario(item: ValidatableScenario, add: AddDiagnostic): void {
+function validateScenario(item: ValidatableScenario, add: AddDiagnostic, options: ScenarioValidationOptions): void {
   const { id, entry } = item;
   const game: GameDefinition = entry;
+  if (!isGameShape(game)) { add("error", id, "malformed scenario structure"); return; }
   const title = item.title ?? game.scenario?.title;
   if (typeof title !== "string" || !title.trim()) add("error", id, "missing scenario title");
 
@@ -76,7 +83,8 @@ function validateScenario(item: ValidatableScenario, add: AddDiagnostic): void {
 
   const characters = new Map<string, (typeof game.characters)[number]>();
   for (const character of game.characters ?? []) {
-    if (!characters.has(character.id)) characters.set(character.id, character);
+    if (characters.has(character.id)) add("error", id, "duplicate character id", "characters");
+    else characters.set(character.id, character);
   }
   for (const character of characters.values()) {
     if (character.defaultExpression) {
@@ -117,6 +125,27 @@ function validateScenario(item: ValidatableScenario, add: AddDiagnostic): void {
   }
 
   validateGraph(item, nodes, sceneLengths(game), add);
+  validateAuthoring(item, nodes, add, options);
+}
+
+function isGameShape(game: GameDefinition): boolean {
+  const record = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
+  if (!record(game) || !Array.isArray(game.characters) || !record(game.scenes) || typeof game.start !== "string") return false;
+  if (game.characters.some(c => !record(c) || typeof c.id !== "string" || typeof c.name !== "string" || typeof c.renderer !== "string")) return false;
+  if (game.stageLayouts && (!record(game.stageLayouts) || Object.values(game.stageLayouts).some(l => !record(l) || !Array.isArray(l.members) || l.members.some(m => !record(m) || typeof m.character !== "string")))) return false;
+  for (const scene of Object.values(game.scenes)) {
+    if (!Array.isArray(scene)) return false;
+    for (const node of scene) {
+      if (!record(node) || typeof node.type !== "string" || !["line", "choice", "scene", "set", "jump", "end", "audio"].includes(node.type)) return false;
+      if ("next" in node && typeof node.next !== "string") return false;
+      if (node.type === "line" && typeof node.text !== "string") return false;
+      if (node.type === "choice" && (!Array.isArray(node.options) || node.options.some(o => !record(o) || typeof o.text !== "string" || typeof o.next !== "string"))) return false;
+      if ("commands" in node && (!Array.isArray(node.commands) || node.commands.some(c => !record(c) || typeof c.character !== "string"))) return false;
+      if (node.type === "jump" && typeof node.next !== "string") return false;
+      if ((node.type === "line" || node.type === "scene") && ["layout", "background", "speaker", "expression", "motion"].some(k => k in node && typeof node[k] !== "string")) return false;
+    }
+  }
+  return true;
 }
 
 function sceneLengths(game: GameDefinition): Map<string, number> {
@@ -131,6 +160,10 @@ function validatePresentation(
   add: AddDiagnostic,
 ): void {
   const game = item.entry;
+  if ((node.type === "audio" && node.id && !Object.hasOwn(game.audioAssets ?? {}, node.id)) ||
+      (node.type === "line" && node.voice && !Object.hasOwn(game.audioAssets ?? {}, node.voice))) {
+    add("error", item.id, "unknown audio asset", location);
+  }
   if ((node.type === "line" || node.type === "scene") && node.layout && !game.stageLayouts?.[node.layout]) {
     add("error", item.id, `unknown layout "${node.layout}"`, location);
   }
@@ -317,4 +350,57 @@ function displayNodeKey(key: string): string {
 
 function commandsOf(node: AdvNode): readonly CharacterCommand[] {
   return node.type === "scene" || node.type === "line" ? node.commands ?? [] : [];
+}
+
+function validateAuthoring(item: ValidatableScenario, nodes: Map<string, AdvNode>, add: AddDiagnostic, options: ScenarioValidationOptions): void {
+  const game = item.entry;
+  const usedCharacters = new Set<string>(), usedBackgrounds = new Set<string>(), usedLayouts = new Set<string>();
+  const expressions = new Map<string, Set<string>>(), motions = new Map<string, Set<string>>();
+  const use = (map: Map<string, Set<string>>, character: string, value?: string) => {
+    if (!value) return; const set = map.get(character) ?? new Set<string>(); set.add(value); map.set(character, set);
+  };
+  for (const [key, node] of nodes) {
+    const location = displayNodeKey(key);
+    if (node.type === "choice") {
+      if (!node.options.length) add("error", item.id, "choice has no options", location);
+      if (new Set(node.options.map(o => o.text.trim())).size !== node.options.length) add("warning", item.id, "choice has duplicate labels", location);
+      if (node.options.some(o => !o.text.trim())) add("warning", item.id, "choice has an empty label", location);
+    }
+    if (node.type === "line" && node.speaker) {
+      usedCharacters.add(node.speaker); use(expressions, node.speaker, node.expression); use(motions, node.speaker, node.motion);
+    }
+    if ((node.type === "line" || node.type === "scene") && node.layout) usedLayouts.add(node.layout);
+    if (node.type === "scene" && node.background) usedBackgrounds.add(node.background);
+    for (const command of commandsOf(node)) { usedCharacters.add(command.character); use(expressions, command.character, command.expression); use(motions, command.character, command.motion); }
+  }
+  for (const layout of usedLayouts) for (const member of game.stageLayouts?.[layout]?.members ?? []) usedCharacters.add(member.character);
+  for (const character of game.characters) use(expressions, character.id, character.defaultExpression);
+  const reached = new Set<string>(), queue = [nodeKey(game.start, 0)], lengths = sceneLengths(game);
+  while (queue.length) { const key = queue.pop()!; if (reached.has(key)) continue; reached.add(key); const node = nodes.get(key); if (node) for (const next of outgoingTargets(key, node, lengths)) if (next) queue.push(next); }
+  // Automatic cycles cannot yield to an input adapter. Report once per cycle.
+  const finished = new Set<string>();
+  for (const origin of nodes.keys()) {
+    if (finished.has(origin) || !reached.has(origin)) continue;
+    const path = new Set<string>(); let cursor: string | undefined = origin;
+    while (cursor && nodes.has(cursor) && !finished.has(cursor)) {
+      if (path.has(cursor)) { add("error", item.id, "infinite deterministic loop without an input checkpoint", displayNodeKey(cursor)); break; }
+      const node: AdvNode = nodes.get(cursor)!;
+      if (node.type === "line" || node.type === "choice" || node.type === "end") break;
+      path.add(cursor); cursor = outgoingTargets(cursor, node, lengths)[0];
+    }
+    for (const key of path) finished.add(key);
+  }
+  if (!options.lint) return;
+  for (const [sceneId, scene] of Object.entries(game.scenes)) if (!scene.length) add("warning", item.id, "empty scene ends playback immediately", sceneId);
+  for (const character of game.characters) {
+    if (!usedCharacters.has(character.id)) add("warning", item.id, "unused character", `characters.${character.id}`);
+    const assets = character.assets;
+    if (!assets) continue;
+    const registry = assets.expressions && typeof assets.expressions === "object" ? assets.expressions : assets;
+    for (const expression of Object.keys(registry)) if (!expressions.get(character.id)?.has(expression)) add("warning", item.id, "unused expression", `characters.${character.id}.expressions.${expression}`);
+    if (assets.motions && typeof assets.motions === "object") for (const motion of Object.keys(assets.motions)) if (!motions.get(character.id)?.has(motion)) add("warning", item.id, "unused motion", `characters.${character.id}.motions.${motion}`);
+  }
+  for (const id of Object.keys(game.backgrounds ?? {})) if (!usedBackgrounds.has(id)) add("warning", item.id, "unused background", `backgrounds.${id}`);
+  for (const id of Object.keys(game.stageLayouts ?? {})) if (!usedLayouts.has(id)) add("warning", item.id, "unused layout", `stageLayouts.${id}`);
+  for (const [key] of nodes) if (!reached.has(key)) add("warning", item.id, "unreachable node or choice branch", displayNodeKey(key));
 }

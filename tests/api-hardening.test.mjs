@@ -15,3 +15,14 @@ test('unchecked deterministic loops fail instead of starving the host',async()=>
 test('duplicate stage registries reject before renderer allocation',async()=>{
  const {CharacterStage}=await import('../dist/core.js');let creations=0;const renderer={key:'mock',create(){creations++;return {};}};const character={id:'alice',name:'Alice',renderer:'mock'};assert.throws(()=>new CharacterStage({},[character,character],[renderer]),/Duplicate character/);assert.throws(()=>new CharacterStage({},[character],[renderer,renderer]),/Duplicate renderer/);assert.equal(creations,0);
 });
+test('renderer-declared initial expression is saved and reset instead of keeping a later expression',async()=>{
+ const {CharacterStage}=await import('../dist/core.js');const expressions=[];const stage=new CharacterStage({},[{id:'alice',name:'Alice',renderer:'mock'}],[{key:'mock',create(){return{initialExpression:'normal',setExpression:e=>expressions.push(e),setPosition(){},show(){},hide(){}};}}]);const initial=stage.snapshot();assert.equal(initial[0].expression,'normal');await stage.command({character:'alice',expression:'smile'});await stage.restore(initial);assert.equal(stage.getExpression('alice'),'normal');assert.deepEqual(expressions,['smile','normal']);
+});
+test('saved unknown registered expression rejects before replacing active input',async()=>{
+ const {AdvEngine,CharacterStage}=await import('../dist/core.js');let release;const game={scenario:{id:'sample'},start:'scene-a',characters:[{id:'alice',name:'Alice',renderer:'mock',defaultExpression:'normal',assets:{expressions:{normal:'normal.svg'}}}],scenes:{'scene-a':[{type:'line',text:'hello'}]}};
+ const stage=new CharacterStage({},game.characters,[{key:'mock',create(){return{setExpression(){},setPosition(){},show(){},hide(){}};}}]);const engine=new AdvEngine({game,stage,ui:{presentLine:()=>new Promise(r=>release=r),presentEnd(){}}});const state=engine.createSaveState();const run=engine.run();while(!release)await Promise.resolve();state.presentation.characters[0].expression='missing';await assert.rejects(engine.restoreSaveState(state),e=>e.code==='corrupted');assert.equal(engine.ended,false);engine.stop();await run;
+});
+test('sprite-selected fallback is exposed as a logical initial expression',async t=>{
+ const previous=globalThis.document;class E{dataset={};style={setProperty(){},removeProperty(){}};append(){};remove(){};setAttribute(){};decode(){return Promise.resolve();}}
+ globalThis.document={createElement:()=>new E()};t.after(()=>{if(previous===undefined)delete globalThis.document;else globalThis.document=previous;});const sprite=new SpriteRenderer().create(new E(),{id:'alice',name:'Alice',renderer:'sprite',assets:{expressions:{normal:'normal.svg',smile:'smile.svg'}}});assert.equal(sprite.initialExpression,'normal');sprite.destroy();
+});

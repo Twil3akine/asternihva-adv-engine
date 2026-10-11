@@ -1,15 +1,19 @@
+import type { CharacterState } from "./save.js";
 import type {
   CharacterCommand,
   CharacterDefinition,
   CharacterRenderer,
   RenderedCharacter,
   StageLayoutDefinition,
+  StagePosition,
 } from "./types.js";
 
 interface CharacterEntry {
   definition: CharacterDefinition;
   instance: RenderedCharacter;
   expression?: string;
+  visible: boolean;
+  position: StagePosition;
 }
 
 export class CharacterStage<Host = unknown> {
@@ -34,7 +38,7 @@ export class CharacterStage<Host = unknown> {
       }
 
       const instance = renderer.create(host, character);
-      this.#characters.set(character.id, { definition: character, instance, expression: character.defaultExpression });
+      this.#characters.set(character.id, { definition: character, instance, expression: character.defaultExpression ?? instance.initialExpression, visible: false, position: "center" });
     }
   }
 
@@ -80,6 +84,7 @@ export class CharacterStage<Host = unknown> {
 
     if (command.position !== undefined) {
       await instance.setPosition(command.position);
+      entry.position = structuredClone(command.position);
     }
     if (command.expression !== undefined) {
       await instance.setExpression(command.expression);
@@ -87,13 +92,39 @@ export class CharacterStage<Host = unknown> {
     }
     if (command.show === true) {
       await instance.show();
+      entry.visible = true;
     }
     if (command.motion !== undefined && this.#motionEnabled) {
       await instance.playMotion(command.motion);
     }
     if (command.show === false) {
       await instance.hide();
+      entry.visible = false;
     }
+  }
+
+  snapshot(): CharacterState[] {
+    return [...this.#characters].map(([character, entry]) => ({ character, visible: entry.visible,
+      expression: entry.expression, position: structuredClone(entry.position) }));
+  }
+
+  async restore(states: readonly CharacterState[]): Promise<void> {
+    const byId = new Map(states.map(state => [state.character, state]));
+    if (byId.size !== this.#characters.size || [...byId.keys()].some(id => !this.#characters.has(id))) {
+      throw new Error("Saved character registry does not match the stage.");
+    }
+    for (const [character, entry] of this.#characters) {
+      if (byId.get(character)!.expression === undefined && entry.expression !== undefined && entry.definition.defaultExpression === undefined && entry.instance.initialExpression === undefined) {
+        throw new Error("Restoring an unspecified expression requires defaultExpression or renderer.initialExpression.");
+      }
+    }
+    for (const [character, entry] of this.#characters) {
+      const state = byId.get(character)!;
+      entry.instance.stopMotion?.();
+      await this.command({ character, position: state.position, expression: state.expression ?? entry.definition.defaultExpression ?? entry.instance.initialExpression, show: state.visible });
+      entry.expression = state.expression ?? entry.definition.defaultExpression ?? entry.instance.initialExpression;
+    }
+    this.setActive(undefined);
   }
 
   setActive(characterId?: string): void {

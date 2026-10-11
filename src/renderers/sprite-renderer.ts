@@ -54,6 +54,7 @@ export interface SpriteMotion {
 }
 
 class SpriteCharacter implements SpriteRenderedCharacter {
+  readonly initialExpression?: string;
   readonly #root: HTMLDivElement;
   readonly #visual: HTMLDivElement;
   readonly #image: HTMLImageElement;
@@ -107,7 +108,8 @@ class SpriteCharacter implements SpriteRenderedCharacter {
 
     const initial = [character.defaultExpression, "normal", "default"]
       .find((name) => name !== undefined && this.#expressions[name]);
-    this.#initial = this.setExpression(initial ?? Object.keys(this.#expressions)[0] ?? "");
+    this.initialExpression = initial ?? Object.keys(this.#expressions)[0];
+    this.#initial = this.setExpression(this.initialExpression ?? "");
   }
 
   async show(): Promise<void> {

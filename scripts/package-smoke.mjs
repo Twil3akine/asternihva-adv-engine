@@ -95,6 +95,15 @@ try {
     stdio: "inherit",
   });
 
+  if (names.includes("scripts/cli.mjs")) {
+    const fixturePath = join(extraction, "sample.mjs");
+    await writeFile(fixturePath, `export default { scenario: { id: "sample", title: "Sample" }, start: "scene-a", characters: [], scenes: { "scene-a": [{ type: "line", text: "hello" }, { type: "end" }] } };`);
+    const cli = join(extraction, "node_modules/asternihva-adv-engine/scripts/cli.mjs");
+    const result = JSON.parse(execFileSync(process.execPath, [cli, "scenario", "validate", fixturePath], { cwd: extraction, encoding: "utf8" }));
+    assert.equal(result.valid, true, "installed CLI validation failed");
+    assert.equal(JSON.parse(execFileSync(process.execPath, [cli, "scenario", "stats", fixturePath], { cwd: extraction, encoding: "utf8" }))[0].lines, 1);
+  }
+
   // Compile a consumer with ES-only libs; declaration dependencies must not require DOM.
   await writeFile(join(extraction, "tsconfig.json"), JSON.stringify({compilerOptions:{noEmit:true,strict:true,lib:["ES2022"],target:"ES2022",module:"NodeNext",moduleResolution:"NodeNext",types:[]},files:["core-smoke.mts"]}));
   await writeFile(join(extraction, "core-smoke.mts"), `

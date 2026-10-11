@@ -1,3 +1,5 @@
+import type { SaveStore } from "./save.js";
+import { SaveError } from "./save.js";
 import { AdvEngine, type AdvEngineOptions } from "./engine.js";
 import type { GameDefinition, ScenarioMetadata } from "./types.js";
 
@@ -56,6 +58,16 @@ export class ScenarioCatalog {
 
   getCurrentScenario(): Readonly<ScenarioCatalogEntry> | undefined {
     return this.#currentId ? this.getScenario(this.#currentId) : undefined;
+  }
+
+  async loadScenario(slot: string, options: Omit<AdvEngineOptions, "game"> & { saves: SaveStore }): Promise<ScenarioPlayback> {
+    const record = await options.saves.load(slot);
+    const item = this.#entries.get(record.state.scenarioId);
+    if (!item) throw new SaveError("scenario-missing", "Saved scenario is not in this catalog.");
+    const engine = new AdvEngine({ ...options, game: { ...item.entry, scenario: { ...item.entry.scenario, id: item.id } } });
+    await engine.restoreSaveState(record.state);
+    this.#currentId = item.id;
+    return { engine, finished: engine.run() };
   }
 
   /** Starts a fresh engine; the caller owns its stage/UI and eventual destruction. */
