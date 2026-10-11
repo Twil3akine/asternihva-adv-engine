@@ -50,3 +50,5 @@ export { AudioController, DEFAULT_AUDIO_VOLUMES, type AudioAdapter, type AudioCh
 export type { AudioNode } from "./types.js";
 
 export { BrowserAudioAdapter, type BrowserAudioOptions } from "./ui/browser-audio.js";
+
+export { LandscapeViewport, fitGameViewport, mobileLandscapeCss, type LandscapeViewportOptions, type ViewportInsets } from "./ui/landscape-viewport.js";

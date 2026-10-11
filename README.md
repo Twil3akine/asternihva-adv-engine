@@ -383,3 +383,36 @@ A consumer owns its page, navigation, registries and lifecycle. Sample helpers
 are outside package exports. For TypeScript sprite assets, use `satisfies SpriteAssets`
 from `/web` to check renderer-specific settings (`fullbody` or `portrait`). The
 open-ended CharacterDefinition.assets also supports custom renderer contracts.
+
+## Desktop and mobile landscape
+
+The web target is Desktop or Mobile Landscape with a centered 16:9 surface. Use
+`viewport-fit=cover` in the viewport meta tag and opt in to `mobileLandscapeCss`
+plus `LandscapeViewport` from `/web`:
+
+```ts
+import { LandscapeViewport, mobileLandscapeCss } from 'asternihva-adv-engine/web';
+style.textContent += mobileLandscapeCss;
+const viewport = new LandscapeViewport(host, {
+  shell: document.body,
+  message: 'Please rotate your device to landscape.',
+  onOrientationChange: portrait => { if (portrait) stopAutoAndSkip(); },
+});
+// When disposing this host:
+viewport.destroy();
+```
+
+The helper tracks visual-viewport resize/pan, fits inside safe-area insets and
+restores host styles/listeners on destroy. Portrait uses a native blocking dialog
+and makes the game inert/hidden; it does not offer a compressed portrait game.
+The host chooses its message and pauses auto/skip. Rotation preserves runtime
+position. Custom overlays and buttons remain application responsibilities.
+Define safe-area overrides on `:root` so both the shell and game inherit them.
+
+`mobileLandscapeCss` provides short-landscape dialogue/choice sizes, scrollable
+panels and 44px touch controls. Logs remain selectable. Fullbody sprite mode
+preserves generic fixture framing; real game crop/theme decisions belong to the
+consumer. Test supported screens at `npm run mobile:test`: actual generic sample
+on desktop, iPhone-like and Android-like Chromium touch contexts, including
+portrait rotation, safe-area simulation, short viewport and Save/Load. Emulation
+is not a physical iPhone/Safari guarantee; confirm on real devices before launch.

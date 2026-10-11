@@ -8,7 +8,7 @@ const server=createServer(async(req,res)=>{
   const path=resolve(root,'.'+new URL(req.url,'http://local').pathname);
   if(path!==root&&!path.startsWith(root+sep)){res.statusCode=403;res.end();return;}
   if(path===root){res.setHeader('Content-Type','text/html');res.end('<!doctype html><html><body></body></html>');return;}
-  try{res.setHeader('Content-Type',({'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html','.css':'text/css'})[extname(path)]??'text/plain');res.end(await readFile(path));}catch{res.statusCode=404;res.end();}
+  try{res.setHeader('Content-Type',({'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html','.css':'text/css','.svg':'image/svg+xml'})[extname(path)]??'text/plain');res.end(await readFile(path));}catch{res.statusCode=404;res.end();}
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 let browser;

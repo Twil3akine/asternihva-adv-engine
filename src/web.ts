@@ -14,3 +14,5 @@ export { LocalStorageAdapter } from "./ui/local-storage.js";
 
 export { SaveLoadPanel, saveLoadPanelCss, type SaveLoadPanelOptions, type SavePanelMode, type SavePanelLabels } from "./ui/save-load-panel.js";
 export { BrowserAudioAdapter, type BrowserAudioOptions } from "./ui/browser-audio.js";
+
+export { LandscapeViewport, fitGameViewport, mobileLandscapeCss, type LandscapeViewportOptions, type ViewportInsets } from "./ui/landscape-viewport.js";

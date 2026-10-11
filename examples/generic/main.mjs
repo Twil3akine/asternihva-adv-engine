@@ -10,7 +10,7 @@ import {
   AudioController, InputRouter, SaveStore, SaveError,
 } from "../../dist/index.js";
 
-import { ChapterProgressStore, LocalStorageAdapter, SaveLoadPanel, saveLoadPanelCss, BrowserAudioAdapter, BrowserKeyboardInput } from "../../dist/web.js";
+import { ChapterProgressStore, LocalStorageAdapter, SaveLoadPanel, saveLoadPanelCss, BrowserAudioAdapter, BrowserKeyboardInput, LandscapeViewport, mobileLandscapeCss } from "../../dist/web.js";
 
 import { scenarios, characters, backgrounds, layouts } from "./scenario.mjs";
 import { resolveLogPortrait } from "./log.mjs";
@@ -21,7 +21,7 @@ import { attachGameShell } from './game-shell.mjs';
 
 
 const style = document.createElement("style");
-style.textContent = gameViewportCss + spriteRendererCss + domUiCss + saveLoadPanelCss;
+style.textContent = gameViewportCss + spriteRendererCss + domUiCss + saveLoadPanelCss + mobileLandscapeCss;
 document.head.append(style);
 
 const status = document.querySelector("#asset-status");
@@ -188,4 +188,5 @@ const keyboard = new BrowserKeyboardInput(input, {
 const unlockAudio = () => { if (currentAudio) void currentAudio.unlock().catch(reportError); };
 root.addEventListener('pointerdown', unlockAudio);
 root.addEventListener('keydown', unlockAudio);
-window.addEventListener('pagehide', () => { disposePlayback(); panel.destroy(); keyboard.destroy(); root.removeEventListener('pointerdown', unlockAudio); root.removeEventListener('keydown', unlockAudio); }, { once: true });
+const viewport = new LandscapeViewport(root, { onOrientationChange: portrait => { if (portrait) controls.stop(); } });
+window.addEventListener('pagehide', () => { viewport.destroy(); disposePlayback(); panel.destroy(); keyboard.destroy(); root.removeEventListener('pointerdown', unlockAudio); root.removeEventListener('keydown', unlockAudio); }, { once: true });

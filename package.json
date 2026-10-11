@@ -84,6 +84,7 @@
     "assets": "npm run build && node scripts/cli.mjs asset build",
     "smoke:runtime": "node scripts/compatibility-smoke.mjs",
     "verify:boundary": "node scripts/public-boundary.mjs",
-    "consumer:test": "node tests/consumer-e2e.mjs"
+    "consumer:test": "node tests/consumer-e2e.mjs",
+    "mobile:test": "node tests/mobile-e2e.mjs"
   }
 }

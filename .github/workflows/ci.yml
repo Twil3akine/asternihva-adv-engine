@@ -41,6 +41,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run browser:test
       - run: npm run consumer:test
+      - run: npm run mobile:test
 
   bun-smoke:
     runs-on: ubuntu-latest

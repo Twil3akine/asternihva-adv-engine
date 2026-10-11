@@ -33,3 +33,15 @@ button:focus-visible { outline: 3px solid #9ebce8; outline-offset: 2px; }
 .adv-log-content, .adv-log-content * { user-select: text; -webkit-user-select: text; }
 .asset-status { position: absolute; z-index: 300; bottom: 0; margin: 0; background: #18212e; }
 @media (prefers-reduced-motion: reduce) { .episode-title { transition: none !important; } }
+
+@media (orientation: landscape) and (max-height: 540px) {
+  .shell-screen, .end-card { padding: 12px; font-size: 16px; }
+  .shell-screen h1, .end-card h1 { font-size: 24px; margin-block: 4px 12px; }
+  .shell-screen h2 { font-size: 20px; margin-block: 4px; }
+  .shell-screen button, .end-card button { min-height: 44px; padding: 8px 12px; }
+  .chapter-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .chapter-entry { padding: 8px; }
+  .stage { inset: 4% 12% 30%; }
+  .adv-audio-settings { gap: 8px; }
+  .adv-audio-settings input { min-height: 44px; }
+}
