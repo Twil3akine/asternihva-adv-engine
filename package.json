@@ -34,12 +34,16 @@
   ],
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "build": "tsc -p tsconfig.json",
+    "build": "node scripts/build.mjs",
     "test": "node --test tests/*.test.mjs",
     "check": "npm run build && npm test",
     "pack:smoke": "npm run build && node scripts/package-smoke.mjs",
     "serve:example": "python3 -m http.server 4173 --bind 127.0.0.1",
-    "validate:scenarios": "npm run build && node scripts/validate-scenarios.mjs"
+    "validate:scenarios": "npm run build && node scripts/validate-scenarios.mjs",
+    "verify:core": "node scripts/verify-core.mjs",
+    "validate:fixture": "node scripts/validate-fixture.mjs",
+    "smoke:runtime": "node scripts/compatibility-smoke.mjs",
+    "browser:test": "node tests/browser-smoke.mjs"
   },
   "keywords": [
     "visual-novel",
@@ -58,6 +62,7 @@
     "node": ">=18"
   },
   "devDependencies": {
+    "playwright": "^1.61.0",
     "typescript": "^5.8.3"
   }
 }

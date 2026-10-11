@@ -21,6 +21,8 @@ export class CharacterStage<Host = unknown> {
     characters: readonly CharacterDefinition[],
     renderers: readonly CharacterRenderer<Host>[],
   ) {
+    if (new Set(characters.map(c => c.id)).size !== characters.length) throw new Error("Duplicate character id in stage.");
+    if (new Set(renderers.map(r => r.key)).size !== renderers.length) throw new Error("Duplicate renderer key in stage.");
     const rendererMap = new Map(renderers.map((renderer) => [renderer.key, renderer]));
 
     for (const character of characters) {

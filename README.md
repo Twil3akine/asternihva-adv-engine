@@ -107,10 +107,31 @@ npm test
 npm run validate:scenarios
 ```
 
-The local game shell loads private definitions from the ignored `scenario/` directory. They are not included in Git or npm distribution. `validate:scenarios` checks these local definitions and requires them to be present. Public development and tests use generic fixtures instead. Git history predating this separation still contains story text; history needs a separate publication decision before the repository is made public.
+The local game shell loads private definitions from the ignored `scenario/` directory. They are not included in Git or npm distribution. `validate:scenarios` checks these local definitions and requires them to be present. Public development and tests use generic fixtures instead. The package allowlist excludes the demo and local story directory. Check package contents before distributing a build.
 
 `npm run pack:smoke` packs and installs in a temporary directory, verifies all public imports, checks the core declarations without DOM libs, and rejects local story/assets. It never publishes.
 
 ## License
 
 MIT. See [LICENSE](./LICENSE).
+
+## Verification and CI
+
+`npm run verify:core` checks transitive core source imports/types for DOM leakage.
+`npm run validate:fixture` validates a generic story without local assets.
+`npm run pack:smoke` also rejects unpublished deep imports and compiles a consumer
+with ES-only libs and no ambient types. Set `ADV_PRIVATE_SCENARIO_DIR` to an
+external local directory to scan packed text for those story strings/fragments;
+only file paths and counts are reported.
+
+`npm run browser:test` runs a generic Chromium fixture without local artwork,
+fonts or stories. Install Chromium with `npx playwright install chromium`.
+`CHROMIUM_EXECUTABLE_PATH` optionally selects an existing binary. CI covers
+Node 18/22/24 checks, package smoke, generic validation, Chromium and a Bun
+runtime smoke. `npm run smoke:runtime` can also be run with Bun directly.
+
+Unchecked playback limits consecutive automatic nodes to 10,000 by default;
+`AdvEngineOptions.maxAutomaticSteps` can set a positive integer limit. A line or
+choice resets the counter. This prevents a malformed deterministic loop from
+starving the host. Stage construction rejects duplicate character/renderer IDs
+before creating any renderer instances. Destroyed sprites ignore further work.

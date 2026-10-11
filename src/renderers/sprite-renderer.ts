@@ -65,6 +65,7 @@ class SpriteCharacter implements SpriteRenderedCharacter {
   #expressionToken = 0;
   #initial: Promise<void>;
   #motion?: Animation;
+  #destroyed = false;
   readonly #crossfadeDuration: number;
   #fade?: { outgoing: HTMLImageElement; animations: Animation[]; lease?: ImageLease };
 
@@ -110,15 +111,19 @@ class SpriteCharacter implements SpriteRenderedCharacter {
   }
 
   async show(): Promise<void> {
+    if (this.#destroyed) return;
     await this.#initial;
+    if (this.#destroyed) return;
     this.#root.dataset.visible = "true";
   }
 
   hide(): void {
+    if (this.#destroyed) return;
     this.#root.dataset.visible = "false";
   }
 
   async setExpression(name: string): Promise<void> {
+    if (this.#destroyed) return;
     const source = Object.hasOwn(this.#expressions, name) ? this.#expressions[name] : undefined;
     if (!source) return;
     const token = ++this.#expressionToken;
@@ -155,6 +160,7 @@ class SpriteCharacter implements SpriteRenderedCharacter {
   }
 
   playMotion(name: string): void {
+    if (this.#destroyed) return;
     const motion = Object.hasOwn(this.#motions, name) ? this.#motions[name] : undefined;
     if (!motion || !Array.isArray(motion.keyframes) || !this.#visual.animate) return;
     this.#motion?.cancel();
@@ -182,6 +188,7 @@ class SpriteCharacter implements SpriteRenderedCharacter {
   }
 
   setPosition(position: StagePosition): void {
+    if (this.#destroyed) return;
     if (typeof position === "string") {
       this.#root.dataset.position = position;
       this.#root.style.removeProperty("--adv-x");
@@ -203,10 +210,12 @@ class SpriteCharacter implements SpriteRenderedCharacter {
   }
 
   setActive(active: boolean): void {
+    if (this.#destroyed) return;
     this.#root.dataset.active = String(active);
   }
 
   setDisplayMode(mode: SpriteDisplayMode): void {
+    if (this.#destroyed) return;
     if (mode !== "portrait" && mode !== "fullbody") {
       throw new Error(`Unknown sprite display mode: ${mode}`);
     }
@@ -214,6 +223,8 @@ class SpriteCharacter implements SpriteRenderedCharacter {
   }
 
   destroy(): void {
+    if (this.#destroyed) return;
+    this.#destroyed = true;
     this.#expressionToken += 1;
     this.#motion?.cancel();
     this.#cancelFade();

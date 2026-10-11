@@ -13,6 +13,8 @@ export interface AdvEngineOptions {
   game: GameDefinition;
   stage: CharacterStage;
   ui: UiAdapter;
+  /** Guard unchecked automatic loops; line/choice nodes reset the count. */
+  maxAutomaticSteps?: number;
 }
 
 export class AdvEngine {
@@ -20,6 +22,7 @@ export class AdvEngine {
   readonly #stage: CharacterStage;
   readonly #ui: UiAdapter;
   readonly #state: Record<string, Scalar>;
+  readonly #maxAutomaticSteps: number;
 
   #sceneId: string;
   #nodeIndex = 0;
@@ -27,6 +30,8 @@ export class AdvEngine {
   #ended = false;
 
   constructor(options: AdvEngineOptions) {
+    this.#maxAutomaticSteps = options.maxAutomaticSteps ?? 10000;
+    if (!Number.isSafeInteger(this.#maxAutomaticSteps) || this.#maxAutomaticSteps < 1) throw new TypeError("maxAutomaticSteps must be a positive integer.");
     this.#game = options.game;
     this.#stage = options.stage;
     this.#ui = options.ui;
@@ -69,6 +74,7 @@ export class AdvEngine {
     this.#running = true;
 
     try {
+      let automaticSteps = 0;
       while (this.#running) {
         const scene = this.#game.scenes[this.#sceneId];
         if (!scene) {
@@ -81,6 +87,8 @@ export class AdvEngine {
           return;
         }
 
+        if (node.type === "line" || node.type === "choice") automaticSteps = 0;
+        else if (++automaticSteps > this.#maxAutomaticSteps) throw new Error("Maximum automatic steps exceeded; check scenario for a deterministic loop.");
         this.#prefetchNextBackground();
         await this.#execute(node);
       }
