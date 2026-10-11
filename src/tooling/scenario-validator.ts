@@ -75,6 +75,7 @@ function validateScenario(item: ValidatableScenario, add: AddDiagnostic, options
   const { id, entry } = item;
   const game: GameDefinition = entry;
   if (!isGameShape(game)) { add("error", id, "malformed scenario structure"); return; }
+  if (!validateGameRegistries(item, add)) return;
   validateRuntimeFields(item, add);
   const title = item.title ?? game.scenario?.title;
   if (typeof title !== "string" || !title.trim()) add("error", id, "missing scenario title");
@@ -135,7 +136,6 @@ function isGameShape(game: GameDefinition): boolean {
   const record = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
   if (!record(game) || !Array.isArray(game.characters) || !record(game.scenes) || typeof game.start !== "string") return false;
   if (game.characters.some(c => !record(c) || typeof c.id !== "string" || typeof c.name !== "string" || typeof c.renderer !== "string")) return false;
-  if (game.stageLayouts && (!record(game.stageLayouts) || Object.values(game.stageLayouts).some(l => !record(l) || !Array.isArray(l.members) || l.members.some(m => !record(m) || typeof m.character !== "string")))) return false;
   for (const scene of Object.values(game.scenes)) {
     if (!Array.isArray(scene)) return false;
     for (const node of scene) {
@@ -153,6 +153,47 @@ function isGameShape(game: GameDefinition): boolean {
 
 function sceneLengths(game: GameDefinition): Map<string, number> {
   return new Map(Object.entries(game.scenes ?? {}).map(([id, nodes]) => [id, nodes.length]));
+}
+
+/** Validate engine-owned top-level fields before traversing JS module registries. */
+function validateGameRegistries(item: ValidatableScenario, add: AddDiagnostic): boolean {
+  const game = item.entry;
+  const record = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
+  let valid = true;
+  const error = (location: string) => { valid = false; add("error", item.id, "invalid GameDefinition field", location); };
+  if (game.title !== undefined && typeof game.title !== "string") error("title");
+  if (game.scenario !== undefined) {
+    if (!record(game.scenario)) error("scenario");
+    else {
+      for (const key of ["id", "title", "chapter", "description"] as const) if (game.scenario[key] !== undefined && typeof game.scenario[key] !== "string") error(`scenario.${key}`);
+      if (game.scenario.order !== undefined && (typeof game.scenario.order !== "number" || !Number.isFinite(game.scenario.order))) error("scenario.order");
+    }
+  }
+  if (game.audioAssets !== undefined) {
+    if (!record(game.audioAssets)) error("audioAssets");
+    else for (const [id, source] of Object.entries(game.audioAssets)) if (typeof source !== "string") error(`audioAssets.${id}`);
+  }
+  if (game.backgrounds !== undefined) {
+    if (!record(game.backgrounds)) error("backgrounds");
+    else for (const [id, background] of Object.entries(game.backgrounds)) {
+      const location = `backgrounds.${id}`;
+      if (!record(background)) { error(location); continue; }
+      if (typeof background.src !== "string") error(`${location}.src`);
+      for (const key of ["anchorX", "anchorY", "overlay"] as const) {
+        const value = background[key];
+        if (value !== undefined && (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1)) error(`${location}.${key}`);
+      }
+    }
+  }
+  if (game.stageLayouts !== undefined) {
+    if (!record(game.stageLayouts)) error("stageLayouts");
+    else for (const [id, layout] of Object.entries(game.stageLayouts)) {
+      const location = `stageLayouts.${id}`;
+      if (!record(layout) || !Array.isArray(layout.members)) { error(location); continue; }
+      for (const [index, member] of layout.members.entries()) if (!record(member) || typeof member.character !== "string") error(`${location}.members[${index}]`);
+    }
+  }
+  return valid;
 }
 
 /** JS modules do not get TypeScript checking; enforce runtime/save field contracts. */

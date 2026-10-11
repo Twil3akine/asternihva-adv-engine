@@ -140,9 +140,13 @@ export class CharacterStage<Host = unknown> {
   }
 
   destroy(): void {
-    for (const entry of this.#characters.values()) {
-      entry.instance.destroy();
-    }
+    const entries = [...this.#characters.values()];
     this.#characters.clear();
+    let failure: unknown;
+    let failed = false;
+    for (const entry of entries) {
+      try { entry.instance.destroy(); } catch (error) { if (!failed) { failure = error; failed = true; } }
+    }
+    if (failed) throw failure;
   }
 }

@@ -198,7 +198,7 @@ export class AdvEngine {
         const scene = Object.hasOwn(this.#game.scenes, this.#sceneId) ? this.#game.scenes[this.#sceneId] : undefined;
         if (!scene) throw new Error(`Unknown scene: ${this.#sceneId}`);
         const node = scene[this.#nodeIndex];
-        if (!node) { await this.#effect(() => this.#finish(), epoch); this.#safe = true; return; }
+        if (!node) { await this.#finish(epoch); this.#safe = true; return; }
         this.#safe = false;
         if (node.type === "line" || node.type === "choice") automaticSteps = 0;
         else if (++automaticSteps > this.#maxAutomaticSteps) throw new Error("Maximum automatic steps exceeded; check scenario for a deterministic loop.");
@@ -238,10 +238,12 @@ export class AdvEngine {
   destroy(): void {
     if (this.#destroyed) return;
     this.#destroyed = true;
-    this.stop();
-    this.#stage.destroy();
-    this.#ui.destroy?.();
-    this.#options.audio?.destroy();
+    let failure: unknown;
+    let failed = false;
+    for (const dispose of [() => this.stop(), () => this.#stage.destroy(), () => this.#ui.destroy?.(), () => this.#options.audio?.destroy()]) {
+      try { dispose(); } catch (error) { if (!failed) { failure = error; failed = true; } }
+    }
+    if (failed) throw failure;
   }
 
   async #execute(node: AdvNode, epoch: number): Promise<void> {
@@ -321,7 +323,7 @@ export class AdvEngine {
         return;
 
       case "end":
-        await this.#finish();
+        await this.#finish(epoch);
         return;
     }
   }
@@ -357,12 +359,17 @@ export class AdvEngine {
     this.#layout = id;
   }
 
-  async #finish(): Promise<void> {
+  async #finish(epoch: number): Promise<void> {
     this.#ended = true;
-    if (this.#game.scenario?.id) this.#options.progress?.markCompleted(this.#game.scenario.id);
     this.#stage.setActive(undefined);
     this.#ui.setActiveSpeaker?.(undefined);
-    await this.#ui.presentEnd();
+    try { await this.#effect(() => this.#ui.presentEnd(), epoch); }
+    catch (error) {
+      // A cancelled UI may reject its pending end promise rather than resolve it.
+      if (epoch !== this.#epoch) throw new CancelledExecution();
+      throw error;
+    }
+    if (this.#game.scenario?.id) this.#options.progress?.markCompleted(this.#game.scenario.id);
     this.#running = false;
   }
 

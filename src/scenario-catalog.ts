@@ -65,7 +65,12 @@ export class ScenarioCatalog {
     const item = this.#entries.get(record.state.scenarioId);
     if (!item) throw new SaveError("scenario-missing", "Saved scenario is not in this catalog.");
     const engine = this.#makeEngine(item.id, options);
-    await engine.restoreSaveState(record.state);
+    try { await engine.restoreSaveState(record.state); }
+    catch (error) {
+      // The caller never receives this engine, so the catalog owns failed-load cleanup.
+      try { engine.destroy(); } catch { /* Preserve the original restoration error. */ }
+      throw error;
+    }
     this.#currentId = item.id;
     return { engine, finished: engine.run() };
   }
