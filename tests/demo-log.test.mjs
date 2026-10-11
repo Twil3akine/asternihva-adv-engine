@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createLogEntry, renderLogEntries, resolveLogPortrait } from "../examples/asternihva/demo-log.mjs";
+import { createLogEntry, renderLogEntries, resolveLogPortrait } from "../examples/generic/log.mjs";
 
 class FakeElement {
   constructor(tagName) {
@@ -94,13 +94,13 @@ test("renderLogEntries preserves order, text, roles, narration and latest classe
 
 test("renderLogEntries adds portrait style values and safely falls back when an image errors", t => {
   withFakeDocument(t);
-  const entry = createLogEntry({ speakerId: "noa", speakerName: "<Noa>", text: "<script>safe</script>", expression: "calm" });
+  const entry = createLogEntry({ speakerId: "noa", speakerName: "<Alice>", text: "<script>safe</script>", expression: "calm" });
   const container = new FakeElement("section");
   const [article] = renderLogEntries(container, [entry], row => resolveLogPortrait(row, iconMap));
   const [header, body] = article.children;
   const [avatar, name] = header.children;
   const image = avatar.children[0];
-  assert.equal(name.textContent, "<Noa>");
+  assert.equal(name.textContent, "<Alice>");
   assert.equal(body.textContent, "<script>safe</script>");
   assert.equal(image.style.values["--adv-log-portrait-scale"], "2.4");
   assert.equal(image.style.values["--adv-log-portrait-anchor-x"], "0.4");
@@ -110,18 +110,3 @@ test("renderLogEntries adds portrait style values and safely falls back when an 
   assert.ok(article.classes.has("adv-log-entry--without-icon"));
 });
 
-test('demo log framing resolves independently from stage framing for all characters', async () => {
-  const { assetManifest } = await import('../examples/asternihva/asset-manifest.mjs');
-  assert.deepEqual(assetManifest.map(({ id, logPortrait }) => [id, logPortrait.scale, logPortrait.anchorX, logPortrait.anchorY]), [
-    ['noah', 4.5, 0.5, 0.155],
-    ['seren', 4.4, 0.5, 0.150],
-    ['luminal', 4.6, 0.5, 0.159],
-  ]);
-  for (const character of assetManifest) {
-    const portrait = resolveLogPortrait({ speakerId: character.id, expressionId: 'normal' }, {
-      [character.id]: { expressions: { normal: '/portrait.png' }, portrait: character.logPortrait },
-    });
-    assert.deepEqual({ scale: portrait.scale, anchorX: portrait.anchorX, anchorY: portrait.anchorY }, character.logPortrait);
-    assert.notDeepEqual(character.logPortrait, character.portrait);
-  }
-});

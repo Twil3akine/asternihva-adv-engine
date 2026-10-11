@@ -37,3 +37,18 @@ export { BackgroundPresenter, backgroundPresenterCss, type BackgroundPresenterOp
 export { DecodedImageCache, type ImageCacheOptions, type ImageLease } from "./assets/decoded-image-cache.js";
 export { GameSettingsStore, DEFAULT_GAME_SETTINGS, AUTO_SPEED_MULTIPLIERS, getAutoDelayMultiplier, type GameSettings, type AutoSpeed } from "./ui/settings.js";
 export { ScenarioCatalog, type ScenarioCatalogEntry, type ScenarioCatalogMetadata, type ScenarioPlayback } from "./scenario-catalog.js";
+
+export { InputRouter, resolveKeyInput, DEFAULT_KEY_BINDINGS, type InputAction, type InputHandler, type PhysicalKeyInput, type KeyBinding } from "./input.js";
+
+export { BrowserKeyboardInput, type KeyboardInputOptions } from "./ui/keyboard-input.js";
+export { SaveStore, SaveError, DEFAULT_SAVE_SLOTS, validateSaveState, type StorageAdapter, type SaveState, type SaveRecord, type SaveSummary, type SaveErrorCode, type CharacterState } from "./save.js";
+
+export { LocalStorageAdapter } from "./ui/local-storage.js";
+
+export { SaveLoadPanel, saveLoadPanelCss, type SaveLoadPanelOptions, type SavePanelMode, type SavePanelLabels } from "./ui/save-load-panel.js";
+export { AudioController, DEFAULT_AUDIO_VOLUMES, type AudioAdapter, type AudioChannel, type AudioVolumes, type AudioPlayOptions, type AudioStopOptions, type BgmState, type LogicalAudioState } from "./audio.js";
+export type { AudioNode } from "./types.js";
+
+export { BrowserAudioAdapter, type BrowserAudioOptions } from "./ui/browser-audio.js";
+
+export { LandscapeViewport, fitGameViewport, mobileLandscapeCss, type LandscapeViewportOptions, type ViewportInsets } from "./ui/landscape-viewport.js";

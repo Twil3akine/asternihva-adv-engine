@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Generic ADV Sample</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main id="game" class="game adv-viewport" data-screen="title" data-mode="title">
+      <section id="title-screen" class="shell-screen" aria-labelledby="shell-title">
+        <h1 id="shell-title">Generic ADV Sample</h1>
+        <nav class="shell-actions" aria-label="タイトル">
+          <button data-shell-action="start">はじめる</button>
+          <button data-shell-action="chapter">チャプター</button>
+          <button data-save-action="load">ロード</button>
+          <button data-shell-action="settings">設定</button>
+        </nav>
+      </section>
+      <section id="chapter-screen" class="shell-screen" aria-labelledby="chapter-heading" hidden>
+        <h2 id="chapter-heading">CHAPTER SELECT</h2>
+        <div id="chapter-list" class="chapter-list"></div>
+        <button data-shell-action="title">タイトルへ戻る</button>
+      </section>
+      <div id="background" class="background adv-background"></div>
+      <div class="shade"></div>
+      <p id="scenario-title" class="adv-scenario-title" hidden></p>
+      <div id="episode-title" class="episode-title" aria-live="polite" hidden>
+        <span class="episode-title__chapter"></span>
+        <span class="episode-title__name"></span>
+      </div>
+      <header class="brand" data-debug-panel hidden>
+        <span>web-adv-engine / example</span>
+        <strong id="title"></strong>
+      </header>
+      <p id="asset-status" class="asset-status" role="status" hidden></p>
+      <div class="stage-window adv-character-layer">
+        <section id="stage" class="stage" aria-label="character stage"></section>
+      </div>
+      <section id="dialogue" class="adv-dialogue">
+        <div id="speaker" class="adv-speaker"></div>
+        <div id="text" class="adv-text" aria-live="polite" aria-atomic="true"></div>
+        <span id="page-indicator" class="adv-page-indicator" aria-label="ページ送り"></span>
+        <nav id="controls" class="adv-controls" aria-label="ゲーム操作">
+          <button class="adv-control" data-control="auto" aria-pressed="false">AUTO</button>
+          <button class="adv-control" data-control="skip" aria-pressed="false">SKIP</button>
+          <button class="adv-control" data-control="log">LOG</button>
+          <button class="adv-control" data-control="menu">MENU</button>
+        </nav>
+      </section>
+      <div id="choices" class="adv-choices" role="group" aria-label="選択肢"></div>
+      <section id="end-card" class="end-card" aria-live="polite" aria-labelledby="end-title" hidden>
+        <span class="end-card__chapter">— END —</span>
+        <h1 id="end-title" class="end-card__title"></h1>
+        <button class="end-card__replay" data-replay>もう一度読む</button>
+        <button class="end-card__replay" data-end-chapters>チャプター選択へ戻る</button>
+      </section>
+      <dialog id="log-panel" class="adv-panel adv-log-panel" aria-label="会話履歴">
+        <header class="adv-panel-header"><h2>LOG</h2><form method="dialog"><button aria-label="履歴を閉じる">閉じる ×</button></form></header>
+        <div class="adv-log-content" role="list" aria-label="発言履歴"></div>
+      </dialog>
+      <dialog id="menu-panel" class="adv-panel adv-menu-panel" aria-label="メニュー">
+        <h2>MENU</h2>
+        <nav class="adv-menu-items" aria-label="メニュー操作">
+          <form method="dialog"><button data-menu-action="resume">ゲームに戻る</button></form>
+          <button data-menu-action="log">ログ</button>
+          <button data-menu-action="settings">設定</button>
+          <button data-save-action="save">セーブ</button>
+          <button data-save-action="load">ロード</button>
+          <button data-shell-action="chapters-menu">チャプター選択</button>
+          <button data-shell-action="title-menu">タイトルへ戻る</button>
+          <button id="restart">最初から</button>
+        </nav>
+      </dialog>
+      <dialog id="settings-panel" class="adv-panel adv-settings-panel" aria-labelledby="settings-title">
+        <header class="adv-panel-header"><h2 id="settings-title">設定</h2><button data-settings-back aria-label="メニューへ戻る">戻る ×</button></header>
+        <section class="adv-setting-row" role="group" aria-labelledby="auto-speed-label">
+          <h3 id="auto-speed-label">AUTO速度</h3>
+          <div class="adv-setting-options">
+            <button data-setting="autoSpeed" data-value="slow" aria-pressed="false">遅い</button>
+            <button data-setting="autoSpeed" data-value="normal" aria-pressed="true">標準</button>
+            <button data-setting="autoSpeed" data-value="fast" aria-pressed="false">速い</button>
+          </div>
+        </section>
+        <section class="adv-setting-row" role="group" aria-labelledby="motion-label">
+          <h3 id="motion-label">キャラクター演出</h3>
+          <div class="adv-setting-options"><button data-setting="characterMotion" data-value="true" aria-pressed="true">オン</button><button data-setting="characterMotion" data-value="false" aria-pressed="false">オフ</button></div>
+        </section>
+        <section class="adv-setting-row" role="group" aria-labelledby="ui-animation-label">
+          <h3 id="ui-animation-label">画面演出</h3>
+          <div class="adv-setting-options"><button data-setting="uiAnimation" data-value="true" aria-pressed="true">オン</button><button data-setting="uiAnimation" data-value="false" aria-pressed="false">オフ</button></div>
+        </section>
+        <section class="adv-setting-row" role="group" aria-labelledby="audio-label">
+          <h3 id="audio-label">音量</h3>
+          <div class="adv-audio-settings">
+            <label>全体 <input type="range" min="0" max="1" step="0.01" value="1" data-audio-setting="master"> <output data-audio-value="master">100%</output></label>
+            <label>BGM <input type="range" min="0" max="1" step="0.01" value="1" data-audio-setting="bgm"> <output data-audio-value="bgm">100%</output></label>
+            <label>効果音 <input type="range" min="0" max="1" step="0.01" value="1" data-audio-setting="se"> <output data-audio-value="se">100%</output></label>
+            <label>音声 <input type="range" min="0" max="1" step="0.01" value="1" data-audio-setting="voice"> <output data-audio-value="voice">100%</output></label>
+          </div>
+        </section>
+        <section class="adv-setting-row"><h3>全画面表示</h3><button id="fullscreen" aria-pressed="false">全画面表示にする</button></section>
+      </dialog>
+    </main>
+    <script type="module" src="./main.mjs"></script>
+  </body>
+</html>

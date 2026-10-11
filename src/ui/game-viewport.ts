@@ -2,7 +2,7 @@
 export const gameViewportCss = `
 .adv-viewport {
   position: relative;
-  width: min(100vw, calc(100dvh * 16 / 9));
+  width: var(--adv-fitted-width, min(100vw, calc(100dvh * 16 / 9)));
   aspect-ratio: 16 / 9;
   overflow: hidden;
   isolation: isolate;

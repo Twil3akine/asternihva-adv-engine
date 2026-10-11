@@ -1,15 +1,19 @@
+import type { CharacterState } from "./save.js";
 import type {
   CharacterCommand,
   CharacterDefinition,
   CharacterRenderer,
   RenderedCharacter,
   StageLayoutDefinition,
+  StagePosition,
 } from "./types.js";
 
 interface CharacterEntry {
   definition: CharacterDefinition;
   instance: RenderedCharacter;
   expression?: string;
+  visible: boolean;
+  position: StagePosition;
 }
 
 export class CharacterStage<Host = unknown> {
@@ -21,9 +25,14 @@ export class CharacterStage<Host = unknown> {
     characters: readonly CharacterDefinition[],
     renderers: readonly CharacterRenderer<Host>[],
   ) {
+    if (new Set(characters.map(c => c.id)).size !== characters.length) throw new Error("Duplicate character id in stage.");
+    if (new Set(renderers.map(r => r.key)).size !== renderers.length) throw new Error("Duplicate renderer key in stage.");
     const rendererMap = new Map(renderers.map((renderer) => [renderer.key, renderer]));
 
     for (const character of characters) {
+      if (!rendererMap.has(character.renderer)) throw new Error(`Renderer "${character.renderer}" for character "${character.id}" is not registered.`);
+    }
+    try { for (const character of characters) {
       const renderer = rendererMap.get(character.renderer);
       if (!renderer) {
         throw new Error(
@@ -32,7 +41,10 @@ export class CharacterStage<Host = unknown> {
       }
 
       const instance = renderer.create(host, character);
-      this.#characters.set(character.id, { definition: character, instance, expression: character.defaultExpression });
+      this.#characters.set(character.id, { definition: character, instance, expression: character.defaultExpression ?? instance.initialExpression, visible: false, position: "center" });
+    } } catch (error) {
+      this.destroy();
+      throw error;
     }
   }
 
@@ -78,6 +90,7 @@ export class CharacterStage<Host = unknown> {
 
     if (command.position !== undefined) {
       await instance.setPosition(command.position);
+      entry.position = structuredClone(command.position);
     }
     if (command.expression !== undefined) {
       await instance.setExpression(command.expression);
@@ -85,13 +98,39 @@ export class CharacterStage<Host = unknown> {
     }
     if (command.show === true) {
       await instance.show();
+      entry.visible = true;
     }
     if (command.motion !== undefined && this.#motionEnabled) {
       await instance.playMotion(command.motion);
     }
     if (command.show === false) {
       await instance.hide();
+      entry.visible = false;
     }
+  }
+
+  snapshot(): CharacterState[] {
+    return [...this.#characters].map(([character, entry]) => ({ character, visible: entry.visible,
+      expression: entry.expression, position: structuredClone(entry.position) }));
+  }
+
+  async restore(states: readonly CharacterState[]): Promise<void> {
+    const byId = new Map(states.map(state => [state.character, state]));
+    if (byId.size !== this.#characters.size || [...byId.keys()].some(id => !this.#characters.has(id))) {
+      throw new Error("Saved character registry does not match the stage.");
+    }
+    for (const [character, entry] of this.#characters) {
+      if (byId.get(character)!.expression === undefined && entry.expression !== undefined && entry.definition.defaultExpression === undefined && entry.instance.initialExpression === undefined) {
+        throw new Error("Restoring an unspecified expression requires defaultExpression or renderer.initialExpression.");
+      }
+    }
+    for (const [character, entry] of this.#characters) {
+      const state = byId.get(character)!;
+      entry.instance.stopMotion?.();
+      await this.command({ character, position: state.position, expression: state.expression ?? entry.definition.defaultExpression ?? entry.instance.initialExpression, show: state.visible });
+      entry.expression = state.expression ?? entry.definition.defaultExpression ?? entry.instance.initialExpression;
+    }
+    this.setActive(undefined);
   }
 
   setActive(characterId?: string): void {
@@ -101,9 +140,13 @@ export class CharacterStage<Host = unknown> {
   }
 
   destroy(): void {
-    for (const entry of this.#characters.values()) {
-      entry.instance.destroy();
-    }
+    const entries = [...this.#characters.values()];
     this.#characters.clear();
+    let failure: unknown;
+    let failed = false;
+    for (const entry of entries) {
+      try { entry.instance.destroy(); } catch (error) { if (!failed) { failure = error; failed = true; } }
+    }
+    if (failed) throw failure;
   }
 }

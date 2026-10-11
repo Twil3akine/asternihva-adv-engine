@@ -1,22 +1,9 @@
 node_modules/
 dist/
 coverage/
-
 .env
 .env.*
 !.env.example
-
 .DS_Store
-
 *.log
-
-# Private, locally imported Asternihva character artwork and readiness manifest.
-examples/asternihva/public/characters/
-
-# Local background artwork is not licensed for repository distribution.
-examples/asternihva/public/backgrounds/
-examples/asternihva/public/fonts/
-
-# Private local stories and unattended runner state.
-scenario/
-.codex-night-run/
+*.tgz

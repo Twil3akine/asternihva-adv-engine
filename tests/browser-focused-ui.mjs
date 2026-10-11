@@ -1,5 +1,5 @@
 import { AdvEngine, DomUi } from "../dist/index.js";
-import { DemoUi } from "../examples/asternihva/demo-controls.mjs";
+import { SampleUi } from "../examples/generic/controls.mjs";
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
@@ -20,7 +20,7 @@ function nextFrame() {
   return new Promise(resolve => requestAnimationFrame(() => resolve()));
 }
 
-/** Run in the Asternihva demo page. Exercises real CSS geometry and isolated DomUi input. */
+/** Run in the Generic demo page. Exercises real CSS geometry and isolated DomUi input. */
 export async function testFocusedUi() {
   const game = document.querySelector("#game");
   const dialogue = document.querySelector("#dialogue");
@@ -32,8 +32,8 @@ export async function testFocusedUi() {
   const menu = document.querySelector("#menu-panel");
   const log = document.querySelector("#log-panel");
   const settings = document.querySelector("#settings-panel");
-  assert(game && dialogue && text && speaker && choices && controls && pageIndicator, "Asternihva dialogue DOM IDs changed");
-  assert(menu && log && settings, "Asternihva menu, LOG, or settings dialog is missing");
+  assert(game && dialogue && text && speaker && choices && controls && pageIndicator, "Generic dialogue DOM IDs changed");
+  assert(menu && log && settings, "Generic menu, LOG, or settings dialog is missing");
 
   if (game.dataset.screen === "title") {
     await until(() => game.dataset.shellReady === "true", "Shell did not initialize", 1000);
@@ -48,9 +48,9 @@ export async function testFocusedUi() {
     mode: game.dataset.mode,
   };
   const positionCases = [
-    ["Noah", "一行だけの台詞です。"],
-    ["Noah", "一行目の台詞です。\n二行目の台詞です。"],
-    ["Noah", "一行目の台詞です。\n二行目の台詞です。\n三行目の台詞です。"],
+    ["Alice", "一行だけの台詞です。"],
+    ["Alice", "一行目の台詞です。\n二行目の台詞です。"],
+    ["Alice", "一行目の台詞です。\n二行目の台詞です。\n三行目の台詞です。"],
     ["", "話者名のない地の文です。"],
   ];
   try {
@@ -175,7 +175,7 @@ export async function testFocusedUi() {
 
     const edgeText = "\n\n外側の改行は表示から除きます。\n\n内部の改行は残します。\n\n";
     const visibleText = edgeText.replace(/^\n+|\n+$/g, "");
-    demoUi = new DemoUi({
+    demoUi = new SampleUi({
       root: fixture,
       background: fixture.querySelector(".adv-background"),
       speaker: fixture.querySelector(".adv-speaker"),
@@ -183,7 +183,7 @@ export async function testFocusedUi() {
       choices: fixtureChoices,
       pageIndicator: fixture.querySelector(".adv-page-indicator"),
     });
-    const presentation = demoUi.presentLine({ speakerName: "Noah", text: edgeText });
+    const presentation = demoUi.presentLine({ speakerName: "Alice", text: edgeText });
     await until(() => fixtureText.textContent.length > 0, "Newline fixture did not render");
     const renderedPages = [];
     let presentationDone = false;

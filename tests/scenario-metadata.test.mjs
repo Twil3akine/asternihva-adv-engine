@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { AdvEngine, DomUi } from '../dist/index.js';
 
 test('engine passes optional scenario metadata unchanged to its adapter', () => {
-  const scenario = { id: 'episode', chapter: 'EP.01', title: 'A light' };
+  const scenario = { id: 'episode', chapter: 'CH.2', title: 'A light' };
   let received;
   new AdvEngine({ game: { scenario, start: 'intro', characters: [], scenes: {} }, stage: {}, ui: { setScenarioMetadata(value) { received = value; } } });
   assert.equal(received, scenario);
@@ -11,16 +11,16 @@ test('engine passes optional scenario metadata unchanged to its adapter', () => 
 test('scenario title supports chapter, title only, chapter only and absent metadata', () => {
   const scenarioTitle = { textContent: '', hidden: false, dataset: {} };
   const ui = new DomUi({ scenarioTitle });
-  ui.setScenarioMetadata({ chapter: 'EP.01', title: 'A light' });
-  assert.equal(scenarioTitle.textContent, 'EP.01\nA light');
+  ui.setScenarioMetadata({ chapter: 'CH.2', title: 'A light' });
+  assert.equal(scenarioTitle.textContent, 'CH.2\nA light');
   assert.equal(scenarioTitle.dataset.hasChapter, 'true');
   assert.equal(scenarioTitle.dataset.hasTitle, 'true');
   ui.setScenarioMetadata({ title: 'A light' });
   assert.equal(scenarioTitle.textContent, 'A light');
   assert.equal(scenarioTitle.dataset.hasChapter, 'false');
   assert.equal(scenarioTitle.dataset.hasTitle, 'true');
-  ui.setScenarioMetadata({ chapter: 'EP.01' });
-  assert.equal(scenarioTitle.textContent, 'EP.01');
+  ui.setScenarioMetadata({ chapter: 'CH.2' });
+  assert.equal(scenarioTitle.textContent, 'CH.2');
   ui.setScenarioMetadata();
   assert.equal(scenarioTitle.hidden, true);
   assert.equal(scenarioTitle.textContent, '');

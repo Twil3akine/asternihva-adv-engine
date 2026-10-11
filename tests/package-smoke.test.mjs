@@ -5,5 +5,5 @@ import { resolve } from "node:path";
 
 test("npm package contents and installed public imports are smoke tested", () => {
   const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
-  execFileSync("npm", ["run", "pack:smoke"], { cwd: root, stdio: "inherit" });
+  execFileSync(process.execPath, ["scripts/package-smoke.mjs"], { cwd: root, stdio: "inherit" });
 });

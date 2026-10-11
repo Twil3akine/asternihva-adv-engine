@@ -4,8 +4,31 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [18, 22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm test
+      - run: npm run verify:boundary
+      - run: npm run verify:core
+      - run: npm run validate:fixture
+      - run: npm run pack:smoke
+
+  chromium:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -13,5 +36,22 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm install
-      - run: npm run check
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run browser:test
+      - run: npm run consumer:test
+      - run: npm run mobile:test
+
+  bun-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: oven-sh/setup-bun@v2
+      - run: npm ci
+      - run: npm run build
+      - run: bun scripts/compatibility-smoke.mjs

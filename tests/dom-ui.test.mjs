@@ -314,8 +314,8 @@ test("paginated presentation removes page-edge blank lines while preserving inte
   Object.defineProperty(elements.text, "scrollHeight", {
     get() { return this.textContent.split("\n").length * 20; },
   });
-  const { DemoUi } = await import("../examples/asternihva/demo-controls.mjs");
-  const ui = new DemoUi(elements);
+  const { SampleUi } = await import("../examples/generic/controls.mjs");
+  const ui = new SampleUi(elements);
   let done = false;
   const pending = ui.presentLine({ text: original, speakerName: "Alice" }).then(() => { done = true; });
   const pages = [];
