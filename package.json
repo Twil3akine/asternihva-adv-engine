@@ -1,10 +1,49 @@
 {
-  "name": "asternihva-adv-engine",
-  "version": "0.1.0",
-  "description": "A small, renderer-agnostic visual novel and ADV engine.",
-  "type": "module",
-  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "asternihva-adv-engine": "./scripts/cli.mjs"
+  },
+  "main": "./dist/index.js",
+  "keywords": [
+    "visual-novel",
+    "adv",
+    "web",
+    "typescript",
+    "game-engine"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "playwright": "^1.61.0",
+    "typescript": "^5.8.3",
+    "sharp": "^0.34.5",
+    "@types/node": "^22.20.5"
+  },
+  "type": "module",
+  "peerDependenciesMeta": {
+    "sharp": {
+      "optional": true
+    }
+  },
+  "version": "0.1.0",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "scripts/cli.mjs"
+  ],
+  "name": "asternihva-adv-engine",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Twil3akine/asternihva-adv-engine.git"
+  },
+  "description": "A small, renderer-agnostic visual novel and ADV engine.",
+  "sideEffects": false,
+  "peerDependencies": {
+    "sharp": "^0.34.0"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -23,41 +62,22 @@
       "import": "./dist/live2d.js"
     },
     "./tooling": {
-      "types": "./dist/tooling/scenario-validator.d.ts",
-      "import": "./dist/tooling/scenario-validator.js"
+      "types": "./dist/tooling/index.d.ts",
+      "import": "./dist/tooling/index.js"
     }
   },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "build": "tsc -p tsconfig.json",
-    "test": "node --test tests/*.test.mjs",
     "check": "npm run build && npm test",
+    "validate:fixture": "node scripts/validate-fixture.mjs",
     "pack:smoke": "npm run build && node scripts/package-smoke.mjs",
+    "verify:core": "node scripts/verify-core.mjs",
+    "test": "node --test tests/*.test.mjs",
     "serve:example": "python3 -m http.server 4173 --bind 127.0.0.1",
+    "build": "node scripts/build.mjs",
+    "browser:test": "node tests/browser-smoke.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "assets": "npm run build && node scripts/cli.mjs asset build",
+    "smoke:runtime": "node scripts/compatibility-smoke.mjs",
     "validate:scenarios": "npm run build && node scripts/validate-scenarios.mjs"
-  },
-  "keywords": [
-    "visual-novel",
-    "adv",
-    "web",
-    "typescript",
-    "game-engine"
-  ],
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Twil3akine/asternihva-adv-engine.git"
-  },
-  "sideEffects": false,
-  "engines": {
-    "node": ">=18"
-  },
-  "devDependencies": {
-    "typescript": "^5.8.3"
   }
 }

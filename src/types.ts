@@ -1,3 +1,4 @@
+import type { AudioChannel, AudioPlayOptions, AudioStopOptions } from "./audio.js";
 export type Scalar = string | number | boolean | null;
 
 export type StagePosition =
@@ -30,8 +31,17 @@ export interface CharacterCommand {
   position?: StagePosition;
 }
 
+export interface AudioNode extends AudioPlayOptions, AudioStopOptions {
+  type: "audio";
+  channel: AudioChannel;
+  /** Omit ID to stop the channel. */
+  id?: string;
+  next?: string;
+}
+
 export interface LineNode {
   type: "line";
+  voice?: string;
   speaker?: string;
   text: string;
   layout?: string;
@@ -77,7 +87,7 @@ export interface EndNode {
   type: "end";
 }
 
-export type AdvNode = LineNode | ChoiceNode | JumpNode | SetNode | SceneNode | EndNode;
+export type AdvNode = AudioNode | LineNode | ChoiceNode | JumpNode | SetNode | SceneNode | EndNode;
 
 export interface ScenarioMetadata {
   description?: string;
@@ -110,6 +120,7 @@ export interface StageLayoutDefinition {
 export type StageLayoutPreset = "trio" | "duo-left" | "duo-right" | "solo-center" | "solo-close" | "narration";
 
 export interface GameDefinition {
+  audioAssets?: Record<string, string>;
   backgrounds?: Record<string, BackgroundDefinition>;
   stageLayouts?: Record<string, StageLayoutDefinition>;
   scenario?: ScenarioMetadata;
@@ -150,6 +161,8 @@ export interface UiAdapter {
 }
 
 export interface RenderedCharacter {
+  /** Logical initial expression, when the renderer selects a default itself. */
+  readonly initialExpression?: string;
   show(): void | Promise<void>;
   hide(): void | Promise<void>;
   setExpression(name: string): void | Promise<void>;

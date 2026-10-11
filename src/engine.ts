@@ -1,3 +1,4 @@
+import type { AudioController } from "./audio.js";
 import { SaveError, SaveStore, validateSaveState, isScalarState, type SaveState } from "./save.js";
 import { CharacterStage } from "./character-stage.js";
 import type {
@@ -14,7 +15,10 @@ export interface AdvEngineOptions {
   game: GameDefinition;
   stage: CharacterStage;
   ui: UiAdapter;
+  /** Guard unchecked automatic loops; line/choice nodes reset the count. */
+  maxAutomaticSteps?: number;
   saves?: SaveStore;
+  audio?: AudioController;
   autosave?: boolean;
   onAutosaveError?: (error: unknown) => void;
   progress?: { markPlayed(id: string): void; markCompleted(id: string): void };
@@ -26,6 +30,7 @@ export class AdvEngine {
   readonly #stage: CharacterStage;
   readonly #ui: UiAdapter;
   readonly #state: Record<string, Scalar>;
+  readonly #maxAutomaticSteps: number;
 
   #sceneId: string;
   #nodeIndex = 0;
@@ -44,6 +49,8 @@ export class AdvEngine {
 
 
   constructor(options: AdvEngineOptions) {
+    this.#maxAutomaticSteps = options.maxAutomaticSteps ?? 10000;
+    if (!Number.isSafeInteger(this.#maxAutomaticSteps) || this.#maxAutomaticSteps < 1) throw new TypeError("maxAutomaticSteps must be a positive integer.");
     this.#options = options;
     this.#game = options.game;
     this.#stage = options.stage;
@@ -89,6 +96,7 @@ export class AdvEngine {
     const scenarioId = this.#game.scenario?.id;
     if (!scenarioId) throw new SaveError("scenario-missing", "A stable scenario ID is required to save.");
     return { version: 1, scenarioId, runtime: this.snapshot(), ended: this.#ended,
+      ...(this.#options.audio ? { audio: this.#options.audio.snapshot() } : {}),
       presentation: { background: this.#background, layout: this.#layout, characters: this.#stage.snapshot() } };
   }
 
@@ -114,12 +122,19 @@ export class AdvEngine {
     const ids = new Set(this.#game.characters.map(c => c.id));
     if (state.presentation.characters.length !== ids.size || state.presentation.characters.some(c => !ids.has(c.character)) ||
       (state.presentation.layout && !Object.hasOwn(this.#game.stageLayouts ?? {}, state.presentation.layout))) throw new SaveError("corrupted", "Saved presentation is incompatible with this scenario.");
+    for (const saved of state.presentation.characters) {
+      const definition = this.#game.characters.find(character => character.id === saved.character)!;
+      const expressions = definition.assets?.expressions;
+      if (saved.expression && expressions && typeof expressions === "object" && !Object.hasOwn(expressions, saved.expression)) throw new SaveError("corrupted", "Saved expression is unavailable.");
+    }
+    if (state.audio?.bgm && this.#game.audioAssets && !Object.hasOwn(this.#game.audioAssets, state.audio.bgm.id)) throw new SaveError("corrupted", "Saved BGM is unavailable.");
     const copy = structuredClone(state);
     this.#loading = true;
     this.stop();
     try {
       // Renderer transitions settle before the saved presentation is applied.
       await this.#task;
+      await this.#options.audio?.restore(copy.audio);
       await this.#stage.restore(copy.presentation.characters);
       await this.#setBackground(copy.presentation.background);
       this.#layout = copy.presentation.layout;
@@ -147,6 +162,7 @@ export class AdvEngine {
   }
 
   async #run(epoch: number): Promise<void> {
+    let automaticSteps = 0;
     try {
       while (this.#running && epoch === this.#epoch) {
         const scene = this.#game.scenes[this.#sceneId];
@@ -154,6 +170,8 @@ export class AdvEngine {
         const node = scene[this.#nodeIndex];
         if (!node) { await this.#finish(); return; }
         this.#safe = false;
+        if (node.type === "line" || node.type === "choice") automaticSteps = 0;
+        else if (++automaticSteps > this.#maxAutomaticSteps) throw new Error("Maximum automatic steps exceeded; check scenario for a deterministic loop.");
         this.#prefetchNextBackground();
         await this.#execute(node, epoch);
         this.#safe = true;
@@ -191,11 +209,23 @@ export class AdvEngine {
     this.stop();
     this.#stage.destroy();
     this.#ui.destroy?.();
+    this.#options.audio?.destroy();
   }
 
   async #execute(node: AdvNode, epoch: number): Promise<void> {
     switch (node.type) {
+      case "audio": {
+        const audio = this.#options.audio;
+        if (!audio) throw new Error("Audio system is not configured.");
+        await this.#effect(() => node.id ? audio.play(node.channel, node.id, node) : audio.stop(node.channel, node), epoch);
+        if (node.next) this.#jump(node.next); else this.#nodeIndex++;
+        return;
+      }
       case "line": {
+        if (this.#options.audio) {
+          await this.#effect(() => this.#options.audio!.lineChanged(), epoch);
+          if (node.voice) await this.#effect(() => this.#options.audio!.play("voice", node.voice!), epoch);
+        } else if (node.voice) throw new Error("Audio system is not configured.");
         await this.#effect(() => this.#applyLayout(node.layout), epoch);
         const commands: CharacterCommand[] = [...(node.commands ?? [])];
         if (node.speaker && (node.expression || node.motion || node.position)) {

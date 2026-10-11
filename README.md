@@ -107,7 +107,7 @@ npm test
 npm run validate:scenarios
 ```
 
-The local game shell loads private definitions from the ignored `scenario/` directory. They are not included in Git or npm distribution. `validate:scenarios` checks these local definitions and requires them to be present. Public development and tests use generic fixtures instead. Git history predating this separation still contains story text; history needs a separate publication decision before the repository is made public.
+The local game shell loads private definitions from the ignored `scenario/` directory. They are not included in Git or npm distribution. `validate:scenarios` checks these local definitions and requires them to be present. Public development and tests use generic fixtures instead. The package allowlist excludes the demo and local story directory. Check package contents before distributing a build.
 
 `npm run pack:smoke` packs and installs in a temporary directory, verifies all public imports, checks the core declarations without DOM libs, and rejects local story/assets. It never publishes.
 
@@ -115,6 +115,105 @@ The local game shell loads private definitions from the ignored `scenario/` dire
 
 MIT. See [LICENSE](./LICENSE).
 
+## Verification and CI
+
+`npm run verify:core` checks transitive core source imports/types for DOM leakage.
+`npm run validate:fixture` validates a generic story without local assets.
+`npm run pack:smoke` also rejects unpublished deep imports and compiles a consumer
+with ES-only libs and no ambient types. Set `ADV_PRIVATE_SCENARIO_DIR` to an
+external local directory to scan packed text for those story strings/fragments;
+only file paths and counts are reported.
+
+`npm run browser:test` runs a generic Chromium fixture without local artwork,
+fonts or stories. Install Chromium with `npx playwright install chromium`.
+`CHROMIUM_EXECUTABLE_PATH` optionally selects an existing binary. CI covers
+Node 18/22/24 checks, package smoke, generic validation, Chromium and a Bun
+runtime smoke. `npm run smoke:runtime` can also be run with Bun directly.
+
+Unchecked playback limits consecutive automatic nodes to 10,000 by default;
+`AdvEngineOptions.maxAutomaticSteps` can set a positive integer limit. A line or
+choice resets the counter. This prevents a malformed deterministic loop from
+starving the host. Stage construction rejects duplicate character/renderer IDs
+before creating any renderer instances. Destroyed sprites ignore further work.
+## Asset tooling
+
+Install the optional image converter with `npm install sharp` and run:
+
+```sh
+asternihva-adv-engine asset build assets.json public/generated
+# From a checkout:
+npm run assets -- assets.json public/generated
+```
+
+Manifest paths resolve relative to the JSON file:
+
+```json
+{
+  "version": 1,
+  "assets": [{
+    "id": "alice", "source": "source.png", "format": "webp",
+    "maxWidth": 1600, "maxHeight": 1600,
+    "thumbnail": { "size": 192, "format": "png" }
+  }]
+}
+```
+
+PNG and WebP retain alpha, resize inside bounds without enlarging, and emit
+content-hashed files plus `assets.generated.json`. Thumbnail generation retains
+aspect ratio without cropping. Source/config/converter fingerprints skip unchanged
+assets; output hashes also detect missing or corrupt generated files. Stale
+hashed files are reported and retained for review. IDs must use letters, digits,
+underscores or hyphens. No source images are included in the package.
+
+`buildAssets`, `validateAssetManifest`, and their types are available from
+`/tooling`. Inject an `ImageTransformer` with a stable version string for other
+converters; only the CLI needs Sharp. `/tooling` uses Node filesystem APIs.
+
+## Scenario analysis CLI
+
+```sh
+asternihva-adv-engine scenario validate ./sample.mjs
+asternihva-adv-engine scenario validate ./sample.mjs --lint
+asternihva-adv-engine scenario stats ./sample.mjs
+asternihva-adv-engine scenario graph ./sample.mjs ./graph.json
+asternihva-adv-engine scenario graph ./sample.mjs ./graph.dot
+```
+
+Modules export a definition, catalog entry, array, or `scenarios` list. They are
+trusted executable JavaScript, not sandboxed input. Supply the full character,
+background and layout registries when validating references. CLI output contains
+only IDs, pass/fail, counts and statistics; failures do not quote module source.
+Graph export contains node IDs/kinds and edges, excluding dialogue, choice labels
+and asset paths. Graphviz is not required.
+
+`scenarioStatistics`, `scenarioGraph`, and `scenarioGraphDot` are available in
+`/tooling`. Reading length defaults to 500 Unicode characters/minute and counts
+all authored branches, not one player's route. `validateScenarios(entries,
+{ lint: true })` adds empty scene, unused registry and unreachable node warnings.
+Empty choices, duplicate character IDs and reachable automatic loops error;
+duplicate/blank choice labels warn. Implicit scene exhaustion remains legal.
+Duplicate JavaScript scene object keys are overwritten before evaluation and
+cannot be diagnosed by the runtime validator; use source linting for those.
+## Input actions
+
+`InputRouter` in `/core` accepts `advance`, `confirm`, `cancel`, `menu`, `log`,
+`auto`, `skip`, `up`, `down`, `quickSave` and `quickLoad`. Subscribe handlers that
+return `true` to consume an action; higher-priority handlers run first.
+Touch buttons and future gamepad adapters can call `dispatch` directly.
+`resolveKeyInput` maps physical keys without DOM dependencies.
+
+`BrowserKeyboardInput` in `/web` translates browser key events. Defaults use
+Enter/Space/ArrowRight for line advance, Enter/Space to confirm choices,
+ArrowUp/ArrowDown for choice navigation, Escape for menu/cancel, L/A/S for
+log/auto/skip, F5/F9 for quick save/load. Only handled actions prevent the browser
+default; composition, repeat and modifier combinations are ignored unless mapped.
+Editable elements and native controls keep their keys.
+
+`DomUi` accepts `{ input, keyboard, bindings }` and exposes `.input`; it handles
+line/choice actions. The application subscribes menu/log/auto/skip/save/load
+handlers on the same router. Set `keyboard: false` when the host owns keyboard
+listeners. Custom bindings replace the default list. Overlay handlers should use
+a higher priority and consume actions while open.
 ## Save and load
 
 ```ts
@@ -164,3 +263,40 @@ priority to consume quickSave/quickLoad/cancel and block background actions whil
 open. Destroy the panel when its host is disposed. `saveLoadPanelCss` provides
 structural styles only. See `examples/generic/index.html` for a public example
 that runs without local stories or artwork.
+## Audio
+
+`AudioController` in `/core` owns BGM state and channel volumes through an injected
+`AudioAdapter`. `BrowserAudioAdapter` in `/web` lazily decodes registered sources
+with Web Audio. Call `adapter.unlock()` from a user gesture. The host owns asset
+URLs; no audio files are shipped.
+
+```ts
+import { AudioController } from "asternihva-adv-engine/core";
+import { BrowserAudioAdapter } from "asternihva-adv-engine/web";
+const adapter = new BrowserAudioAdapter({ assets: { music: "/audio/music.ogg" } });
+const audio = new AudioController(adapter);
+await audio.play("bgm", "music", { loop: true, fadeInMs: 200, crossfadeMs: 500 });
+await audio.stop("bgm", { fadeOutMs: 300 });
+```
+
+Pass `audio` to `AdvEngine`. Additive nodes use `{ type: "audio", channel: "bgm",
+id: "music" }`; omit `id` to stop a channel. Lines optionally use `voice: "clip"`.
+Register IDs in `GameDefinition.audioAssets` for validation. BGM/Voice replace
+prior playback, SE overlaps. BGM supports loop, fade-in/out and crossfade;
+volumes are 0–1 and effective gain is master × channel × per-play volume.
+Durations are milliseconds. Playback APIs resolve when playback is scheduled,
+not when a clip ends. Failed decode can retry; stop/destroy invalidates pending
+requests. Changing volume replaces an active gain ramp.
+
+`settings.update({ audio: { master: 1, bgm: .7, se: 1, voice: 1 } })` persists
+volumes. `settings.bindAudio(audio)` applies them and returns an unsubscribe
+function. Legacy settings without `audio` use full-volume defaults. Voice stops
+on line changes unless `new AudioController(adapter, false)` is used. SaveState
+optionally includes only BGM ID/loop/per-play volume; loading clears one-shots
+and starts BGM from the beginning. Earlier v1 saves remain supported.
+
+Renderers can expose a logical `initialExpression` when choosing their own
+fallback; SpriteRenderer does so. Custom renderers should set this property or
+`CharacterDefinition.defaultExpression` for reliable restoration of their initial
+expression. Unknown registered expressions/BGM in a save are rejected before
+playback is changed.

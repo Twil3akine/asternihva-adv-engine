@@ -1,3 +1,4 @@
+import type { LogicalAudioState } from "./audio.js";
 import type { EngineSnapshot, Scalar, StagePosition } from "./types.js";
 
 /** DOM-free storage; implementations may be synchronous or asynchronous. */
@@ -18,6 +19,7 @@ export interface SaveState {
   runtime: EngineSnapshot;
   presentation: { background?: string; layout?: string; characters: CharacterState[] };
   ended: boolean;
+  audio?: LogicalAudioState;
 }
 export interface SaveRecord { slot: string; savedAt: string; state: SaveState; }
 export interface SaveSummary { slot: string; savedAt: string; scenarioId: string; sceneId: string; nodeIndex: number; }
@@ -40,6 +42,11 @@ export function validateSaveState(value: unknown): asserts value is SaveState {
   if (!record(value)) throw new SaveError("corrupted", "Invalid save state.");
   if (value.version !== 1) throw new SaveError("unsupported-version", "Unsupported save schema version.");
   const runtime = value.runtime, presentation = value.presentation;
+  if (value.audio !== undefined && (!record(value.audio) || (value.audio.bgm !== undefined &&
+    (!record(value.audio.bgm) || !id(value.audio.bgm.id) || typeof value.audio.bgm.loop !== "boolean" ||
+      typeof value.audio.bgm.volume !== "number" || !Number.isFinite(value.audio.bgm.volume) || value.audio.bgm.volume < 0 || value.audio.bgm.volume > 1)))) {
+    throw new SaveError("corrupted", "Invalid saved audio state.");
+  }
   if (!id(value.scenarioId) || typeof value.ended !== "boolean" || !record(runtime) || !id(runtime.sceneId) ||
       !Number.isSafeInteger(runtime.nodeIndex) || (runtime.nodeIndex as number) < 0 || !isScalarState(runtime.state) ||
       !record(presentation) || (presentation.background !== undefined && !id(presentation.background)) ||
