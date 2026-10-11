@@ -2,7 +2,13 @@ import { DomUi, calculateAutoDelay, getAutoDelayMultiplier } from "../../dist/in
 
 import { createLogEntry, renderLogEntries } from "./demo-log.mjs";
 
-export async function presentEpisodeTitle(root, element, metadata, { durationMs = 1900, fadeDurationMs = 700 } = {}) {
+export async function presentEpisodeTitle(root, element, metadata, { durationMs = 1900, fadeDurationMs = 700, signal } = {}) {
+  signal?.throwIfAborted();
+  const wait = milliseconds => new Promise((resolve, reject) => {
+    const cancel = () => { clearTimeout(timer); reject(signal.reason); };
+    const timer = setTimeout(() => { signal?.removeEventListener('abort', cancel); resolve(); }, milliseconds);
+    signal?.addEventListener('abort', cancel, { once: true });
+  });
   const reducedMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const animated = root.dataset.uiAnimation !== 'off' && !reducedMotion;
   const chapter = element.querySelector('.episode-title__chapter');
@@ -14,10 +20,10 @@ export async function presentEpisodeTitle(root, element, metadata, { durationMs 
   root.dataset.mode = 'intro';
   element.dataset.phase = 'in';
   element.hidden = false;
-  await new Promise(resolve => setTimeout(resolve, animated ? durationMs : 250));
+  await wait(animated ? durationMs : 250);
   if (animated) {
     element.dataset.phase = 'out';
-    await new Promise(resolve => setTimeout(resolve, fadeDurationMs));
+    await wait(fadeDurationMs);
   }
   element.hidden = true;
   delete element.dataset.phase;
@@ -99,7 +105,6 @@ export function attachControls(root, ui, { auto = {} } = {}, settings, { onResta
       }
     }
   });
-  root.querySelectorAll('dialog').forEach(panel => panel.addEventListener('keydown', event => event.stopPropagation()));
   root.querySelector('[data-menu-action="log"]').addEventListener('click', () => {
     root.querySelector('#menu-panel').close();
     const panel = root.querySelector('#log-panel');
@@ -110,5 +115,10 @@ export function attachControls(root, ui, { auto = {} } = {}, settings, { onResta
   });
   root.querySelector('#restart').addEventListener('click', () => onRestart ? onRestart() : location.reload());
   window.addEventListener('pagehide', () => { stop(); stateObserver.disconnect(); pageObserver.disconnect(); unsubscribeSettings?.(); }, { once: true });
-  return { stop };
+  return { stop, handleAction(action) {
+    if (root.dataset.screen !== 'game' || root.querySelector('dialog[open]')) return false;
+    if (!['auto', 'skip', 'log', 'menu'].includes(action)) return false;
+    controls.querySelector(`[data-control="${action}"]`).click();
+    return true;
+  } };
 }

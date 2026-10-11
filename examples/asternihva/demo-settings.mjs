@@ -10,6 +10,11 @@ export function attachSettings(root, settings, { ui, stage, onBack }) {
     panel.querySelectorAll('[data-setting]').forEach(button => {
       button.setAttribute('aria-pressed', String(String(value[button.dataset.setting]) === button.dataset.value));
     });
+    panel.querySelectorAll('[data-audio-setting]').forEach(slider => {
+      const volume = value.audio?.[slider.dataset.audioSetting] ?? 1;
+      slider.value = String(volume);
+      panel.querySelector(`[data-audio-value="${slider.dataset.audioSetting}"]`).textContent = `${Math.round(volume * 100)}%`;
+    });
   };
   apply(settings.value);
   const unsubscribe = settings.subscribe(apply);
@@ -22,6 +27,11 @@ export function attachSettings(root, settings, { ui, stage, onBack }) {
     if (!button) return;
     const value = button.dataset.value;
     settings.update({ [button.dataset.setting]: value === 'true' ? true : value === 'false' ? false : value });
+  });
+  panel.addEventListener('input', event => {
+    const channel = event.target.dataset?.audioSetting;
+    if (!['master', 'bgm', 'se', 'voice'].includes(channel)) return;
+    settings.update({ audio: { master: 1, bgm: 1, se: 1, voice: 1, ...settings.value.audio, [channel]: Number(event.target.value) } });
   });
   const updateFullscreen = () => {
     const supported = document.fullscreenEnabled && typeof document.documentElement.requestFullscreen === 'function';

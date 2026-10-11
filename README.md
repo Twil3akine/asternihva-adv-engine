@@ -300,3 +300,13 @@ fallback; SpriteRenderer does so. Custom renderers should set this property or
 `CharacterDefinition.defaultExpression` for reliable restoration of their initial
 expression. Unknown registered expressions/BGM in a save are rejected before
 playback is changed.
+
+The bundled example shell connects Save/Load from its title and menu, F5/F9 through
+one InputRouter, and master/BGM/SE/voice sliders through GameSettingsStore. Loading
+constructs the saved chapter's stage before restoring logical state and omits the
+fresh chapter intro. Existing story modules and assets remain external. Opening
+an overlay or saving/loading stops AUTO/SKIP; leaving a chapter cancels its pending
+intro/playback and closes its audio context. A cancelled run is never marked CLEAR.
+When browser storage is denied, the example reports that saves last only for the
+current page session. Hosts should report storage quota errors instead of silently
+claiming durable saves.

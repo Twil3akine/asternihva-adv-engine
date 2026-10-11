@@ -1,15 +1,17 @@
 import { renderChapterSelect } from './chapter-select.mjs';
 
 /** Navigation only. Scenario execution and game UI stay in their existing modules. */
-export function attachGameShell(root, catalog, { onStart, onLeave, onSettings, progress }) {
+export function attachGameShell(root, catalog, { onStart, onLeave, onSettings, progress, input }) {
   const title = root.querySelector('#title-screen');
   const chapters = root.querySelector('#chapter-screen');
   let currentId;
   let starting = false;
   let generation = 0;
+  let pending;
+  const leave = () => { pending?.abort(); pending = undefined; starting = false; onLeave(); };
   const show = screen => {
     generation++;
-    onLeave();
+    leave();
     root.dataset.screen = screen;
     root.dataset.mode = screen;
     title.hidden = screen !== 'title';
@@ -17,21 +19,24 @@ export function attachGameShell(root, catalog, { onStart, onLeave, onSettings, p
     if (screen === 'chapter') renderChapterSelect(root.querySelector('#chapter-list'), catalog, start, currentId ?? progress?.snapshot().lastPlayedId, progress).focus();
     else title.querySelector('button')?.focus();
   };
-  const start = async id => {
-    if (starting || !catalog.getScenarioMetadata(id)) return;
+  const start = async (id, saveState) => {
+    if (starting || !catalog.getScenarioMetadata(id)) return false;
+    leave();
     starting = true;
     const token = ++generation;
+    pending = new AbortController();
+    const signal = pending.signal;
     currentId = id;
     root.dataset.screen = 'game';
     root.dataset.mode = 'intro';
     title.hidden = chapters.hidden = true;
     document.activeElement?.blur();
     try {
-      const playback = await onStart(id);
-      starting = false;
+      const playback = await onStart(id, { saveState, signal });
+      if (token !== generation || signal.aborted) return false;
       progress?.markPlayed(id);
       playback.finished.then(() => {
-        if (token === generation) progress?.markCompleted(id);
+        if (token === generation && (!playback.engine || playback.engine.ended)) progress?.markCompleted(id);
       }).catch(error => {
         if (token === generation) {
           show('chapter');
@@ -39,11 +44,16 @@ export function attachGameShell(root, catalog, { onStart, onLeave, onSettings, p
           root.querySelector('#asset-status').textContent = `シナリオを再生できませんでした: ${error.message}`;
         }
       });
+      return true;
     } catch (error) {
-      starting = false;
+      if (token !== generation || signal.aborted) return false;
       show('chapter');
       root.querySelector('#asset-status').hidden = false;
       root.querySelector('#asset-status').textContent = `シナリオを開始できませんでした: ${error.message}`;
+      if (saveState) throw error;
+      return false;
+    } finally {
+      if (token === generation) starting = false;
     }
   };
   root.querySelector('[data-shell-action="start"]').disabled = !catalog.getScenarios().length;
@@ -52,13 +62,21 @@ export function attachGameShell(root, catalog, { onStart, onLeave, onSettings, p
   root.querySelector('[data-shell-action="title"]').addEventListener('click', () => show('title'));
   root.querySelector('[data-shell-action="settings"]').addEventListener('click', onSettings);
   root.querySelector('[data-end-chapters]').addEventListener('click', () => show('chapter'));
-  root.addEventListener('keydown', event => {
+  root.querySelector('[data-shell-action="chapters-menu"]')?.addEventListener('click', () => show('chapter'));
+  root.querySelector('[data-shell-action="title-menu"]')?.addEventListener('click', () => show('title'));
+  const handleAction = action => {
+    if ((action === 'cancel' || action === 'menu') && root.dataset.screen === 'chapter') { show('title'); return true; }
+    return false;
+  };
+  const unsubscribe = input?.subscribe(handleAction, 20);
+  if (!input) root.addEventListener('keydown', event => {
     if (event.key === 'Escape' && root.dataset.screen === 'chapter') {
       event.preventDefault();
       show('title');
     }
   });
+  globalThis.window?.addEventListener('pagehide', () => { generation++; leave(); unsubscribe?.(); }, { once: true });
   show('title');
   root.dataset.shellReady = 'true';
-  return { start, showTitle: () => show('title'), showChapters: () => show('chapter'), replay: () => start(currentId) };
+  return { start, restore: state => start(state.scenarioId, state), showTitle: () => show('title'), showChapters: () => show('chapter'), replay: () => start(currentId) };
 }

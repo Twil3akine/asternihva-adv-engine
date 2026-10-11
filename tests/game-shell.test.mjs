@@ -192,3 +192,66 @@ test('shell records play and completion and chapters show status', async () => {
     assert.equal(progress.snapshot().lastPlayedId, 'sample');
   } finally { fixture.restoreDocument(); }
 });
+
+test('shell cancels stale starts without clearing progress or blocking a later chapter', async () => {
+  const fixture = makeShellFixture();
+  const { ChapterProgressStore } = await import('../dist/web.js');
+  const progress = new ChapterProgressStore();
+  const entries = ['sample-a', 'sample-b'].map(id => ({ id, title: 'Sample' }));
+  const catalog = { getScenarios: () => entries, getScenarioMetadata: id => entries.find(entry => entry.id === id) };
+  let releaseOld, oldSignal;
+  try {
+    const shell = attachGameShell(fixture.root, catalog, {
+      progress, onLeave() {}, onSettings() {},
+      onStart: (id, { signal }) => id === 'sample-a'
+        ? new Promise(resolve => { oldSignal = signal; releaseOld = resolve; })
+        : { engine: { ended: false }, finished: Promise.resolve() },
+    });
+    const first = shell.start('sample-a');
+    shell.showTitle();
+    assert.equal(oldSignal.aborted, true);
+    assert.equal(await shell.start('sample-b'), true);
+    releaseOld({ finished: Promise.resolve() });
+    assert.equal(await first, false);
+    await Promise.resolve();
+    assert.equal(progress.getStatus('sample-a'), 'NEW');
+    assert.equal(progress.getStatus('sample-b'), 'PLAYED');
+    assert.equal(fixture.root.dataset.screen, 'game');
+  } finally { fixture.restoreDocument(); }
+});
+
+test('shell restores a save without treating a stopped run as chapter completion', async () => {
+  const fixture = makeShellFixture();
+  const { ChapterProgressStore } = await import('../dist/web.js');
+  const progress = new ChapterProgressStore();
+  const state = { scenarioId: 'sample', runtime: { sceneId: 'scene-a', nodeIndex: 1 } };
+  let received;
+  const catalog = { getScenarios: () => [{ id: 'sample', title: 'Sample' }], getScenarioMetadata: id => id === 'sample' ? { id } : undefined };
+  try {
+    const shell = attachGameShell(fixture.root, catalog, {
+      progress, onLeave() {}, onSettings() {},
+      onStart: (_id, { saveState }) => { received = saveState; return { engine: { ended: false }, finished: Promise.resolve() }; },
+    });
+    assert.equal(await shell.restore(state), true);
+    assert.equal(received, state);
+    await Promise.resolve();
+    assert.equal(progress.getStatus('sample'), 'PLAYED');
+  } finally { fixture.restoreDocument(); }
+});
+
+ test('shell ignores an obsolete start failure and reports current restore failures', async () => {
+  const fixture = makeShellFixture();
+  let rejectOld;
+  const catalog = { getScenarios: () => [{ id: 'sample', title: 'Sample' }], getScenarioMetadata: id => id === 'sample' ? { id } : undefined };
+  try {
+    let failing = false;
+    const shell = attachGameShell(fixture.root, catalog, {
+      onLeave() {}, onSettings() {}, onStart: () => failing ? Promise.reject(new Error('Invalid save')) : new Promise((_resolve, reject) => { rejectOld = reject; }),
+    });
+    const old = shell.start('sample'); shell.showTitle(); rejectOld(new Error('Obsolete'));
+    assert.equal(await old, false); assert.equal(fixture.status.textContent, '');
+    failing = true;
+    await assert.rejects(shell.restore({ scenarioId: 'sample' }), /Invalid save/);
+    assert.equal(fixture.root.dataset.screen, 'chapter');
+  } finally { fixture.restoreDocument(); }
+});

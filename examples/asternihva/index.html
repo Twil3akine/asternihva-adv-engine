@@ -14,6 +14,7 @@
         <nav class="shell-actions" aria-label="タイトル">
           <button data-shell-action="start">はじめる</button>
           <button data-shell-action="chapter">チャプター</button>
+          <button data-save-action="load">ロード</button>
           <button data-shell-action="settings">設定</button>
         </nav>
       </section>
@@ -65,6 +66,10 @@
           <form method="dialog"><button data-menu-action="resume">ゲームに戻る</button></form>
           <button data-menu-action="log">ログ</button>
           <button data-menu-action="settings">設定</button>
+          <button data-save-action="save">セーブ</button>
+          <button data-save-action="load">ロード</button>
+          <button data-shell-action="chapters-menu">チャプター選択</button>
+          <button data-shell-action="title-menu">タイトルへ戻る</button>
           <button id="restart">最初から</button>
         </nav>
       </dialog>
@@ -85,6 +90,15 @@
         <section class="adv-setting-row" role="group" aria-labelledby="ui-animation-label">
           <h3 id="ui-animation-label">画面演出</h3>
           <div class="adv-setting-options"><button data-setting="uiAnimation" data-value="true" aria-pressed="true">オン</button><button data-setting="uiAnimation" data-value="false" aria-pressed="false">オフ</button></div>
+        </section>
+        <section class="adv-setting-row" role="group" aria-labelledby="audio-label">
+          <h3 id="audio-label">音量</h3>
+          <div class="adv-audio-settings">
+            <label>全体 <input type="range" min="0" max="1" step="0.01" value="1" data-audio-setting="master"> <output data-audio-value="master">100%</output></label>
+            <label>BGM <input type="range" min="0" max="1" step="0.01" value="1" data-audio-setting="bgm"> <output data-audio-value="bgm">100%</output></label>
+            <label>効果音 <input type="range" min="0" max="1" step="0.01" value="1" data-audio-setting="se"> <output data-audio-value="se">100%</output></label>
+            <label>音声 <input type="range" min="0" max="1" step="0.01" value="1" data-audio-setting="voice"> <output data-audio-value="voice">100%</output></label>
+          </div>
         </section>
         <section class="adv-setting-row"><h3>全画面表示</h3><button id="fullscreen" aria-pressed="false">全画面表示にする</button></section>
       </dialog>

@@ -8,7 +8,7 @@ const server=createServer(async(req,res)=>{
   const path=resolve(root,'.'+new URL(req.url,'http://local').pathname);
   if(path!==root&&!path.startsWith(root+sep)){res.statusCode=403;res.end();return;}
   if(path===root){res.setHeader('Content-Type','text/html');res.end('<!doctype html><html><body></body></html>');return;}
-  try{res.setHeader('Content-Type',['.js','.mjs'].includes(extname(path))?'text/javascript':'text/plain');res.end(await readFile(path));}catch{res.statusCode=404;res.end();}
+  try{res.setHeader('Content-Type',({'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html','.css':'text/css'})[extname(path)]??'text/plain');res.end(await readFile(path));}catch{res.statusCode=404;res.end();}
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 let browser;
@@ -57,5 +57,7 @@ try{
   const panel=web.SaveLoadPanel?await (await import('/tests/browser-save-panel.mjs')).testSaveLoadPanel():undefined;
   return {chromium:true,savePanel:Boolean(panel),lineChoice:true,input:Boolean(core.InputRouter),saveLoad:Boolean(saves),audio,imageFailure:true,destroyRace:true,malformedStorage:true,reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches};
  });
- assert.deepEqual(errors,[]);console.log(JSON.stringify(result));
+ assert.deepEqual(errors,[]);
+ const shell = await (await import('./browser-shell-integration.mjs')).testShellIntegration(browser, `http://127.0.0.1:${server.address().port}`);
+ console.log(JSON.stringify({...result,...shell}));
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
