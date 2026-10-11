@@ -114,3 +114,40 @@ The local game shell loads private definitions from the ignored `scenario/` dire
 ## License
 
 MIT. See [LICENSE](./LICENSE).
+
+## Save and load
+
+```ts
+import { SaveStore } from "asternihva-adv-engine/core";
+import { LocalStorageAdapter } from "asternihva-adv-engine/web";
+const saves = new SaveStore(new LocalStorageAdapter(), "my-game");
+const engine = new AdvEngine({ game: scenario, stage, ui, saves, autosave: true });
+const finished = engine.run();
+await engine.save("quicksave");
+await engine.load("quicksave"); // stops old playback and reconstructs presentation
+const resumed = engine.run();
+```
+
+Give each scenario a stable `scenario.id`. Slots are `autosave`, `quicksave`, and
+`manual-1` through `manual-5`; custom slots can be passed to `SaveStore`.
+`save`, `load`, `deleteSave`, `hasSave`, and `listSaves` are available on the store
+and the configured engine. Schema v1 stores node position, scalar variables,
+background/layout IDs, visibility, expressions and positions; it excludes DOM,
+image caches, motion timing, dialogue text and assets. A waiting line or choice
+resumes from its node (and a long line starts again at page one).
+
+Saving during renderer transitions throws `SaveError` with code `busy`. Loading
+validates first, cancels old input and waits for renderer work before restoration.
+Call `run()` after loading. Implement `UiAdapter.cancelPending()` in custom UIs to
+remove stale event handlers. Failed storage operations use code `storage`;
+missing/corrupt/unsupported slots have distinct codes. `listSaves` omits invalid
+slots, while `load(slot)` reports their error.
+
+Autosave is opt-in and runs after scene nodes and resolved choices. An optional
+`onAutosaveError` handles storage failures without stopping playback. Inject a
+`progress` store with `markPlayed` / `markCompleted` to preserve chapter history;
+loading never erases completion records. `catalog.loadScenario(slot, { saves,
+stage, ui })` resolves a saved scenario before starting playback; the caller
+must dispose of old playback and supply a stage matching that scenario. A save
+for an unavailable scenario reports `scenario-missing`. Scenario revisions that
+change scene/node IDs need an application migration policy.

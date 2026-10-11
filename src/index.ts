@@ -37,3 +37,7 @@ export { BackgroundPresenter, backgroundPresenterCss, type BackgroundPresenterOp
 export { DecodedImageCache, type ImageCacheOptions, type ImageLease } from "./assets/decoded-image-cache.js";
 export { GameSettingsStore, DEFAULT_GAME_SETTINGS, AUTO_SPEED_MULTIPLIERS, getAutoDelayMultiplier, type GameSettings, type AutoSpeed } from "./ui/settings.js";
 export { ScenarioCatalog, type ScenarioCatalogEntry, type ScenarioCatalogMetadata, type ScenarioPlayback } from "./scenario-catalog.js";
+
+export { SaveStore, SaveError, DEFAULT_SAVE_SLOTS, validateSaveState, type StorageAdapter, type SaveState, type SaveRecord, type SaveSummary, type SaveErrorCode, type CharacterState } from "./save.js";
+
+export { LocalStorageAdapter } from "./ui/local-storage.js";

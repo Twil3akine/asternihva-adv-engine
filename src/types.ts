@@ -144,6 +144,8 @@ export interface UiAdapter {
   setActiveSpeaker?(characterId?: string): void;
   setTitle?(title?: string): void;
   setScenarioMetadata?(metadata?: ScenarioMetadata): void;
+  /** Discard pending interaction when playback is stopped or replaced. */
+  cancelPending?(): void;
   destroy?(): void;
 }
 
