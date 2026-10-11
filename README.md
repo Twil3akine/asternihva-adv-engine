@@ -320,3 +320,19 @@ adapter operation settles and does not commit saved variables/progress. A cancel
 or failed restore cannot be saved until another restore or playback reaches a safe
 checkpoint. Renderer adapters must suppress late work after their own destruction.
 Destroyed engines cannot be run, restored, or saved; construct a fresh engine.
+
+For duplicate scene keys that JavaScript would overwrite before runtime validation,
+use the optional static source checker:
+
+```sh
+bun add -d typescript
+asternihva-adv-engine scenario lint-source ./sample.mjs
+```
+
+`lintScenarioSource(source)` is also exported from `/tooling`. It parses JS without
+executing the module, detects duplicate static keys in each inline `scenes` table,
+and reports syntax errors with line/column locations. Diagnostic output contains
+codes and counts, not source text, scene IDs or dialogue. Computed keys, spread
+properties and non-inline scenes tables produce coverage warnings; their dynamic
+values require the normal runtime Validator. TypeScript is a lazy optional peer:
+all package entry points and other CLI commands work without that parser installed.

@@ -3,12 +3,18 @@ import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { buildAssets, validateAssetManifest, validateScenarios, scenarioStatistics, scenarioGraph, scenarioGraphDot } from "../dist/tooling/index.js";
+import { buildAssets, validateAssetManifest, validateScenarios, scenarioStatistics, scenarioGraph, scenarioGraphDot, lintScenarioSource } from "../dist/tooling/index.js";
 
 const [command, subcommand, manifestPath, outDir, ...extra] = process.argv.slice(2);
 try {
   if (command === "scenario") {
-    if (!["validate", "stats", "graph"].includes(subcommand) || !manifestPath) throw new Error("Usage: asternihva-adv-engine scenario <validate|stats|graph> <module.mjs> [--lint|out.json|out.dot]");
+    if (!["validate", "stats", "graph", "lint-source"].includes(subcommand) || !manifestPath) throw new Error("Usage: asternihva-adv-engine scenario <validate|stats|graph|lint-source> <module.mjs> [--lint|out.json|out.dot]");
+    if (subcommand === 'lint-source') {
+      if (outDir || extra.length) throw new Error('Source lint takes one module path.');
+      const result = await lintScenarioSource(await readFile(manifestPath, 'utf8'));
+      console.log(JSON.stringify(result, null, 2));
+      process.exitCode = result.valid ? 0 : 1;
+    } else {
     // Scenario modules are trusted executable JavaScript. No module text is printed.
     const module = await import(pathToFileURL(resolve(manifestPath)).href);
     const exported = module.default ?? module.scenarios ?? Object.values(module).filter(v => v && typeof v === "object" && (v.entry || v.scenes));
@@ -28,6 +34,7 @@ try {
       await writeFile(outDir, outDir.endsWith(".dot") ? scenarioGraphDot(entries[0].entry) : JSON.stringify(scenarioGraph(entries[0].entry), null, 2) + "\n");
       console.log("Scenario graph written.");
     }
+    }
   } else {
   if (command !== "asset" || subcommand !== "build" || !manifestPath || !outDir || extra.length) {
     throw new Error("Usage: asternihva-adv-engine asset build <manifest.json> <out-dir>");
@@ -46,4 +53,4 @@ try {
   const result = await buildAssets({ manifest, baseDir: dirname(resolve(manifestPath)), outDir, transformer });
   console.log(JSON.stringify({ built: result.built, skipped: result.skipped, stale: result.stale }, null, 2));
   }
-} catch (error) { console.error(command === "scenario" ? "Scenario tooling failed; inspect the trusted module locally." : error.message); process.exitCode = 1; }
+} catch (error) { console.error(error.code === 'SCENARIO_SOURCE_PARSER_MISSING' ? 'Source lint requires the optional parser: npm install typescript' : command === "scenario" ? "Scenario tooling failed; inspect the trusted module locally." : error.message); process.exitCode = 1; }

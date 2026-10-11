@@ -25,6 +25,9 @@
   "peerDependenciesMeta": {
     "sharp": {
       "optional": true
+    },
+    "typescript": {
+      "optional": true
     }
   },
   "version": "0.1.0",
@@ -42,7 +45,8 @@
   "description": "A small, renderer-agnostic visual novel and ADV engine.",
   "sideEffects": false,
   "peerDependencies": {
-    "sharp": "^0.34.0"
+    "sharp": "^0.34.0",
+    "typescript": "^5.8.0"
   },
   "exports": {
     ".": {

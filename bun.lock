@@ -12,9 +12,11 @@
       },
       "peerDependencies": {
         "sharp": "^0.34.0",
+        "typescript": "^5.8.0",
       },
       "optionalPeers": [
         "sharp",
+        "typescript",
       ],
     },
   },

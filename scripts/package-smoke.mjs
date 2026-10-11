@@ -87,6 +87,15 @@ try {
     if (!web.DomUi || !web.SpriteRenderer) throw new Error('web exports missing');
     if (!live2d.Live2DRenderer) throw new Error('Live2D export missing');
     if (!tooling.validateScenarios) throw new Error('tooling export missing');
+    if (tooling.lintScenarioSource) {
+      try {
+        const parsed = await tooling.lintScenarioSource('export const game = { scenes: {} };');
+        if (!parsed.valid) throw new Error('installed source lint failed');
+      } catch (error) {
+        if (error.code !== 'SCENARIO_SOURCE_PARSER_MISSING') throw error;
+        // Optional parser absence must not block importing any package entry point.
+      }
+    }
     try { await import('asternihva-adv-engine/dist/engine.js'); throw new Error('deep import unexpectedly allowed'); } catch (error) { if (error.code !== 'ERR_PACKAGE_PATH_NOT_EXPORTED') throw error; }
     if ('window' in globalThis || 'document' in globalThis) throw new Error('unexpected browser global in Node');
   `;
