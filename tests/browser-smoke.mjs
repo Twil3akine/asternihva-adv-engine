@@ -8,7 +8,7 @@ const server=createServer(async(req,res)=>{
   const path=resolve(root,'.'+new URL(req.url,'http://local').pathname);
   if(path!==root&&!path.startsWith(root+sep)){res.statusCode=403;res.end();return;}
   if(path===root){res.setHeader('Content-Type','text/html');res.end('<!doctype html><html><body></body></html>');return;}
-  try{res.setHeader('Content-Type',extname(path)==='.js'?'text/javascript':'text/plain');res.end(await readFile(path));}catch{res.statusCode=404;res.end();}
+  try{res.setHeader('Content-Type',['.js','.mjs'].includes(extname(path))?'text/javascript':'text/plain');res.end(await readFile(path));}catch{res.statusCode=404;res.end();}
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 let browser;
@@ -54,7 +54,8 @@ try{
    const context=new AudioContext(),adapter=new web.BrowserAudioAdapter({assets:{a:'a.wav',b:'b.wav'},createContext:()=>context,load:async()=>wav()});await adapter.unlock();const controller=new core.AudioController(adapter);
    await controller.play('bgm','a',{fadeInMs:10});await Promise.all([controller.play('se','a'),controller.play('se','a')]);await controller.play('voice','a');await controller.lineChanged();await controller.play('bgm','b',{crossfadeMs:20});const state=controller.snapshot();if(state.bgm.id!=='b')throw Error('BGM state mismatch.');await controller.restore(state);controller.destroy();await tick();if(context.state!=='closed')throw Error('Audio context did not close.');audio=true;
   }
-  return {chromium:true,lineChoice:true,input:Boolean(core.InputRouter),saveLoad:Boolean(saves),audio,imageFailure:true,destroyRace:true,malformedStorage:true,reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches};
+  const panel=web.SaveLoadPanel?await (await import('/tests/browser-save-panel.mjs')).testSaveLoadPanel():undefined;
+  return {chromium:true,savePanel:Boolean(panel),lineChoice:true,input:Boolean(core.InputRouter),saveLoad:Boolean(saves),audio,imageFailure:true,destroyRace:true,malformedStorage:true,reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches};
  });
  assert.deepEqual(errors,[]);console.log(JSON.stringify(result));
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
