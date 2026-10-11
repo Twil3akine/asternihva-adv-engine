@@ -148,3 +148,91 @@ underscores or hyphens. No source images are included in the package.
 `buildAssets`, `validateAssetManifest`, and their types are available from
 `/tooling`. Inject an `ImageTransformer` with a stable version string for other
 converters; only the CLI needs Sharp. `/tooling` uses Node filesystem APIs.
+## Input actions
+
+`InputRouter` in `/core` accepts `advance`, `confirm`, `cancel`, `menu`, `log`,
+`auto`, `skip`, `up`, `down`, `quickSave` and `quickLoad`. Subscribe handlers that
+return `true` to consume an action; higher-priority handlers run first.
+Touch buttons and future gamepad adapters can call `dispatch` directly.
+`resolveKeyInput` maps physical keys without DOM dependencies.
+
+`BrowserKeyboardInput` in `/web` translates browser key events. Defaults use
+Enter/Space/ArrowRight for line advance, Enter/Space to confirm choices,
+ArrowUp/ArrowDown for choice navigation, Escape for menu/cancel, L/A/S for
+log/auto/skip, F5/F9 for quick save/load. Only handled actions prevent the browser
+default; composition, repeat and modifier combinations are ignored unless mapped.
+Editable elements and native controls keep their keys.
+
+`DomUi` accepts `{ input, keyboard, bindings }` and exposes `.input`; it handles
+line/choice actions. The application subscribes menu/log/auto/skip/save/load
+handlers on the same router. Set `keyboard: false` when the host owns keyboard
+listeners. Custom bindings replace the default list. Overlay handlers should use
+a higher priority and consume actions while open.
+## Save and load
+
+```ts
+import { SaveStore } from "asternihva-adv-engine/core";
+import { LocalStorageAdapter } from "asternihva-adv-engine/web";
+const saves = new SaveStore(new LocalStorageAdapter(), "my-game");
+const engine = new AdvEngine({ game: scenario, stage, ui, saves, autosave: true });
+const finished = engine.run();
+await engine.save("quicksave");
+await engine.load("quicksave"); // stops old playback and reconstructs presentation
+const resumed = engine.run();
+```
+
+Give each scenario a stable `scenario.id`. Slots are `autosave`, `quicksave`, and
+`manual-1` through `manual-5`; custom slots can be passed to `SaveStore`.
+`save`, `load`, `deleteSave`, `hasSave`, and `listSaves` are available on the store
+and the configured engine. Schema v1 stores node position, scalar variables,
+background/layout IDs, visibility, expressions and positions; it excludes DOM,
+image caches, motion timing, dialogue text and assets. A waiting line or choice
+resumes from its node (and a long line starts again at page one).
+
+Saving during renderer transitions throws `SaveError` with code `busy`. Loading
+validates first, cancels old input and waits for renderer work before restoration.
+Call `run()` after loading. Implement `UiAdapter.cancelPending()` in custom UIs to
+remove stale event handlers. Failed storage operations use code `storage`;
+missing/corrupt/unsupported slots have distinct codes. `listSaves` omits invalid
+slots, while `load(slot)` reports their error.
+
+Autosave is opt-in and runs after scene nodes and resolved choices. An optional
+`onAutosaveError` handles storage failures without stopping playback. Inject a
+`progress` store with `markPlayed` / `markCompleted` to preserve chapter history;
+loading never erases completion records. `catalog.loadScenario(slot, { saves,
+stage, ui })` resolves a saved scenario before starting playback; the caller
+must dispose of old playback and supply a stage matching that scenario. A save
+for an unavailable scenario reports `scenario-missing`. Scenario revisions that
+change scene/node IDs need an application migration policy.
+
+## Audio
+
+`AudioController` in `/core` owns BGM state and channel volumes through an injected
+`AudioAdapter`. `BrowserAudioAdapter` in `/web` lazily decodes registered sources
+with Web Audio. Call `adapter.unlock()` from a user gesture. The host owns asset
+URLs; no audio files are shipped.
+
+```ts
+import { AudioController } from "asternihva-adv-engine/core";
+import { BrowserAudioAdapter } from "asternihva-adv-engine/web";
+const adapter = new BrowserAudioAdapter({ assets: { music: "/audio/music.ogg" } });
+const audio = new AudioController(adapter);
+await audio.play("bgm", "music", { loop: true, fadeInMs: 200, crossfadeMs: 500 });
+await audio.stop("bgm", { fadeOutMs: 300 });
+```
+
+Pass `audio` to `AdvEngine`. Additive nodes use `{ type: "audio", channel: "bgm",
+id: "music" }`; omit `id` to stop a channel. Lines optionally use `voice: "clip"`.
+Register IDs in `GameDefinition.audioAssets` for validation. BGM/Voice replace
+prior playback, SE overlaps. BGM supports loop, fade-in/out and crossfade;
+volumes are 0–1 and effective gain is master × channel × per-play volume.
+Durations are milliseconds. Playback APIs resolve when playback is scheduled,
+not when a clip ends. Failed decode can retry; stop/destroy invalidates pending
+requests. Changing volume replaces an active gain ramp.
+
+`settings.update({ audio: { master: 1, bgm: .7, se: 1, voice: 1 } })` persists
+volumes. `settings.bindAudio(audio)` applies them and returns an unsubscribe
+function. Legacy settings without `audio` use full-volume defaults. Voice stops
+on line changes unless `new AudioController(adapter, false)` is used. SaveState
+optionally includes only BGM ID/loop/per-play volume; loading clears one-shots
+and starts BGM from the beginning. Earlier v1 saves remain supported.
