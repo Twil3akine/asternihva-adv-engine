@@ -148,3 +148,29 @@ underscores or hyphens. No source images are included in the package.
 `buildAssets`, `validateAssetManifest`, and their types are available from
 `/tooling`. Inject an `ImageTransformer` with a stable version string for other
 converters; only the CLI needs Sharp. `/tooling` uses Node filesystem APIs.
+
+## Scenario analysis CLI
+
+```sh
+asternihva-adv-engine scenario validate ./sample.mjs
+asternihva-adv-engine scenario validate ./sample.mjs --lint
+asternihva-adv-engine scenario stats ./sample.mjs
+asternihva-adv-engine scenario graph ./sample.mjs ./graph.json
+asternihva-adv-engine scenario graph ./sample.mjs ./graph.dot
+```
+
+Modules export a definition, catalog entry, array, or `scenarios` list. They are
+trusted executable JavaScript, not sandboxed input. Supply the full character,
+background and layout registries when validating references. CLI output contains
+only IDs, pass/fail, counts and statistics; failures do not quote module source.
+Graph export contains node IDs/kinds and edges, excluding dialogue, choice labels
+and asset paths. Graphviz is not required.
+
+`scenarioStatistics`, `scenarioGraph`, and `scenarioGraphDot` are available in
+`/tooling`. Reading length defaults to 500 Unicode characters/minute and counts
+all authored branches, not one player's route. `validateScenarios(entries,
+{ lint: true })` adds empty scene, unused registry and unreachable node warnings.
+Empty choices, duplicate character IDs and reachable automatic loops error;
+duplicate/blank choice labels warn. Implicit scene exhaustion remains legal.
+Duplicate JavaScript scene object keys are overwritten before evaluation and
+cannot be diagnosed by the runtime validator; use source linting for those.
