@@ -120,7 +120,7 @@ test('destroy during restore cancels before committing runtime state or progress
   await assert.rejects(f.engine.run(), /destroyed/);
 });
 
-test('stop during audio restoration blocks later presentation and permits a fresh load after settling', async () => {
+test('stop during audio restoration blocks later presentation and permanently rejects reuse', async () => {
   let release, entered;
   const gate = new Promise(resolve => { entered = resolve; });
   let blocked = true;
@@ -134,9 +134,10 @@ test('stop during audio restoration blocks later presentation and permits a fres
   assert.equal(f.calls.some(([method]) => method === 'setPosition'), false);
   assert.throws(() => f.engine.createSaveState(), error => error.code === 'busy');
   blocked = false;
-  await f.engine.restoreSaveState(state);
-  assert.equal(f.engine.state.seen, true);
-  assert.doesNotThrow(() => f.engine.createSaveState());
+  await assert.rejects(f.engine.restoreSaveState(state), /unusable/);
+  await assert.rejects(f.engine.run(), error => error.code === 'busy');
+  assert.throws(() => f.engine.restore(state.runtime), /unusable/);
+  assert.throws(() => f.engine.save('manual-1'), /unusable/);
   f.engine.destroy();
 });
 
@@ -191,7 +192,7 @@ test('catalog loads use catalog metadata overrides consistently with fresh start
   f.ui.setScenarioMetadata = value => { metadata = value; };
   const catalog = new ScenarioCatalog([{ id: 'sample', title: 'Selected', chapter: 'ONE', entry: f.game }]);
   const playback = await catalog.loadScenario('manual-1', { saves: f.saves, stage: f.stage, ui: f.ui });
-  assert.deepEqual(metadata, { id: 'sample', title: 'Selected', chapter: 'ONE' });
+  assert.deepEqual(metadata, { id: 'sample', title: 'Selected', chapter: 'ONE', description: undefined, order: undefined });
   playback.engine.stop(); await playback.finished;
   playback.engine.destroy();
 });
@@ -210,4 +211,64 @@ test('implicit scene exhaustion remains a saveable terminal checkpoint', async (
   assert.equal((await f.saves.load('manual-1')).state.ended, true);
   await f.engine.load('manual-1');
   assert.equal(f.engine.ended, true);
+});
+
+for (const phase of ['audio', 'stage', 'background', 'speaker', 'end']) {
+  test(`failed ${phase} restoration cannot commit runtime or resume/save`, async () => {
+    const played = [], failure = new Error('adapter failed');
+    const f = fixture({ options: { progress: { markPlayed: id => played.push(id), markCompleted() {} },
+      ...(phase === 'audio' ? { audio: { snapshot: () => ({}), restore() { throw failure; }, destroy() {} } } : {}) } });
+    if (phase === 'stage') f.stage.restore = async () => { throw failure; };
+    if (phase === 'background') f.ui.presentBackground = async () => { throw failure; };
+    if (phase === 'speaker') f.ui.setActiveSpeaker = () => { throw failure; };
+    if (phase === 'end') f.ui.presentEnd = async () => { throw failure; };
+    const saved = f.engine.createSaveState();
+    saved.runtime = { sceneId: 'scene-b', nodeIndex: 1, state: { seen: true } };
+    saved.ended = true;
+    const before = f.engine.snapshot();
+    await assert.rejects(f.engine.restoreSaveState(saved), error => error === failure);
+    assert.deepEqual(f.engine.snapshot(), before); assert.equal(f.engine.ended, false);
+    assert.deepEqual(played, []);
+    await assert.rejects(f.engine.run(), error => error.code === 'busy');
+    assert.throws(() => f.engine.save('manual-1'), /unusable/);
+    await assert.rejects(f.engine.restoreSaveState(saved), /unusable/);
+    assert.throws(() => f.engine.restore(saved.runtime), /unusable/);
+    assert.equal(await f.saves.hasSave('manual-1'), false);
+    f.engine.destroy();
+  });
+}
+
+for (const cancel of ['stop', 'destroy']) test(`${cancel} while restoring ended presentation never commits the ended checkpoint`, async () => {
+  const played = [], f = fixture({ options: { progress: { markPlayed: id => played.push(id), markCompleted() {} } } });
+  let entered, release;
+  const gate = new Promise(resolve => { entered = resolve; });
+  f.ui.presentEnd = () => { entered(); return new Promise(resolve => { release = resolve; }); };
+  const saved = f.engine.createSaveState();
+  saved.runtime = { sceneId: 'scene-b', nodeIndex: 1, state: { seen: true } }; saved.ended = true;
+  const before = f.engine.snapshot(), loading = f.engine.restoreSaveState(saved);
+  await gate;
+  assert.deepEqual(f.engine.snapshot(), before); assert.equal(f.engine.ended, false);
+  await assert.rejects(f.engine.run(), error => error.code === 'busy');
+  f.engine[cancel](); release();
+  await assert.rejects(loading, error => error.code === 'busy');
+  assert.deepEqual(f.engine.snapshot(), before); assert.equal(f.engine.ended, false); assert.deepEqual(played, []);
+  await assert.rejects(f.engine.run()); assert.throws(() => f.engine.createSaveState(), error => error.code === 'busy');
+  f.engine.destroy();
+});
+
+test('preflight failure leaves the same engine available to run, save and restore', async () => {
+  const f = fixture(), saved = f.engine.createSaveState();
+  await assert.rejects(f.engine.restoreSaveState({ ...saved, scenarioId: 'missing' }), error => error.code === 'scenario-missing');
+  await atLine(f); await f.engine.save('manual-1');
+  await f.engine.restoreSaveState(saved); await f.run;
+  assert.deepEqual(f.engine.snapshot(), saved.runtime);
+  assert.doesNotThrow(() => f.engine.createSaveState()); f.engine.destroy();
+});
+
+test('synchronous cancellation from a restore UI hook cannot commit runtime', async () => {
+  const f = fixture(), saved = f.engine.createSaveState(); saved.runtime.state.seen = true;
+  f.ui.setActiveSpeaker = () => f.engine.stop();
+  await assert.rejects(f.engine.restoreSaveState(saved), error => error.code === 'busy');
+  assert.equal(f.engine.state.seen, false); await assert.rejects(f.engine.run(), error => error.code === 'busy');
+  f.engine.destroy();
 });

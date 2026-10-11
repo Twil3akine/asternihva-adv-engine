@@ -76,7 +76,7 @@ export class ScenarioCatalog {
     const metadata = this.getScenarioMetadata(id)!;
     return new AdvEngine({ ...options, game: {
       ...item.entry,
-      scenario: { id, chapter: metadata.chapter, title: metadata.title },
+      scenario: { ...metadata },
     } });
   }
 

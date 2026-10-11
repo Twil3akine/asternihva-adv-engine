@@ -1,5 +1,7 @@
 import type { AdvNode, CharacterCommand, CharacterDefinition, GameDefinition } from "../types.js";
 import type { ScenarioCatalogEntry } from "../scenario-catalog.js";
+import { isScalarState, isStagePosition } from "../save.js";
+import { validateAudioOptions } from "../audio.js";
 
 export type ScenarioDiagnosticSeverity = "error" | "warning";
 
@@ -73,6 +75,7 @@ function validateScenario(item: ValidatableScenario, add: AddDiagnostic, options
   const { id, entry } = item;
   const game: GameDefinition = entry;
   if (!isGameShape(game)) { add("error", id, "malformed scenario structure"); return; }
+  validateRuntimeFields(item, add);
   const title = item.title ?? game.scenario?.title;
   if (typeof title !== "string" || !title.trim()) add("error", id, "missing scenario title");
 
@@ -150,6 +153,52 @@ function isGameShape(game: GameDefinition): boolean {
 
 function sceneLengths(game: GameDefinition): Map<string, number> {
   return new Map(Object.entries(game.scenes ?? {}).map(([id, nodes]) => [id, nodes.length]));
+}
+
+/** JS modules do not get TypeScript checking; enforce runtime/save field contracts. */
+function validateRuntimeFields(item: ValidatableScenario, add: AddDiagnostic): void {
+  const game = item.entry;
+  const error = (message: string, location: string) => add("error", item.id, message, location);
+  const position = (value: unknown, location: string) => {
+    if (value !== undefined && !isStagePosition(value)) error("invalid stage position", location);
+  };
+  const optional = (value: unknown, type: "string" | "boolean", location: string) => {
+    if (value !== undefined && typeof value !== type) error(`expected ${type}`, location);
+  };
+  if (game.initialState !== undefined && !isScalarState(game.initialState)) error("initialState must contain finite scalar values", "initialState");
+  for (const [layoutId, layout] of Object.entries(game.stageLayouts ?? {})) {
+    optional(layout.hideOthers, "boolean", `stageLayouts.${layoutId}.hideOthers`);
+    layout.members.forEach((member, index) => {
+      position(member.position, `stageLayouts.${layoutId}.members[${index}].position`);
+      optional(member.show, "boolean", `stageLayouts.${layoutId}.members[${index}].show`);
+    });
+  }
+  for (const [sceneId, nodes] of Object.entries(game.scenes)) nodes.forEach((node, index) => {
+    const location = `${sceneId}[${index}]`;
+    if (node.type === "set" && !isScalarState(node.values)) error("set.values must contain finite scalar values", `${location}.values`);
+    if (node.type === "choice") {
+      optional(node.prompt, "string", `${location}.prompt`);
+      node.options.forEach((option, optionIndex) => {
+        if (option.set !== undefined && !isScalarState(option.set)) error("choice set must contain finite scalar values", `${location}.options[${optionIndex}].set`);
+      });
+    }
+    if (node.type === "audio") {
+      if (!["bgm", "se", "voice"].includes(node.channel)) error("invalid audio channel", `${location}.channel`);
+      if (node.id !== undefined && (typeof node.id !== "string" || !node.id.trim())) error("audio id must be a non-empty string", `${location}.id`);
+      try { validateAudioOptions(node); } catch { error("invalid audio options", location); }
+    }
+    if (node.type === "line") {
+      position(node.position, `${location}.position`);
+      if (node.voice !== undefined && (typeof node.voice !== "string" || !node.voice.trim())) error("voice id must be a non-empty string", `${location}.voice`);
+    }
+    for (const [commandIndex, command] of commandsOf(node).entries()) {
+      const commandLocation = `${location}.commands[${commandIndex}]`;
+      position(command.position, `${commandLocation}.position`);
+      optional(command.show, "boolean", `${commandLocation}.show`);
+      optional(command.expression, "string", `${commandLocation}.expression`);
+      optional(command.motion, "string", `${commandLocation}.motion`);
+    }
+  });
 }
 
 function validatePresentation(

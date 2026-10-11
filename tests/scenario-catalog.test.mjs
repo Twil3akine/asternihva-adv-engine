@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ScenarioCatalog, AdvEngine } from '../dist/index.js';
+import { ScenarioCatalog, AdvEngine, CharacterStage, SaveStore } from '../dist/index.js';
 const game = { start: 'start', characters: [], scenario: { title: 'Original', chapter: 'ONE' }, scenes: { start: [{ type: 'end' }] } };
 const options = () => ({ stage: { setActive() {}, destroy() {} }, ui: { setScenarioMetadata(value) { this.metadata = value; }, presentEnd() {} } });
 test('scenario catalog preserves order and reuses metadata with optional descriptions', () => {
@@ -60,4 +60,23 @@ test('catalog creates a selected engine without running nodes and preserves cata
   assert.equal(catalog.getCurrentScenario().id, 'sample');
   await engine.run(); assert.equal(ended, true);
   engine.destroy();
+});
+
+for (const overrides of [false, true]) test(`all catalog paths preserve complete ${overrides ? 'overridden' : 'fallback'} metadata`, async () => {
+  const source = { ...game, scenario: { id: 'source-id', chapter: 'ONE', title: 'Original', description: 'Original description', order: 10 } };
+  const expected = overrides
+    ? { id: 'sample', chapter: 'TWO', title: 'Selected', description: '', order: 0 }
+    : { ...source.scenario, id: 'sample' };
+  const catalog = new ScenarioCatalog([{ id: 'sample', ...(overrides ? expected : {}), entry: source }]);
+  const data = new Map(), saves = new SaveStore({ getItem: key => data.get(key) ?? null, setItem: (key,value) => data.set(key,value), removeItem: key => data.delete(key) }, 'sample');
+  const make = () => ({ saves, stage: new CharacterStage({}, [], []), ui: { setScenarioMetadata(value) { this.metadata = value; }, presentEnd() {} } });
+  const creation = make(), created = catalog.createScenario('sample', creation);
+  assert.deepEqual(creation.ui.metadata, expected);
+  await created.save('manual-1'); created.destroy();
+  const starting = make(), started = catalog.startScenario('sample', starting);
+  await started.finished; assert.deepEqual(starting.ui.metadata, expected); started.engine.destroy();
+  const loading = make(), loaded = await catalog.loadScenario('manual-1', loading);
+  await loaded.finished; assert.deepEqual(loading.ui.metadata, expected); loaded.engine.destroy();
+  assert.deepEqual(catalog.getScenarioMetadata('sample'), expected);
+  assert.deepEqual(source.scenario, { id: 'source-id', chapter: 'ONE', title: 'Original', description: 'Original description', order: 10 });
 });

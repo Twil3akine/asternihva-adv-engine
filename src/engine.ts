@@ -42,6 +42,7 @@ export class AdvEngine {
   #layout?: string;
   #safe = true;
   #loading = false;
+  #restoreFailed = false;
   #epoch = 0;
   #task?: Promise<void>;
   #inFlight = false;
@@ -79,6 +80,7 @@ export class AdvEngine {
   }
 
   restore(snapshot: EngineSnapshot): void {
+    this.#assertRestorable();
     if (this.#inFlight || this.#loading || this.#destroyed) throw new SaveError("busy", "Stop and settle playback before restoring a legacy snapshot.");
     if (!isScalarState(snapshot.state) || !Number.isSafeInteger(snapshot.nodeIndex) || snapshot.nodeIndex < 0) throw new SaveError("corrupted", "Invalid runtime snapshot.");
     if (!Object.hasOwn(this.#game.scenes, snapshot.sceneId)) {
@@ -93,6 +95,7 @@ export class AdvEngine {
   }
 
   createSaveState(): SaveState {
+    this.#assertRestorable();
     if (!this.#safe || this.#loading || this.#destroyed) throw new SaveError("busy", "Wait for a logical checkpoint before saving.");
     const scenarioId = this.#game.scenario?.id;
     if (!scenarioId) throw new SaveError("scenario-missing", "A stable scenario ID is required to save.");
@@ -114,8 +117,13 @@ export class AdvEngine {
     await this.restoreSaveState(entry.state);
   }
 
-  /** Stops the old run and reconstructs presentation. Call run() to resume input. */
+  #assertRestorable(): void {
+    if (this.#restoreFailed) throw new SaveError("busy", "Engine is unusable after failed or cancelled restoration; construct a fresh engine.");
+  }
+
+  /** Stops old input and reconstructs presentation. A failed/cancelled restore requires a fresh engine. */
   async restoreSaveState(state: SaveState): Promise<void> {
+    this.#assertRestorable();
     validateSaveState(state);
     if (this.#loading || this.#destroyed) throw new SaveError("busy", "The engine cannot start a load now.");
     if (state.scenarioId !== this.#game.scenario?.id) throw new SaveError("scenario-missing", "Load this save through its scenario catalog entry.");
@@ -132,12 +140,12 @@ export class AdvEngine {
     const copy = structuredClone(state);
     this.#loading = true;
     this.#safe = false;
-    this.stop();
-    const epoch = this.#epoch;
-    const active = () => {
-      if (this.#destroyed || epoch !== this.#epoch) throw new SaveError("busy", "Save restoration was cancelled.");
-    };
     try {
+      this.stop();
+      const epoch = this.#epoch;
+      const active = () => {
+        if (this.#destroyed || epoch !== this.#epoch) throw new SaveError("busy", "Save restoration was cancelled.");
+      };
       // Renderer transitions settle before the saved presentation is applied.
       // A failed old run does not prevent loading a known-good checkpoint.
       await this.#task?.catch(() => {});
@@ -148,23 +156,32 @@ export class AdvEngine {
       active();
       await this.#setBackground(copy.presentation.background);
       active();
+      this.#ui.setActiveSpeaker?.(undefined);
+      active();
+      if (copy.ended) await this.#ui.presentEnd();
+      active();
+      this.#options.progress?.markPlayed(copy.scenarioId);
+      active();
+      // Commit runtime only after all external restoration work has succeeded.
       this.#layout = copy.presentation.layout;
       this.#sceneId = copy.runtime.sceneId;
       this.#nodeIndex = copy.runtime.nodeIndex;
       for (const key of Object.keys(this.#state)) delete this.#state[key];
       Object.assign(this.#state, copy.runtime.state);
       this.#ended = copy.ended;
-      this.#ui.setActiveSpeaker?.(undefined);
-      if (copy.ended) await this.#ui.presentEnd();
-      active();
       this.#safe = true;
-      this.#options.progress?.markPlayed(copy.scenarioId);
+    } catch (error) {
+      // Adapter presentation may be partially changed; never resume or persist it.
+      this.#restoreFailed = true;
+      this.#safe = false;
+      throw error;
     } finally { this.#loading = false; }
   }
 
   run(): Promise<void> {
     if (this.#destroyed) return Promise.reject(new Error("Engine is destroyed."));
-    if (this.#inFlight || this.#ended || this.#loading) return this.#task ?? Promise.resolve();
+    if (this.#restoreFailed || this.#loading) return Promise.reject(new SaveError("busy", "Engine cannot run during or after an unsuccessful restoration; construct a fresh engine after failure."));
+    if (this.#inFlight || this.#ended) return this.#task ?? Promise.resolve();
     this.#running = true;
     this.#inFlight = true;
     const epoch = ++this.#epoch;

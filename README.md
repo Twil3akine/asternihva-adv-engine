@@ -328,9 +328,12 @@ without executing its opening nodes. Use it when a host must retain a handle
 before `restoreSaveState()` and cancel a chapter switch. Catalog metadata overrides
 are applied consistently for new and loaded engines. `stop()`/`destroy()` during
 restore invalidates that restore; it reports `SaveError("busy")` after the pending
-adapter operation settles and does not commit saved variables/progress. A cancelled
-or failed restore cannot be saved until another restore or playback reaches a safe
-checkpoint. Renderer adapters must suppress late work after their own destruction.
+adapter operation settles. Runtime variables, position and ended status commit only
+after UI restoration (including `presentEnd`) succeeds. Once restoration begins,
+an exception or cancellation permanently makes that engine unusable: `run`, save,
+and either restore API reject; destroy it and construct a fresh engine. Preflight
+validation errors leave the existing engine usable. Renderer adapters must suppress
+late work after their own destruction.
 Destroyed engines cannot be run, restored, or saved; construct a fresh engine.
 
 For duplicate scene keys that JavaScript would overwrite before runtime validation,
