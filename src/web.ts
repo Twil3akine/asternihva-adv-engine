@@ -9,6 +9,7 @@ export { GameSettingsStore, DEFAULT_GAME_SETTINGS, AUTO_SPEED_MULTIPLIERS, getAu
 
 export { ChapterProgressStore, type ChapterProgressStatus, type ChapterProgressSnapshot, type ChapterProgressStorage } from "./ui/chapter-progress.js";
 
+export { BrowserKeyboardInput, type KeyboardInputOptions } from "./ui/keyboard-input.js";
 export { LocalStorageAdapter } from "./ui/local-storage.js";
 
 export { BrowserAudioAdapter, type BrowserAudioOptions } from "./ui/browser-audio.js";
