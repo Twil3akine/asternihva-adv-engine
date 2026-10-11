@@ -41,3 +41,6 @@ export { ScenarioCatalog, type ScenarioCatalogEntry, type ScenarioCatalogMetadat
 export { InputRouter, resolveKeyInput, DEFAULT_KEY_BINDINGS, type InputAction, type InputHandler, type PhysicalKeyInput, type KeyBinding } from "./input.js";
 
 export { BrowserKeyboardInput, type KeyboardInputOptions } from "./ui/keyboard-input.js";
+export { SaveStore, SaveError, DEFAULT_SAVE_SLOTS, validateSaveState, type StorageAdapter, type SaveState, type SaveRecord, type SaveSummary, type SaveErrorCode, type CharacterState } from "./save.js";
+
+export { LocalStorageAdapter } from "./ui/local-storage.js";

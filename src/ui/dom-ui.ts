@@ -237,6 +237,8 @@ export class DomUi implements UiAdapter {
     });
   }
 
+  cancelPending(): void { this.#cancelPending(); }
+
   destroy(): void {
     this.#background?.destroy();
     this.#cancelPending();
