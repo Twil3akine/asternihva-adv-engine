@@ -30,6 +30,9 @@ export class CharacterStage<Host = unknown> {
     const rendererMap = new Map(renderers.map((renderer) => [renderer.key, renderer]));
 
     for (const character of characters) {
+      if (!rendererMap.has(character.renderer)) throw new Error(`Renderer "${character.renderer}" for character "${character.id}" is not registered.`);
+    }
+    try { for (const character of characters) {
       const renderer = rendererMap.get(character.renderer);
       if (!renderer) {
         throw new Error(
@@ -39,6 +42,9 @@ export class CharacterStage<Host = unknown> {
 
       const instance = renderer.create(host, character);
       this.#characters.set(character.id, { definition: character, instance, expression: character.defaultExpression ?? instance.initialExpression, visible: false, position: "center" });
+    } } catch (error) {
+      this.destroy();
+      throw error;
     }
   }
 

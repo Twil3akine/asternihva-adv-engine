@@ -18,20 +18,18 @@ export async function testShellIntegration(browser, origin) {
   });
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.route('**/examples/asternihva/local-scenarios.mjs', route => route.fulfill({ contentType: 'text/javascript', body: `
-    export async function loadLocalScenarios() { return ['sample-a','sample-b'].map(id => ({
+  await page.route('**/examples/generic/scenario.mjs', route => route.fulfill({ contentType: 'text/javascript', body: `
+    export const characters=[], backgrounds={}, layouts={};
+    export const scenarios=['sample-a','sample-b'].map(id => ({
       scenario: { id, title: id }, start: 'scene-a', characters: [], audioAssets: { tone: ${JSON.stringify(tone)} }, scenes: {
         'scene-a': [{ type: 'audio', channel: 'bgm', id: 'tone' }, { type: 'line', text: 'hello' }, { type: 'choice', options: [
           { text: 'A', next: 'scene-b', set: { route: 'a' } }, { text: 'B', next: 'scene-b', set: { route: 'b' } }
         ] }], 'scene-b': [{ type: 'line', text: 'done' }, { type: 'end' }]
       }
-    })); }
+    }));
   ` }));
-  await page.route('**/examples/asternihva/demo-assets.mjs', route => route.fulfill({ contentType: 'text/javascript', body: 'export async function loadDemoAssets(){return {characters:[],missing:[]};}' }));
-  await page.route('**/examples/asternihva/background-manifest.mjs', route => route.fulfill({ contentType: 'text/javascript', body: 'export const backgroundManifest={};export async function initialBackground(){return undefined;}' }));
-  await page.route(/\.(png|jpe?g|svg|webp|woff2?|ttf|otf)(\?|$)/i, route => route.abort());
   try {
-    await page.goto(`${origin}/examples/asternihva/index.html`);
+    await page.goto(`${origin}/examples/generic/index.html`);
     const root = page.locator('#game');
     await page.waitForFunction(() => document.querySelector('#game').dataset.shellReady === 'true');
     await page.locator('[data-shell-action="settings"]').click();
@@ -48,7 +46,7 @@ export async function testShellIntegration(browser, origin) {
     assert.equal(await page.evaluate(() => window.audioGains.at(-1).gain.value), Math.fround(0.45));
     await page.keyboard.press('F5');
     await page.waitForFunction(() => Object.keys(localStorage).some(key => key.includes('quicksave')));
-    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('asternihva.saves:save:quicksave')).state.audio.bgm.id), 'tone');
+    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('generic.saves:save:quicksave')).state.audio.bgm.id), 'tone');
     await page.keyboard.press('Escape');
     await page.locator('[data-save-action="save"]').click();
     await page.locator('.adv-save-panel [data-slot="manual-1"] button').first().click();
@@ -77,7 +75,7 @@ export async function testShellIntegration(browser, origin) {
     await page.locator('.adv-save-panel [data-slot="manual-2"] button').first().click();
     await page.waitForFunction(() => document.querySelector('#game').dataset.mode === 'choice' && !document.querySelector('.adv-save-panel').open);
     // The saved chapter was selected, the other chapter was not incorrectly cleared.
-    const progress = await page.evaluate(() => JSON.parse(localStorage.getItem('asternihva.chapter-progress')));
+    const progress = await page.evaluate(() => JSON.parse(localStorage.getItem('generic.chapter-progress')));
     assert(!progress.completedIds.includes('sample-b'));
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');

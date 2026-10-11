@@ -5,6 +5,8 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+import { checkBoundary } from "./public-boundary.mjs";
+
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const temporary = await mkdtemp(join(tmpdir(), "asternihva-engine-pack-"));
 
@@ -22,7 +24,6 @@ try {
     assert(names.includes(required), `package is missing ${required}`);
   }
   for (const path of names) {
-    assert(!/(^|\/)ep0[012](?:-scenario)?\.mjs$/i.test(path), `private scenario file was packed: ${path}`);
     assert(!/(^|\/)(scenario|examples|screenshots|\.codex-night-run)(\/|$)/i.test(path), `private or local path was packed: ${path}`);
     assert(!/\.(png|jpe?g|webp|woff2?|ttf|otf|log|svg|avif|mp3|ogg|wav|flac|mp4|mov)$/i.test(path), `local asset or log was packed: ${path}`);
   }
@@ -43,10 +44,12 @@ try {
   const storyText = [];
   try {
     const directory = process.env.ADV_PRIVATE_SCENARIO_DIR;
-    const definitions = directory ? await Promise.all(["ep00", "ep01", "ep02"].map(async id => (await import(pathToFileURL(resolve(directory, `${id}.mjs`)).href))[id]))
-      : await (await import("../examples/asternihva/local-scenarios.mjs")).loadLocalScenarios();
+    const definitions = directory ? await Promise.all((await readdir(directory)).filter(name => name.endsWith('.mjs')).map(async name => {
+      const module = await import(pathToFileURL(resolve(directory, name)).href);
+      return Object.values(module).find(value => value?.scenes && value?.start);
+    })) : [];
     for (const definition of definitions) {
-      for (const node of Object.values(definition.scenes).flat()) {
+      for (const node of Object.values(definition?.scenes ?? {}).flat()) {
         if (node.text?.length >= 4) storyText.push(node.text);
         if (node.prompt?.length >= 4) storyText.push(node.prompt);
         for (const option of node.options ?? []) if (option.text.length >= 4) storyText.push(option.text);
@@ -61,7 +64,7 @@ try {
     const chars = [...text];
     for (let index = 0; index + 24 <= chars.length; index += 12) fragments.add(chars.slice(index, index + 24).join(""));
   }
-  const privateText = /\b(Noah|Seren|Luminal)\b|room-night-wide|room-night-window/i;
+  await checkBoundary(filesToScan, { fragments: [...fragments] });
   for (const path of filesToScan) {
     const contents = await readFile(path);
     if (contents.includes(0)) continue;
@@ -69,7 +72,7 @@ try {
     for (const line of fragments) {
       assert(!text.includes(line) && !text.includes(JSON.stringify(line).slice(1, -1)), `private scenario text found in ${path}`);
     }
-    assert(!privateText.test(text), `project-specific story text found in ${path}`);
+
   }
 
   execFileSync("npm", ["install", "--prefix", extraction, "--ignore-scripts", "--no-audit", "--no-fund", tarball], {

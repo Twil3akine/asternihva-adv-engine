@@ -1,4 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {execFileSync} from 'node:child_process';
+import { CharacterStage } from '../dist/core.js';
 import {SpriteRenderer,DecodedImageCache} from '../dist/web.js';
 test('transitive core source boundary excludes DOM imports and types',()=>{execFileSync(process.execPath,['scripts/verify-core.mjs'],{stdio:'inherit'});});
 test('generic validation and runtime behavior work outside the browser',()=>{for(const script of ['scripts/validate-fixture.mjs','scripts/compatibility-smoke.mjs'])execFileSync(process.execPath,[script],{stdio:'inherit'});});
@@ -25,4 +26,14 @@ test('saved unknown registered expression rejects before replacing active input'
 test('sprite-selected fallback is exposed as a logical initial expression',async t=>{
  const previous=globalThis.document;class E{dataset={};style={setProperty(){},removeProperty(){}};append(){};remove(){};setAttribute(){};decode(){return Promise.resolve();}}
  globalThis.document={createElement:()=>new E()};t.after(()=>{if(previous===undefined)delete globalThis.document;else globalThis.document=previous;});const sprite=new SpriteRenderer().create(new E(),{id:'alice',name:'Alice',renderer:'sprite',assets:{expressions:{normal:'normal.svg',smile:'smile.svg'}}});assert.equal(sprite.initialExpression,'normal');sprite.destroy();
+});
+
+test('a renderer construction failure releases previously created instances', () => {
+  let destroyed = 0;
+  const renderer = { key: 'mock', create(_host, character) {
+    if (character.id === 'bob') throw Error('fixture failure');
+    return { destroy() { destroyed++; } };
+  } };
+  assert.throws(() => new CharacterStage({}, ['alice','bob'].map(id => ({ id, name: id, renderer: 'mock' })), [renderer]), /fixture failure/);
+  assert.equal(destroyed, 1);
 });

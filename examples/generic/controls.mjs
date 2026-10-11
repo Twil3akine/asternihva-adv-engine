@@ -1,6 +1,6 @@
 import { DomUi, calculateAutoDelay, getAutoDelayMultiplier } from "../../dist/index.js";
 
-import { createLogEntry, renderLogEntries } from "./demo-log.mjs";
+import { createLogEntry, renderLogEntries } from "./log.mjs";
 
 export async function presentEpisodeTitle(root, element, metadata, { durationMs = 1900, fadeDurationMs = 700, signal } = {}) {
   signal?.throwIfAborted();
@@ -29,7 +29,7 @@ export async function presentEpisodeTitle(root, element, metadata, { durationMs 
   delete element.dataset.phase;
 }
 
-export class DemoUi extends DomUi {
+export class SampleUi extends DomUi {
   history = [];
   constructor(elements, { resolveIcon, endCard, scenario, onReplay, ...uiOptions } = {}) {
     super(elements, uiOptions);

@@ -1,6 +1,6 @@
 # asternihva-adv-engine
 
-A small TypeScript engine for data-driven visual novels and adventure games. The engine runs scenario nodes through UI and character-renderer interfaces; the included web adapters provide a DOM dialogue UI and image-based character sprites.
+asternihva-adv-engine is a general-purpose ADV / visual novel engine originally developed for the Asternihva Project. The engine runs scenario nodes through UI and character-renderer interfaces; the included web adapters provide a DOM dialogue UI and image-based character sprites.
 
 ## Install
 
@@ -17,7 +17,7 @@ import { AdvEngine, CharacterStage, type GameDefinition } from "asternihva-adv-e
 import { DomUi, SpriteRenderer } from "asternihva-adv-engine/web";
 
 const scenario: GameDefinition = {
-  scenario: { id: "sample", chapter: "EP.00", title: "A Small Beginning" },
+  scenario: { id: "sample", chapter: "CH.1", title: "Sample" },
   start: "intro",
   characters: [{
     id: "alice",
@@ -28,6 +28,7 @@ const scenario: GameDefinition = {
   }],
   scenes: {
     intro: [
+      { type: "scene", commands: [{ character: "alice", show: true, position: "center" }] },
       { type: "line", speaker: "alice", text: "Hello." },
       { type: "choice", options: [
         { text: "Continue", next: "end" },
@@ -104,10 +105,21 @@ npm install
 npm run typecheck
 npm run build
 npm test
-npm run validate:scenarios
+npm run validate:fixture
 ```
 
-The local game shell loads private definitions from the ignored `scenario/` directory. They are not included in Git or npm distribution. `validate:scenarios` checks these local definitions and requires them to be present. Public development and tests use generic fixtures instead. The package allowlist excludes the demo and local story directory. Check package contents before distributing a build.
+`examples/generic/` is a standalone public sample with Alice and Bob, geometric
+SVG sprites, a background, two chapters, expression changes, choices, title,
+log, settings, Save/Load and End. Run `npm run build`, `npm run serve:example`,
+then open `/examples/generic/`. It needs no external game repository, local fonts
+or private data. Sample shell modules are application code, not package APIs.
+
+`npm run verify:boundary` scans tracked source and the pack smoke also scans
+installed package contents. Reserved work-detail fingerprints and private path
+checks prevent game-specific code or data returning to the public tree. Optional
+external private-text scanning is read-only and reports paths/counts only.
+The check covers the current tree, not historical commits. Removing previously
+tracked data does not remove it from Git history.
 
 `npm run pack:smoke` packs and installs in a temporary directory, verifies all public imports, checks the core declarations without DOM libs, and rejects local story/assets. It never publishes.
 
@@ -336,3 +348,23 @@ codes and counts, not source text, scene IDs or dialogue. Computed keys, spread
 properties and non-inline scenes tables produce coverage warnings; their dynamic
 values require the normal runtime Validator. TypeScript is a lazy optional peer:
 all package entry points and other CLI commands work without that parser installed.
+
+## Character definitions and web integration
+
+A character has a stable `id`, display `name`, registered `renderer` key and
+renderer assets. For sprites, `assets.expressions` maps expression IDs to URLs;
+`defaultExpression` selects the initial one. A line's `expression` switches the
+speaker's sprite. Scene `commands` show/hide or position characters. Register
+background IDs in `backgrounds` and use `{ type: "scene", background: "sample-room" }`.
+Choice `options` contain display `text`, a target `next`, and optional scalar
+variable assignments in `set`. Game-specific fonts, crops, theme and registries
+belong to the consumer application.
+
+Inject `gameViewportCss`, `spriteRendererCss` and `domUiCss` from `/web`, then
+create a `.adv-viewport` with separate background, character and dialogue layers.
+Destroy the engine when switching chapters or disposing the host; it owns the
+supplied stage/UI/audio. Keep SaveStore/settings/progress across chapter switches.
+Use `catalog.createScenario(id, options)` to retain the engine handle before an
+async restore, then `restoreSaveState` and `run`. A renderer construction failure
+releases instances it already created; missing renderer registrations fail first.
+Do not share a stage/UI between simultaneously running engines.

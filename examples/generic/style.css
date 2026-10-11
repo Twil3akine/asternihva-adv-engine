@@ -1,0 +1,35 @@
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100dvh; display: grid; place-items: center; background: #121820; color: #f4f6fc; font-family: system-ui, sans-serif; }
+[hidden] { display: none !important; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible { outline: 3px solid #9ebce8; outline-offset: 2px; }
+.game { background: #323b48; --adv-text-size: 1.8cqw; --adv-dialog-height: 28%; }
+.stage-window { pointer-events: none; }
+.stage { position: absolute; inset: 8% 12% 22%; }
+.shell-screen, .end-card { position: absolute; z-index: 200; inset: 0; padding: 5%; background: #18212e; overflow: auto; }
+.shell-actions, .adv-menu-items { display: flex; flex-wrap: wrap; gap: 12px; }
+.shell-screen button, .end-card button { color: inherit; background: #2b394c; border: 1px solid #a6b0c2; padding: 12px 20px; }
+.chapter-list { display: grid; gap: 12px; }
+.chapter-entry { padding: 12px; border: 1px solid #a6b0c2; }
+.chapter-entry h3, .chapter-entry p { margin: 4px 0; }
+.chapter-entry[data-selected="true"] { border-color: #9ebce8; }
+.game[data-screen="title"] :is(#dialogue, #scenario-title, #controls, #stage), .game[data-screen="chapter"] :is(#dialogue, #scenario-title, #controls, #stage) { visibility: hidden; }
+.game[data-mode="ended"] #dialogue { display: none; }
+.game[data-mode="ended"] .adv-scenario-title { visibility: hidden; }
+.game .episode-title { position: absolute; z-index: 180; inset: 0; display: grid; align-content: center; justify-items: center; background: #18212e; }
+.episode-title__chapter { font-size: 1.2cqw; }
+.episode-title__name { font-size: 3cqw; }
+.game .episode-title[data-phase="out"] { opacity: 0; transition: opacity 700ms; }
+.game[data-mode="intro"] .adv-scenario-title { visibility: hidden; }
+.adv-menu-items { flex-direction: column; }
+.adv-menu-items form, .adv-menu-items button { width: 100%; }
+.adv-setting-row { border-block-end: 1px solid #a6b0c2; padding-block: 8px; }
+.adv-setting-options { display: flex; gap: 8px; }
+.adv-audio-settings { display: grid; gap: 12px; }
+.adv-audio-settings label { display: flex; align-items: center; gap: 8px; }
+.adv-audio-settings input { flex: 1; min-width: 0; }
+.adv-controls { right: 2cqw; }
+.adv-control { font-size: 1.2cqw; padding: .6cqw; }
+.adv-log-content, .adv-log-content * { user-select: text; -webkit-user-select: text; }
+.asset-status { position: absolute; z-index: 300; bottom: 0; margin: 0; background: #18212e; }
+@media (prefers-reduced-motion: reduce) { .episode-title { transition: none !important; } }

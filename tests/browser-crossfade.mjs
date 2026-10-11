@@ -1,7 +1,7 @@
 import { SpriteRenderer, spriteRendererCss } from "../dist/index.js";
 
 // Run in a real browser: (await import('/tests/browser-crossfade.mjs')).testCrossfade()
-export async function testCrossfade(source = "/examples/asternihva/assets/noah-normal.svg") {
+export async function testCrossfade(source = "/examples/generic/assets/alice-normal.svg") {
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
   const style = document.createElement("style");
   style.textContent = spriteRendererCss;

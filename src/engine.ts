@@ -181,7 +181,7 @@ export class AdvEngine {
         const scene = Object.hasOwn(this.#game.scenes, this.#sceneId) ? this.#game.scenes[this.#sceneId] : undefined;
         if (!scene) throw new Error(`Unknown scene: ${this.#sceneId}`);
         const node = scene[this.#nodeIndex];
-        if (!node) { await this.#finish(); return; }
+        if (!node) { await this.#effect(() => this.#finish(), epoch); this.#safe = true; return; }
         this.#safe = false;
         if (node.type === "line" || node.type === "choice") automaticSteps = 0;
         else if (++automaticSteps > this.#maxAutomaticSteps) throw new Error("Maximum automatic steps exceeded; check scenario for a deterministic loop.");

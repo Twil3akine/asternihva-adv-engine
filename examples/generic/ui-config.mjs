@@ -1,4 +1,4 @@
-export const demoUiConfig = {
+export const sampleUiConfig = {
   auto: {
     baseDelayMs: 1000,
     perCharacterMs: 60,

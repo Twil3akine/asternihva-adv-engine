@@ -202,3 +202,12 @@ for (const target of ['toString', '__proto__', 'constructor']) test(`runtime rej
   assert.equal(f.engine.ended, false);
   f.engine.destroy();
 });
+
+test('implicit scene exhaustion remains a saveable terminal checkpoint', async () => {
+  const f = fixture({ game: { scenes: { 'scene-a': [] } } });
+  await f.engine.run();
+  await f.engine.save('manual-1');
+  assert.equal((await f.saves.load('manual-1')).state.ended, true);
+  await f.engine.load('manual-1');
+  assert.equal(f.engine.ended, true);
+});

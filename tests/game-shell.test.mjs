@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { attachGameShell } from "../examples/asternihva/game-shell.mjs";
-import { renderChapterSelect } from "../examples/asternihva/chapter-select.mjs";
+import { attachGameShell } from "../examples/generic/game-shell.mjs";
+import { renderChapterSelect } from "../examples/generic/chapter-select.mjs";
 
 class FakeElement {
   constructor(tagName = "div") {
@@ -74,8 +74,8 @@ function makeShellFixture() {
 test("game shell renders ordered chapters and guards navigation and scenario starts", async () => {
   const fixture = makeShellFixture();
   const entries = [
-    { id: "ep00", chapter: "EP.00", title: "小さな光", description: "夜の物語", entry: {} },
-    { id: "ep01", chapter: "EP.01", title: "次の章", entry: {} },
+    { id: "ep00", chapter: "CH.1", title: "Sample One", description: "夜の物語", entry: {} },
+    { id: "ep01", chapter: "CH.2", title: "次の章", entry: {} },
   ];
   const catalog = {
     getScenarios: () => entries,
@@ -103,8 +103,8 @@ test("game shell renders ordered chapters and guards navigation and scenario sta
     assert.equal(fixture.root.dataset.screen, "chapter");
     assert.deepEqual(fixture.chapterList.children.map(child => child.children.at(-1).dataset.scenarioId), ["ep00", "ep01"]);
     const firstChapter = fixture.chapterList.children[0];
-    assert.equal(firstChapter.children.some(child => child.className === "chapter-label" && child.textContent === "EP.00"), true);
-    assert.equal(firstChapter.children.some(child => child.tagName === "h3" && child.textContent === "小さな光"), true);
+    assert.equal(firstChapter.children.some(child => child.className === "chapter-label" && child.textContent === "CH.1"), true);
+    assert.equal(firstChapter.children.some(child => child.tagName === "h3" && child.textContent === "Sample One"), true);
     assert.equal(firstChapter.children.some(child => child.textContent === "夜の物語"), true);
     const secondChapter = fixture.chapterList.children[1];
     assert.equal(secondChapter.children.some(child => child.textContent === "次の章"), true);
@@ -141,7 +141,7 @@ test("chapter select omits absent descriptions", () => {
   const fixture = makeShellFixture();
   try {
     const catalog = {
-      getScenarios: () => [{ id: "ep00", chapter: "EP.00", title: "小さな光", entry: {} }],
+      getScenarios: () => [{ id: "ep00", chapter: "CH.1", title: "Sample One", entry: {} }],
     };
     const played = [];
     renderChapterSelect(fixture.chapterList, catalog, id => played.push(id));

@@ -12,66 +12,28 @@ import {
 
 import { ChapterProgressStore, LocalStorageAdapter, SaveLoadPanel, saveLoadPanelCss, BrowserAudioAdapter, BrowserKeyboardInput } from "../../dist/web.js";
 
-import { backgroundManifest, initialBackground } from "./background-manifest.mjs";
-import { stageLayoutManifest } from "./stage-layout-manifest.mjs";
-import { assetManifest } from "./asset-manifest.mjs";
-import { resolveLogPortrait } from "./demo-log.mjs";
-import { attachSettings } from "./demo-settings.mjs";
-import { demoUiConfig } from "./ui-config.mjs";
-import { DemoUi, attachControls, presentEpisodeTitle } from "./demo-controls.mjs";
+import { scenarios, characters, backgrounds, layouts } from "./scenario.mjs";
+import { resolveLogPortrait } from "./log.mjs";
+import { attachSettings } from "./settings.mjs";
+import { sampleUiConfig } from "./ui-config.mjs";
+import { SampleUi, attachControls, presentEpisodeTitle } from "./controls.mjs";
 import { attachGameShell } from './game-shell.mjs';
-import { motions } from "./motions.mjs";
-import { loadLocalScenarios } from "./local-scenarios.mjs";
-import { loadDemoAssets } from "./demo-assets.mjs";
 
 
 const style = document.createElement("style");
 style.textContent = gameViewportCss + spriteRendererCss + domUiCss + saveLoadPanelCss;
 document.head.append(style);
 
-await Promise.all([
-  document.fonts.load('400 16px "Zen Kaku Gothic New"', "日本語の表示を確認します"),
-  document.fonts.load('500 16px "Zen Kaku Gothic New"', "Noah セレナ"),
-  document.fonts.load('400 16px Ubuntu', "EP.00 AUTO MENU"),
-].map(promise => promise.catch(() => [])));
-
-
-const debug = new URLSearchParams(location.search).get("debug") === "1";
-const [loaded, firstBackground] = await Promise.all([loadDemoAssets(), initialBackground()]);
 const status = document.querySelector("#asset-status");
-const gameRoot = document.querySelector("#game");
-gameRoot.dataset.debug = String(debug);
-document.querySelector("[data-debug-panel]").hidden = !debug;
-status.hidden = !debug && !loaded.missing.length;
-status.textContent = loaded.missing.length
-  ? debug
-    ? "ローカル画像が不足しています。node scripts/import-asternihva-assets.mjsで導入できます。"
-    : "立ち絵が未導入のため、仮画像で表示しています。"
-  : "Local PNG / expression crossfade / motion";
-gameRoot.dataset.assets = loaded.missing.length ? "fallback" : "local";
-
-const sharedGame = {
-  title: "Asternihva Project",
-  backgrounds: backgroundManifest,
-  stageLayouts: stageLayoutManifest,
-  characters: loaded.characters.map(({ local, ...character }) => ({
-    ...character, assets: { ...character.assets, motions },
-  })),
-};
-let localScenarios;
-try {
-  localScenarios = await loadLocalScenarios();
-} catch (error) {
-  status.hidden = false;
-  status.textContent = `ローカルScenarioを読み込めませんでした: ${error.message}`;
-  localScenarios = [];
-}
+const sharedGame = { title: "Generic ADV Sample", backgrounds, stageLayouts: layouts, characters };
+const firstBackground = 'sample-room';
+const loaded = { characters };
 
 const root = document.querySelector("#game");
 const stageHost = document.querySelector("#stage");
 const logIcons = Object.fromEntries(loaded.characters.map(character => [character.id, {
   expressions: character.assets.expressions,
-  portrait: assetManifest.find(entry => entry.id === character.id).logPortrait,
+  portrait: { scale: 1, anchorX: 0.5, anchorY: 0.5 },
 }]));
 const imageCache = new DecodedImageCache({ maxDecodedImages: 8 });
 let currentUi, currentStage, currentEngine, currentAudio, releasePlayback;
@@ -86,11 +48,11 @@ const saves = new SaveStore(settingsStorage ? new LocalStorageAdapter(settingsSt
   getItem: key => sessionSaves.get(key) ?? null,
   setItem: (key, value) => { sessionSaves.set(key, value); },
   removeItem: key => { sessionSaves.delete(key); },
-}, 'asternihva.saves');
+}, 'generic.saves');
 const reportError = error => { status.hidden = false; status.textContent = `操作できませんでした: ${error.message}`; };
 if (!settingsStorage) { status.hidden = false; status.textContent = '保存領域を利用できないため、セーブはこの画面を閉じるまで有効です。'; }
-const progress = new ChapterProgressStore(settingsStorage, "asternihva.chapter-progress");
-const scenarioEntries = localScenarios.map(definition => ({
+const progress = new ChapterProgressStore(settingsStorage, "generic.chapter-progress");
+const scenarioEntries = scenarios.map(definition => ({
   ...definition.scenario, entry: { ...sharedGame, ...definition },
 }));
 const catalog = new ScenarioCatalog(scenarioEntries);
@@ -110,7 +72,7 @@ const disposePlayback = () => {
   document.querySelector('#episode-title').hidden = true;
   document.querySelector('#choices').replaceChildren();
 };
-controls = attachControls(root, { renderLog: container => currentUi?.renderLog(container) }, demoUiConfig, settings, {
+controls = attachControls(root, { renderLog: container => currentUi?.renderLog(container) }, sampleUiConfig, settings, {
   onRestart: () => shell.replay(),
 });
 attachSettings(root, settings, {
@@ -129,7 +91,7 @@ shell = attachGameShell(root, catalog, {
   onSettings: () => document.querySelector('#settings-panel').showModal(),
   onStart: async (id, { saveState, signal }) => {
     const definition = scenarioEntries.find(entry => entry.id === id).entry;
-    const ui = currentUi = new DemoUi(uiElements, {
+    const ui = currentUi = new SampleUi(uiElements, {
       input, keyboard: false,
       resolveIcon: entry => resolveLogPortrait(entry, logIcons),
       endCard: document.querySelector('#end-card'), scenario: catalog.getScenarioMetadata(id),
@@ -226,4 +188,4 @@ const keyboard = new BrowserKeyboardInput(input, {
 const unlockAudio = () => { if (currentAudio) void currentAudio.unlock().catch(reportError); };
 root.addEventListener('pointerdown', unlockAudio);
 root.addEventListener('keydown', unlockAudio);
-window.addEventListener('pagehide', () => { panel.destroy(); keyboard.destroy(); root.removeEventListener('pointerdown', unlockAudio); root.removeEventListener('keydown', unlockAudio); }, { once: true });
+window.addEventListener('pagehide', () => { disposePlayback(); panel.destroy(); keyboard.destroy(); root.removeEventListener('pointerdown', unlockAudio); root.removeEventListener('keydown', unlockAudio); }, { once: true });
