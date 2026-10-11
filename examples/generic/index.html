@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Generic ADV Save/Load</title>
+<style>body{background:#151515;color:#eee;font:16px sans-serif}main{position:relative;margin:2em auto;width:min(90vw,960px);aspect-ratio:16/9;container-type:inline-size;background:#242424}nav{display:flex;gap:1em}button{font:inherit}#status{white-space:pre-wrap}</style></head>
+<body><nav><button id="save">Save</button><button id="load">Load</button><button id="quick-save">Quick Save</button><button id="quick-load">Quick Load</button></nav>
+<main class="adv-viewport" id="game"><div id="background"></div><section class="adv-dialogue"><b class="adv-speaker" id="speaker"></b><p class="adv-text" id="text"></p></section><div class="adv-choices" id="choices"></div></main><p role="status" id="status"></p>
+<script type="module">
+import * as core from '../../dist/core.js';
+import { DomUi, SaveLoadPanel, LocalStorageAdapter, domUiCss, saveLoadPanelCss } from '../../dist/web.js';
+const root=document.querySelector('#game'),status=document.querySelector('#status');
+const style=document.createElement('style');style.textContent=domUiCss+saveLoadPanelCss;document.head.append(style);
+const saves=new core.SaveStore(new LocalStorageAdapter(),'generic-adv-example');
+const input=core.InputRouter?new core.InputRouter():undefined;
+const ui=new DomUi({root,background:document.querySelector('#background'),speaker:document.querySelector('#speaker'),text:document.querySelector('#text'),choices:document.querySelector('#choices')},{input});
+const game={scenario:{id:'sample',title:'Sample'},start:'scene-a',characters:[],scenes:{'scene-a':[{type:'line',text:'hello'},{type:'choice',options:[{text:'A',next:'scene-b',set:{route:'a'}},{text:'B',next:'scene-b',set:{route:'b'}}]}],'scene-b':[{type:'line',text:'done'},{type:'end'}]}};
+const engine=new core.AdvEngine({game,stage:new core.CharacterStage(root,[],[]),ui,saves,autosave:true});
+const run=()=>{void engine.run().catch(error=>status.textContent=error.message);};
+const panel=new SaveLoadPanel(root,{saves,onSave:slot=>engine.save(slot),onLoad:async slot=>{await engine.load(slot);run();},onError:error=>status.textContent=error.message});
+input?.subscribe(action=>panel.handleAction(action),100);
+for(const mode of ['save','load'])document.querySelector('#'+mode).addEventListener('click',()=>panel.open(mode));
+document.querySelector('#quick-save').addEventListener('click',()=>panel.handleAction('quickSave'));
+document.querySelector('#quick-load').addEventListener('click',()=>panel.handleAction('quickLoad'));
+run();
+</script></body></html>

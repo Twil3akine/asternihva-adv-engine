@@ -151,3 +151,16 @@ stage, ui })` resolves a saved scenario before starting playback; the caller
 must dispose of old playback and supply a stage matching that scenario. A save
 for an unavailable scenario reports `scenario-missing`. Scenario revisions that
 change scene/node IDs need an application migration policy.
+
+## Save/Load panel
+
+`SaveLoadPanel` in `/web` creates a native modal with save/load/delete controls,
+slot metadata, readable error status, initial focus, Escape close and return focus.
+Inject `{ saves, onSave, onLoad, onError?, labels? }`. `open("save")` shows manual
+slots, `open("load")` includes auto/quick slots. Busy operations are serialized.
+The host's `onLoad` should restore an engine and call `run()`; errors remain visible.
+Subscribe `action => panel.handleAction(action)` from an InputRouter at overlay
+priority to consume quickSave/quickLoad/cancel and block background actions while
+open. Destroy the panel when its host is disposed. `saveLoadPanelCss` provides
+structural styles only. See `examples/generic/index.html` for a public example
+that runs without local stories or artwork.

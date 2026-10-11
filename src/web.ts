@@ -10,3 +10,5 @@ export { GameSettingsStore, DEFAULT_GAME_SETTINGS, AUTO_SPEED_MULTIPLIERS, getAu
 export { ChapterProgressStore, type ChapterProgressStatus, type ChapterProgressSnapshot, type ChapterProgressStorage } from "./ui/chapter-progress.js";
 
 export { LocalStorageAdapter } from "./ui/local-storage.js";
+
+export { SaveLoadPanel, saveLoadPanelCss, type SaveLoadPanelOptions, type SavePanelMode, type SavePanelLabels } from "./ui/save-load-panel.js";
