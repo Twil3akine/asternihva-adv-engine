@@ -151,3 +151,35 @@ stage, ui })` resolves a saved scenario before starting playback; the caller
 must dispose of old playback and supply a stage matching that scenario. A save
 for an unavailable scenario reports `scenario-missing`. Scenario revisions that
 change scene/node IDs need an application migration policy.
+
+## Audio
+
+`AudioController` in `/core` owns BGM state and channel volumes through an injected
+`AudioAdapter`. `BrowserAudioAdapter` in `/web` lazily decodes registered sources
+with Web Audio. Call `adapter.unlock()` from a user gesture. The host owns asset
+URLs; no audio files are shipped.
+
+```ts
+import { AudioController } from "asternihva-adv-engine/core";
+import { BrowserAudioAdapter } from "asternihva-adv-engine/web";
+const adapter = new BrowserAudioAdapter({ assets: { music: "/audio/music.ogg" } });
+const audio = new AudioController(adapter);
+await audio.play("bgm", "music", { loop: true, fadeInMs: 200, crossfadeMs: 500 });
+await audio.stop("bgm", { fadeOutMs: 300 });
+```
+
+Pass `audio` to `AdvEngine`. Additive nodes use `{ type: "audio", channel: "bgm",
+id: "music" }`; omit `id` to stop a channel. Lines optionally use `voice: "clip"`.
+Register IDs in `GameDefinition.audioAssets` for validation. BGM/Voice replace
+prior playback, SE overlaps. BGM supports loop, fade-in/out and crossfade;
+volumes are 0–1 and effective gain is master × channel × per-play volume.
+Durations are milliseconds. Playback APIs resolve when playback is scheduled,
+not when a clip ends. Failed decode can retry; stop/destroy invalidates pending
+requests. Changing volume replaces an active gain ramp.
+
+`settings.update({ audio: { master: 1, bgm: .7, se: 1, voice: 1 } })` persists
+volumes. `settings.bindAudio(audio)` applies them and returns an unsubscribe
+function. Legacy settings without `audio` use full-volume defaults. Voice stops
+on line changes unless `new AudioController(adapter, false)` is used. SaveState
+optionally includes only BGM ID/loop/per-play volume; loading clears one-shots
+and starts BGM from the beginning. Earlier v1 saves remain supported.

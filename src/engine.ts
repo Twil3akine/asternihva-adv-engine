@@ -1,3 +1,4 @@
+import type { AudioController } from "./audio.js";
 import { SaveError, SaveStore, validateSaveState, isScalarState, type SaveState } from "./save.js";
 import { CharacterStage } from "./character-stage.js";
 import type {
@@ -15,6 +16,7 @@ export interface AdvEngineOptions {
   stage: CharacterStage;
   ui: UiAdapter;
   saves?: SaveStore;
+  audio?: AudioController;
   autosave?: boolean;
   onAutosaveError?: (error: unknown) => void;
   progress?: { markPlayed(id: string): void; markCompleted(id: string): void };
@@ -89,6 +91,7 @@ export class AdvEngine {
     const scenarioId = this.#game.scenario?.id;
     if (!scenarioId) throw new SaveError("scenario-missing", "A stable scenario ID is required to save.");
     return { version: 1, scenarioId, runtime: this.snapshot(), ended: this.#ended,
+      ...(this.#options.audio ? { audio: this.#options.audio.snapshot() } : {}),
       presentation: { background: this.#background, layout: this.#layout, characters: this.#stage.snapshot() } };
   }
 
@@ -120,6 +123,7 @@ export class AdvEngine {
     try {
       // Renderer transitions settle before the saved presentation is applied.
       await this.#task;
+      await this.#options.audio?.restore(copy.audio);
       await this.#stage.restore(copy.presentation.characters);
       await this.#setBackground(copy.presentation.background);
       this.#layout = copy.presentation.layout;
@@ -191,11 +195,23 @@ export class AdvEngine {
     this.stop();
     this.#stage.destroy();
     this.#ui.destroy?.();
+    this.#options.audio?.destroy();
   }
 
   async #execute(node: AdvNode, epoch: number): Promise<void> {
     switch (node.type) {
+      case "audio": {
+        const audio = this.#options.audio;
+        if (!audio) throw new Error("Audio system is not configured.");
+        await this.#effect(() => node.id ? audio.play(node.channel, node.id, node) : audio.stop(node.channel, node), epoch);
+        if (node.next) this.#jump(node.next); else this.#nodeIndex++;
+        return;
+      }
       case "line": {
+        if (this.#options.audio) {
+          await this.#effect(() => this.#options.audio!.lineChanged(), epoch);
+          if (node.voice) await this.#effect(() => this.#options.audio!.play("voice", node.voice!), epoch);
+        } else if (node.voice) throw new Error("Audio system is not configured.");
         await this.#effect(() => this.#applyLayout(node.layout), epoch);
         const commands: CharacterCommand[] = [...(node.commands ?? [])];
         if (node.speaker && (node.expression || node.motion || node.position)) {
